@@ -33,7 +33,7 @@ using multiQC and riboseQC
                           package_install_loc,
                           orfquant_prefix)
         rannot_ch = create_annotation.out.orfquant_annotation
-        package_ch = create.annotation.out.annotation_package
+        package_ch = create_annotation.out.annotation_package
     } else {
         rannot_ch = orfquant_annotation
         package_ch = orfquant_annot_package

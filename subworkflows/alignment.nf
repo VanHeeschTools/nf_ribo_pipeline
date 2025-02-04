@@ -48,7 +48,7 @@ PRICE respectively and creates an index for the ORFquant bam
         log.warn "Some STAR index files are missing. Running STAR indexing."
         // Run STAR - index if any of the index files are missing
         star_index(genome, gtf, outdir)
-        star_index_ch = star_index.out.star_index
+        star_index_ch = star_index.out.star_index_path
     } else {
         star_index_ch = "${star_index_path}"
         log.info "Using existing STAR index: ${star_index_path}"

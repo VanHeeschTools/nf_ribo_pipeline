@@ -7,6 +7,7 @@ process ref_psites {
 
     input:
     val gtf
+    val outdir
 
     output:
     path(${ref_base}.gtf_psites_p0.sorted.bed), emit: ref_psite_bed

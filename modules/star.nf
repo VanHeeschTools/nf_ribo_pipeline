@@ -11,7 +11,7 @@ process star_index {
     val outdir      // Output directory
 
     output:
-    val "star_index", emit: star_index_path
+    path "star_index", emit: star_index_path
     path "star_index/*"
 
     script:
@@ -32,7 +32,7 @@ process align {
 
     tag "${meta.sample_id}"
     label "alignment"
-    publishDir "${outdir}/star/", mode: 'copy'
+    //publishDir "${outdir}/star/", mode: 'copy'
 
     input: 
     tuple val(meta), path(reads)   // Trimmed RPF reads

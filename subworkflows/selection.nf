@@ -34,6 +34,7 @@ workflow SELECTION {
         // Run bowtie2 - index if none of the index files exist
         bowtie2_index(contaminants_fasta, outdir)
         bowtie2_index_ch = bowtie2_index.out.bowtie2_index_prefix
+        
         log.info "Using created Bowtie2 index: ${bowtie2_index_ch}"
     } else {
         // If index files already exist, use the provided index prefix

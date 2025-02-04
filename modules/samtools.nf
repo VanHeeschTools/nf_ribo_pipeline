@@ -9,8 +9,8 @@ process contaminants_check {
 
     input:
     tuple val(meta), path(reads)            // Trimmed fastp reads
-    tuple val(meta), path(filtered_reads)   // RPF reads
-    tuple val(meta), path(sam_file)         // Filtered contaminant reads
+    tuple val(meta_2), path(filtered_reads)   // RPF reads
+    tuple val(meta_3), path(sam_file)         // Filtered contaminant reads
     val bowtie2_index_prefix                // Bowtie2 reference index
     val outdir                              // Output directory
     val keep_sam                            // Boolean, keep big SAM file for debugging

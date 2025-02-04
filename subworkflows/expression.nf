@@ -32,11 +32,11 @@ workflow EXPRESSION {
     .map { meta, path -> path }
     .collect()
     .set { collected_paths }
-    write_collected_paths(collected_paths)
+    //write_collected_paths(collected_paths)
 
     // Calculate PPM matrices
     ppm_matrix(ref_psites.out.ref_bed,
-               orfcaller_name,
+               "orfcaller_name",
                collected_paths,
                outdir
     )

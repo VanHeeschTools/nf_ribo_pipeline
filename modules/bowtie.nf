@@ -10,7 +10,7 @@ process bowtie2_index {
     val outdir             // Output directory
 
     output:
-    val "bowtie2_index/bowtie2_index", emit: bowtie2_index_prefix
+    path "bowtie2_index", emit: bowtie2_index_prefix
     path "bowtie2_index/bowtie2_index*.bt2"
 
     script:
@@ -35,7 +35,7 @@ process bowtie2 {
 
     tag "${meta.sample_id}"
     label "bowtie2"
-    publishDir "${outdir}/bowtie2", mode: 'copy'
+    //publishDir "${outdir}/bowtie2", mode: 'copy'
 
     input:
     val bowtie2_index_prefix      // Bowtie2 reference index

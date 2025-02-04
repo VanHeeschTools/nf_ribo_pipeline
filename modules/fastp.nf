@@ -5,7 +5,7 @@ process trimming {
 
     tag "${meta.sample_id}"
     label "trimming"
-    publishDir "${outdir}/fastp", mode: 'copy'
+    //publishDir "${outdir}/fastp", mode: 'copy'
 
     input:
     tuple val(meta),val(reads)    // Input FASTQ reads
