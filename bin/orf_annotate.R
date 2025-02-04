@@ -18,7 +18,8 @@ txdb_loc <- args[2]
 orfcaller <- args[3]
 annotation_provider <- args[4]
 gencode_uniprot_file <- args[5]
-cpus <- args[6]
+uniprot_protein_fasta_loc <- args[6]
+cpus <- args[7]
 
 # Extract CDS regions of annotated genes from txdb
 txdb <- AnnotationDbi::loadDb(txdb_loc)
@@ -56,8 +57,7 @@ prepare_orfquant <- function(orfquant_orfs_loc) {
 
   # This functions imports the ORFquant object and outputs
   # a list of ORF ranges (orf_ranges), 
-  # the ORF metadata (orfs_tx_df),
-  # and a combined table of the two (orf_table)
+  # and the ORF metadata (orfs_table) linked to the ORF ranges
 
   # Load ORFquant file and select ORF definitions
   orfquant_orfs <- get(load(orfquant_orfs_loc))
@@ -76,9 +76,50 @@ prepare_orfquant <- function(orfquant_orfs_loc) {
     orf_ranges <- split(orfquant_orfs$ORFs_gen, names(orfquant_orfs$ORFs_gen))
 
     return(list(orf_ranges,
-                orf_table,
-                orfs_tx_df
+                orf_table
                 ))
+}
+
+check_annot_style <- function(orf_ranges,
+                              annotated_gen) {
+  
+  # Convert the seqlevels style of a GRange so that they can be compared with one
+  # another. So far only checks for NCBI and Ensembl.
+  # Input: orf_ranges and CDS definitions of the ORF, only checks the seqlevels of
+  #        these GRanges
+  # Output: orf_ranges with updated seqlevels
+  
+  # This is quite hard-coded, I would recommend checking the seqlevels of the
+  # Called ORFs and use those as a basis for the conversion
+  ensembl_seqlevels <- c("1","2","3","4","5","6","7","8","9","10","11","12",
+                         "13","14","15","16","17","18","19","20","21","22","X")
+  ncbi_seqlevels <- c("chr1","chr2","chr3","chr4","chr5","chr6","chr7","chr8",
+                      "chr9","chr10","chr11","chr12","chr13","chr14","chr15",
+                      "chr16","chr17","chr18","chr19","chr20","chr21","chr22",
+                      "chrX")
+  # Required to reannotate the seqlevels
+  names(ensembl_seqlevels) <- ncbi_seqlevels
+  names(ncbi_seqlevels) <- ensembl_seqlevels
+
+  # Checks whether to change the PRICE seqnames to NCBI style instead of Ensembl
+  check_cds <- ifelse(any(grepl("chr",
+                                GenomeInfoDb::seqlevels(annotated_gen[1]))),
+                      "ncbi",
+                      "ensembl")
+  check_caller <- ifelse(any(grepl("chr",
+                                   GenomeInfoDb::seqlevels(orf_ranges[1]))),
+                         "ncbi",
+                         "ensembl")
+  
+  if(!(check_cds == check_caller)) {
+    print(paste("switch to",check_cds))
+    if(check_cds == "ncbi") {
+      GenomeInfoDb::seqlevels(orf_ranges) <- ncbi_seqlevels
+    } else if (check_cds == "ensembl") {
+      GenomeInfoDb::seqlevels(orf_ranges) <- ensembl_seqlevels
+    }
+  }
+  return(orf_ranges)
 }
 
 check_orf_cds_similarity <- function(orf_ranges,
@@ -87,6 +128,11 @@ check_orf_cds_similarity <- function(orf_ranges,
                                      annotated_gen_unlist) {
 
   # This function 
+  # Input: orf_ranges (Granges of orfcaller ORFs)
+  #        orf_table (orf metadata)
+  #        annotated_gen (Granges of annotated ORFs)
+  #        annotated_gen_unlist (Grangeslist of annotated ORFs)
+  # Output: result_list (list of )
 
   # Find overlaps between called ORF and annotated ORF
   overlaps <- GenomicRanges::findOverlaps(orf_ranges, annotated_gen)
@@ -145,6 +191,13 @@ annotate_new_orfs <- function(orf_ranges,
 
   # Compare CDS vs new ORF, and make a new annotation based on a virtual longest
   # possible ORF of the annotated set.
+  # Input: orf_ranges (Granges of orf_caller ORFs)
+  #        orf_table (metadata of orf_caller ORFs)
+  #        cds_matches_grl ()
+  #        orf_caller (This is important as ORFquant does not include the STOP codon in the sequence)
+  # Output: orf_table with new columns showing start codon, orf coord similarity and the new
+  #         orf annotation type.
+
   # ORFquant does not include stops in the ORF, so we trim the CDS matches
 
   if (tolower(orf_caller) == "orfquant") {
@@ -286,7 +339,8 @@ annotate_new_orfs <- function(orf_ranges,
 
     # Add everything to a complete table
     orf_table <- orf_table %>%
-    dplyr::left_join(new_category_df, by = c("ORF_id_tr" = "orf_id"))
+    dplyr::select(!start_codon) %>%
+    dplyr::left_join(new_category_df, by = c("name" = "orf_id"))
 
     return(orf_table)
   }
@@ -295,6 +349,8 @@ annotate_new_orfs <- function(orf_ranges,
 annotate_uniprot_id <- function(orf_table) {
 
   # Annotate ORFs with uniprot ID where possible using biomart
+  # Input: ORF table
+  # Output: ORF table with uniprot protein IDs linked to gene ID
 
   if ( tolower(annotation_provider) == "ensembl") {
 
@@ -341,21 +397,83 @@ annotate_uniprot_id <- function(orf_table) {
   }
 }
 
+# Calculate protein similarity between uniprot sequence and protein sequence of
+# annotated ORF
+# Input: single ORF protein sequence
+#        uniprot protein sequence
+# Output: similarity score between ORF and uniprot protein
+process_sequence <- function(i) {
+  prot_ids <- orf_table$uniprot_gn_ids[i]
+  if (is.na(prot_ids)) return(NA)
+  
+  orf_sequence <- Biostrings::AAString(orf_table$Protein[i])
+  prot_ids_split <- strsplit(prot_ids, ";")[[1]]
+  
+  prot_ids_split <- prot_ids_split[prot_ids_split %in% names(uniprot_fasta_names)]
+  fasta_entries <- uniprot_fasta_names[prot_ids_split]
+  fasta_entries <- fasta_entries[!sapply(fasta_entries, is.null)]
+  
+  if (length(fasta_entries) == 0) return(NA)
+  
+  # prot_seqs <- AAStringSet(unlist(fasta_entries))
+  alignment <- Biostrings::pairwiseAlignment(pattern = fasta_entries, subject = orf_sequence, type = "local")
+  similarity_score <- max(nmatch(alignment) / width(fasta_entries)) * 100
+  
+  return(as.numeric(similarity_score))
+}
+
 # Load ORF information
-prep_orfs <- prepare_orfquant(orfquant_orfs_loc = orfs_loc)
+if ( tolower(orfcaller) == "orfquant") {
+
+  prep_orfs <- prepare_orfquant(orfquant_orfs_loc = orfs_loc)
+
+} else if ( tolower(orfcaller) == "price") {
+
+  prep_orfs <- prepare_price(price_orfs_loc = orfs_loc,
+                             tx2gene = tx2gene)
+
+}
+
+# Check annotation style
+restyled_orfs <- check_annot_style(prep_orfs[[1]],
+                  annotated_gen = cds_gene)
 
 # Find new ORF and annotated ORF location similarities
-orf_cds_sim <- check_orf_cds_similarity(orf_ranges = prep_orfs[[1]],
+orf_cds_sim <- check_orf_cds_similarity(orf_ranges = restyled_orfs,
                                         orf_table = prep_orfs[[2]],
                                         annotated_gen = cds_gene,
                                         annotated_gen_unlist = cds_gene_unlist)
 
 # Annotate ORF table with newfound annotations
-orf_table <- annotate_new_orfs(orf_ranges = prep_orfs[[1]],
+orf_table <- annotate_new_orfs(orf_ranges = restyled_orfs,
                                orf_table = prep_orfs[[2]],
                   cds_matches_grl = orf_cds_sim,
                   orf_caller = orfcaller)
 
+# Annotate ORFs with uniprot protein IDs using either gencode
+# conversion table or Ensembl biomart
 orf_table <- annotate_uniprot_id("gencode",
                                  gencode_uniprot_file,
                                  orf_table)
+
+# Load UniProt Reference Proteome fasta files
+uniprot_fasta <- rtracklayer::import(uniprot_fasta_loc,
+                                     type = "AA")
+
+# Change the names to more easily digestible by R
+# Might have to be changed when the input file is different
+names(uniprot_fasta) <- sapply(names(uniprot_fasta), function(x) {
+  strsplit(x, "\\|")[[1]][2]
+})
+
+# Do the calculations in parallel using MCLAPPLY
+orf_table <- orf_table %>%
+  dplyr::mutate(similarity_score = parallel::mclapply(1:nrow(orf_table),
+                                                      process_sequence,
+                                                      mc.cores = cpus))
+
+# Write resulting table to disk
+write.table(orf_table, file = paste(orf_caller,"orfs.csv", sep = "_"),
+            quote = F,
+            row.names = F,
+            sep = ",")

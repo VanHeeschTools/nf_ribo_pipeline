@@ -54,7 +54,7 @@ riboseqc_analysis <- function(bam, rannot, name) {
 }
 
 # See if script works without package
-# if (!require(basename(annotation_package), character.only = TRUE)) {
+#if (!require(basename(annotation_package), character.only = TRUE)) {
 #   install.packages(annotation_package,
 #                    repos = NULL, type = "source")
 # }
