@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sys
 import os
 from optparse import OptionParser
@@ -21,8 +22,7 @@ if not isExist:
    # Create a new directory because it does not exist 
   os.makedirs(outdir)
 
-out = open(outdir + os.path.basename(gtff) + "_psites_plus_partial.bed","w+")
-
+out = open(outdir + "/" + os.path.basename(gtff) + "_psites_plus_partial.bed","w+")
 # Define classes and functions
 class trans_object:
 		def __init__(self, chrm, gene, strand, start, end, code):

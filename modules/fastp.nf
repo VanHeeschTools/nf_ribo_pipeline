@@ -1,15 +1,15 @@
 // used FASTP NFcore module as inspiration
-process trimming {
+process read_trimming {
 
     // Remove low-quality and short reads from fastq file
 
     tag "${meta.sample_id}"
-    label "trimming"
+    label "read_trimming"
     //publishDir "${outdir}/fastp", mode: 'copy'
 
     input:
     tuple val(meta),val(reads)    // Input FASTQ reads
-    val outdir                          // Output directory
+    val outdir                    // Output directory
 
     output:
     tuple val(meta), path("${meta.sample_id}/${meta.sample_id}.fastp.fastq.gz") , emit: reads
@@ -19,6 +19,7 @@ process trimming {
 
     script:
     def sample_id = meta.sample_id
+    //TODO: compare with trimgalore output
     """
     mkdir "${sample_id}"
     fastp \

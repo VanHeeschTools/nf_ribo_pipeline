@@ -28,18 +28,30 @@ ref_ORFs_codons <- ref_bed %>%
     length_kb = n() / 1000
   )
 
-intersect_files <- grep(
-  invert = T,
-  x = list.files(bedfile_loc, pattern = "intersect.bed", full.names = T),
-  value = T
-)
+#intersect_files <- grep(
+#  invert = T,
+#  x = list.files(bedfile_loc, pattern = "intersect.bed", full.names = T),
+#  value = T
+#)
+
+print(bedfile_loc)
+
+# Split the string into a vector of filenames
+bed_file_list <- strsplit(bedfile_loc, " ")[[1]]
+print(bed_file_list)
+
+
+#bedfile_loc <- getwd()  # Set to the current working directory
+#print(bedfile_loc)
+#intersect_files <- grep("intersect.bed", list.files(bedfile_loc), invert = FALSE, value = TRUE)
+#print(intersect_files)
 
 # Initiate DFs for populating
 ppm <- data.frame(row.names = ref_ORFs_codons$ref_id)
 psites <- data.frame(row.names = ref_ORFs_codons$ref_id)
 
 # Loops over all files, extracts P-sites
-for (int_file in intersect_files) {
+for (int_file in bed_file_list) {
   sample_name = gsub(pattern = "_intersect.bed",
                      replacement = "",
                      x = basename(int_file))

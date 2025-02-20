@@ -2,20 +2,26 @@ process intersect_psites {
 
     // Intersect a reference BED with p-site positions with p-sites from a sample
 
-    tag "${meta.sample_id}"
+    tag "${sample_id}"
     label "intersect_psites"
     publishDir "${outdir}/bedfiles", mode: 'copy'
 
     input:
-    tuple val(meta), val(sample_psite_bed)
-    val ref_psite_bed
+    tuple val(sample_id), path(sample_psite_bed)
+    path ref_psite_bed
     val outdir
 
     output:
-    tuple val(meta), path("${meta.sample_id}_intersect.bed"), emit: sample_intersect_bed
+    tuple val(sample_id), path("${sample_id}_intersect.bed"), emit: sample_intersect_bed
 
     script:
     """
+    echo ${sample_id}
+    echo ${sample_psite_bed}
+    echo ${ref_psite_bed}
+    echo ${outdir}
+
+
     bedtools intersect \
       -a ${sample_psite_bed} \
       -b ${ref_psite_bed} \
@@ -24,9 +30,10 @@ process intersect_psites {
       -header \
       -f 1.00 \
       -s \
-      -sorted > "${meta.sample_id}_intersect.bed"
+      -sorted > "${sample_id}_intersect.bed"
       """
 }
+
 
 process ppm_matrix {
 
@@ -37,8 +44,8 @@ process ppm_matrix {
     publishDir "${outdir}/orf_expression", mode: 'copy'
 
     input:
-    val ref_psite_bed
-    val sample_intersect_bed
+    path ref_psite_bed
+    path sample_intersect_bed
     val orfcaller_name
     val outdir
 
@@ -47,9 +54,8 @@ process ppm_matrix {
     path("${orfcaller_name}_psites.txt"), emit: psite_matrix
 
     script:
-
     """
-    Rscript psite_matrix.R \
+    psite_matrix.R \
     "${ref_psite_bed}" \
     "${sample_intersect_bed}" \
     "${orfcaller_name}"
