@@ -40,10 +40,13 @@ process ref_psites {
   path "${gtf.baseName}.gtf_psites_p0.sorted.bed", emit: ref_psite_bed
 
   script:
+  //TODO: Find a better way to do this
+  def extension = gtf.getName().tokenize('.')[-1]
+  def fileType = extension == 'bed' ? 'bed' : extension == 'gtf' ? 'gtf' : 'Unknown'
   """
   inframe_psite_bed.py -i ${gtf} -a "no" -o \$PWD -t "ORF_id"
 
-  sort -T \$PWD -k1,1 -k2,2n "${gtf.baseName}.bed_psites_plus_partial.bed" > "${gtf.baseName}.gtf_psites_p0.sorted.bed"
+  sort -T \$PWD -k1,1 -k2,2n "${gtf.baseName}.${fileType}_psites_plus_partial.bed" > "${gtf.baseName}.gtf_psites_p0.sorted.bed"
   """
 
 }

@@ -30,12 +30,13 @@ workflow ORFQUANT {
              pandoc_dir,
              orfquant_annot_package,
              package_install_loc,
-             outdir
-             )
+             outdir)
 
     fix_orfquant(orfquant.out.orfquant_results_file,
                  orfquant_annotation,
-                 orfquant_prefix)
+                 orfquant_prefix,
+                 package_install_loc,
+                 outdir)
 
     orfquant_orfs = fix_orfquant.out.orfquant_gtf
     orfquant_results_file = orfquant.out.orfquant_results_file

@@ -23,10 +23,7 @@ workflow EXPRESSION {
     )
 
 
-    intersect_input = sample_psites.out.sample_psite_bed.cross(ref_psites.out.ref_psite_bed)
-
     // Create intersect between P-sites and in-frame ORF locations
-    // TODO: should run for each sample, but only runs for the first sample now
     intersect_psites(sample_psites.out.sample_psite_bed,
                      ref_psites.out.ref_psite_bed.first(),
                      outdir

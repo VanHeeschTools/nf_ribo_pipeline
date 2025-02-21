@@ -13,6 +13,10 @@ args <- commandArgs(trailingOnly = TRUE)
 orfquant_results <- args[1]
 rannot <- args[2]
 orfquant_prefix <- args[3]
+package_install_loc <- args[4]
+
+paths <- c(package_install_loc, .libPaths())
+.libPaths(paths)
 
 # Load files
 orfquant_orfs <- get(load(orfquant_results))
@@ -41,6 +45,7 @@ map_tx_genes <- S4Vectors::mcols(ORFs_tx)[, c(
 ORFs_gen <- orfquant_orfs$ORFs_gen
 
 match_ORF <- match(names(ORFs_gen), map_tx_genes$ORF_id_tr)
+ORFs_gen$transcript_id <- map_tx_genes[match_ORF, "transcript_id"]
 match_tx <- match(ORFs_gen$transcript_id, map_tx_genes$transcript_id)
 
 ORFs_gen$transcript_id <- map_tx_genes[match_ORF, "transcript_id"]
@@ -61,8 +66,7 @@ ORFs_readthroughs <- ORFquant_results$ORFs_readthroughs
 # Fix protein FASTA
 if (is(ORFs_readthroughs$Protein, "list")) {
   proteins_readthrough <- Biostrings::AAStringSet(lapply(ORFs_readthroughs$Protein, "[[", 1))
-}
-else {
+}else {
   proteins_readthrough <- Biostrings::AAStringSet(ORFs_readthroughs$Protein)
 }
 if (length(proteins_readthrough) > 0) {

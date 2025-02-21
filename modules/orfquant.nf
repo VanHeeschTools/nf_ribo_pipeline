@@ -61,9 +61,11 @@ process fix_orfquant {
     publishDir "${outdir}/orfquant", mode: 'copy'
 
     input:
-    val orfquant_results_file
+    path orfquant_results_file
+    path rannot
     val orfquant_prefix
-    val rannot
+    val package_install_loc
+    val outdir
 
     output:
     path "${orfquant_prefix}_Detected_ORFs_fixed.gtf", emit: orfquant_gtf
@@ -74,6 +76,7 @@ process fix_orfquant {
     fix_orfquant_output.R \
     ${orfquant_results_file} \
     ${rannot} \
-    ${orfquant_prefix}
+    ${orfquant_prefix} \
+    ${package_install_loc}
     """
 }

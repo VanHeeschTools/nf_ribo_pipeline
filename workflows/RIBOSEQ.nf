@@ -21,7 +21,7 @@ include { RIBOQC } from '../subworkflows/RIBOQC.nf'
 include { ORFQUANT } from '../subworkflows/ORFQUANT.nf'
 include { PRICE } from '../subworkflows/PRICE.nf'
 // Expression and annotation still untested
-include { EXPRESSION } from '../subworkflows/EXPRESSION.nf'
+include { EXPRESSION; EXPRESSION as EXPRESSION_PRICE } from '../subworkflows/EXPRESSION.nf'
 //include { ANNOTATION } from '../subworkflows/ANNOTATION.nf'
 
 // Define input channel
@@ -97,7 +97,7 @@ workflow RIBOSEQ {
            // star_output,
            // samtools_output
            )
-    /*
+    // /*
     if (params.run_orfquant) {
         ORFQUANT(RIBOQC.out.for_orfquant_files,
                  RIBOQC.out.rannot_ch,
@@ -111,11 +111,11 @@ workflow RIBOSEQ {
         // This is untested
         // TODO: merge the expression workflows
         ORFQUANT_EXPRESSION = EXPRESSION(ORFQUANT.out.orfquant_orfs,
-                                         RIBOQC.out.riboseqc_results,
+                                         RIBOQC.out.for_orfquant_files,
                                          params.package_install_loc,
                                          params.outdir
                                          ) 
-    }*/
+    }//*/
 
     if (params.run_price) {
         PRICE(bamlist,
@@ -128,7 +128,7 @@ workflow RIBOSEQ {
               )
         
          // This is untested
-        PRICE_EXPRESSION = EXPRESSION(PRICE.out.price_orfs,
+        PRICE_EXPRESSION = EXPRESSION_PRICE(PRICE.out.price_orfs,
                                       RIBOQC.out.for_orfquant_files,
                                       params.package_install_loc,
                                       params.outdir
@@ -145,5 +145,8 @@ workflow RIBOSEQ {
                params.run_price
                )
 */
+
+// Run plotting scripts here or somewhere else? Might be better to do it in the seperate processes
+// Create multiqc report and add the created plots to it
 
 }
