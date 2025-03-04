@@ -4,25 +4,30 @@ process annotate_orfs {
     publishDir "${outdir}/annotate_orfs", mode: 'copy'
 
     input:
+    val orfs_loc                  // Output of the orf caller (bed or ORFquant object)
+    val reference_gtf             // gtf file
+    val orfcaller                 // Val, name of the orfcaller used
+    val annotation_provider       // Val, name of the location where the IDs come from, ensembl or gencode
+    val gencode_uniprot_file      // File, uniprot file required when annotation_provider is gencode
+    val uniprot_protein_fasta_loc //File, location of uniprot fasta file
+    val package_install_loc
+    val orfquant_annot_package
 
     output:
+    path "${orf_caller}_orfs.csv"
 
     script:
     """
     orf_annotate.R \
-    ""\
-    ""
-
-
-    #args <- commandArgs(trailingOnly = TRUE)
-    #orfs_loc <- args[1]
-    #txdb_loc <- args[2]
-    #orfcaller <- args[3]
-    #annotation_provider <- args[4]
-    #gencode_uniprot_file <- args[5]
-    #uniprot_protein_fasta_loc <- args[6]
-    #cpus <- args[7]
-
+    "${orfs_loc}" \
+    "${reference_gtf}" \
+    "${orfcaller}" \
+    "${annotation_provider}" \
+    "${gencode_uniprot_file}" \
+    "${uniprot_protein_fasta_loc}" \
+    "${package_install_loc}" \
+    "${orfquant_annot_package}" \
+    $task.cpus
     """
 }
 

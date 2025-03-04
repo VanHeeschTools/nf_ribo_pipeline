@@ -7,6 +7,7 @@ workflow EXPRESSION {
     orfs
     riboseqc_results
     package_install_loc
+    orfcaller
     outdir
 
     main:
@@ -22,10 +23,10 @@ workflow EXPRESSION {
                outdir
     )
 
-
     // Create intersect between P-sites and in-frame ORF locations
     intersect_psites(sample_psites.out.sample_psite_bed,
                      ref_psites.out.ref_psite_bed.first(),
+                     orfcaller,
                      outdir
     )
 
@@ -38,17 +39,16 @@ workflow EXPRESSION {
     // Calculate PPM matrices
     ppm_matrix(ref_psites.out.ref_psite_bed.first(),
                collected_paths,
-               "orfcaller_name",
+               orfcaller,
                outdir
     )
 
     ref_psite_bed = ref_psites.out.ref_psite_bed
-    ppm_matrix_out = ppm_matrix.out.ppm_matrix
-    raw_matrix_out = ppm_matrix.out.psite_matrix
+    ppm_matrix = ppm_matrix.out.ppm_matrix
 
     emit:
     ref_psite_bed
-    ppm_matrix_out
-    raw_matrix_out
+    ppm_matrix
+
 
 }

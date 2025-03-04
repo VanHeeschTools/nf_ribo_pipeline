@@ -18,6 +18,9 @@ package_install_loc <- args[4]
 paths <- c(package_install_loc, .libPaths())
 .libPaths(paths)
 
+# Get workdir
+workdir <- getwd()  
+
 # Load files
 orfquant_orfs <- get(load(orfquant_results))
 load_annotation(rannot)
@@ -117,4 +120,11 @@ all <- sort(c(exs_gtf, ORFs_gen))
 all$`source` = "ORFquant"
 names(all) <- NULL
 
-suppressWarnings(rtracklayer::export.gff2(object = all, con = paste(orfquant_prefix, "Detected_ORFs_fixed.gtf", sep = "_")))
+
+# Export output files
+filepath_fasta <- file.path(workdir, paste(orfquant_prefix, "Protein_sequences_fixed.fasta", sep = "_"))
+Biostrings::writeXStringSet(proteins, filepath = filepath_fasta)
+
+
+filepath_gtf <- file.path(workdir, paste(orfquant_prefix, "Detected_ORFs_fixed.gtf", sep = "_"))
+suppressWarnings(rtracklayer::export.gff2(object = all, con = filepath_gtf))

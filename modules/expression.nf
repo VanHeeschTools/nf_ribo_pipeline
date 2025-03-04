@@ -9,10 +9,11 @@ process intersect_psites {
     input:
     tuple val(sample_id), path(sample_psite_bed)
     path ref_psite_bed
+    val orfcaller
     val outdir
 
     output:
-    tuple val(sample_id), path("${sample_id}_intersect.bed"), emit: sample_intersect_bed
+    tuple val(sample_id), path("${sample_id}_${orfcaller}_intersect.bed"), emit: sample_intersect_bed
 
     script:
     """
@@ -30,7 +31,7 @@ process intersect_psites {
       -header \
       -f 1.00 \
       -s \
-      -sorted > "${sample_id}_intersect.bed"
+      -sorted > "${sample_id}_${orfcaller}_intersect.bed"
       """
 }
 
@@ -50,8 +51,8 @@ process ppm_matrix {
     val outdir
 
     output:
-    path("${orfcaller_name}_psites_permillion.txt"), emit: ppm_matrix
-    path("${orfcaller_name}_psites.txt"), emit: psite_matrix
+    path("${orfcaller_name}_psites_permillion.csv"), emit: ppm_matrix
+    path("${orfcaller_name}_psites.csv"), emit: psite_matrix
 
     script:
     """

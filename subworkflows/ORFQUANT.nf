@@ -32,6 +32,7 @@ workflow ORFQUANT {
              package_install_loc,
              outdir)
 
+    // Fixed the gtf output of orfquant which is mostly relevant if only orfquant is used
     fix_orfquant(orfquant.out.orfquant_results_file,
                  orfquant_annotation,
                  orfquant_prefix,

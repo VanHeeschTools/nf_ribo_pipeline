@@ -48,11 +48,11 @@ workflow SELECTION {
 
     // Create QC stats
     contaminants_check(trimmed_reads,
-                       bowtie2.out.filtered_reads,
-                       bowtie2.out.sam_file,
+                       bowtie2.out.bowtie_output_files,
                        bowtie2_index,
                        outdir,
                        keep_sam)
+                       //TODO: write ouput sam to fastq option
 
     // Gather output tuples into single list
     rpf_reads = bowtie2.out.filtered_reads

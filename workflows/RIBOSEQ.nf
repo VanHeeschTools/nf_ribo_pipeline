@@ -22,7 +22,7 @@ include { ORFQUANT } from '../subworkflows/ORFQUANT.nf'
 include { PRICE } from '../subworkflows/PRICE.nf'
 // Expression and annotation still untested
 include { EXPRESSION; EXPRESSION as EXPRESSION_PRICE } from '../subworkflows/EXPRESSION.nf'
-//include { ANNOTATION } from '../subworkflows/ANNOTATION.nf'
+include { ANNOTATION } from '../subworkflows/ANNOTATION.nf'
 
 // Define input channel
 ch_input = Channel.fromPath(params.input)
@@ -99,6 +99,7 @@ workflow RIBOSEQ {
            )
     // /*
     if (params.run_orfquant) {
+        orfcaller_ch = Channel.value("orfquant")
         ORFQUANT(RIBOQC.out.for_orfquant_files,
                  RIBOQC.out.rannot_ch,
                  RIBOQC.out.package_ch,
@@ -107,17 +108,20 @@ workflow RIBOSEQ {
                  params.orfquant_prefix,
                  params.outdir
                  )
-        
-        // This is untested
+
         // TODO: merge the expression workflows
-        ORFQUANT_EXPRESSION = EXPRESSION(ORFQUANT.out.orfquant_orfs,
-                                         RIBOQC.out.for_orfquant_files,
-                                         params.package_install_loc,
-                                         params.outdir
-                                         ) 
+        EXPRESSION(ORFQUANT.out.orfquant_orfs,
+                    RIBOQC.out.for_orfquant_files,
+                    params.package_install_loc,
+                    orfcaller_ch,
+                    params.outdir
+                    ) 
+        orfquant_output = ORFQUANT.out.orfquant_results_file
+        orfquant_ppm_matrix = EXPRESSION.out.ppm_matrix
     }//*/
 
     if (params.run_price) {
+        orfcaller_ch = Channel.value("price")
         PRICE(bamlist,
               params.price_index_path,
               params.reference_fasta,
@@ -127,24 +131,31 @@ workflow RIBOSEQ {
               params.gedi_exec_loc
               )
         
-         // This is untested
-        PRICE_EXPRESSION = EXPRESSION_PRICE(PRICE.out.price_orfs,
-                                      RIBOQC.out.for_orfquant_files,
-                                      params.package_install_loc,
-                                      params.outdir
-                                      ) 
+        EXPRESSION_PRICE(PRICE.out.price_orfs,
+                    RIBOQC.out.for_orfquant_files,
+                    params.package_install_loc,
+                    orfcaller_ch,
+                    params.outdir
+                    ) 
+        price_output = PRICE.out.price_orfs
+        price_ppm_matrix = EXPRESSION_PRICE.out.ppm_matrix
     }
 
-/*
-    ANNOTATION(
-               ORFQUANT.out.orfquant_results,
-               PRICE.out.price_results,
-               PRICE_EXPRESSION.out.
-               ORFQUANT_EXPRESSION.out.
-               params.run_orfquant,
-               params.run_price
+//*
+    ANNOTATION( orfquant_output,
+                orfquant_ppm_matrix,
+                price_output,
+                price_ppm_matrix,
+                params.reference_gtf,
+                params.run_orfquant,
+                params.run_price,
+                params.annotation_provider,
+                params.gencode_uniprot_file,
+                params.uniprot_protein_fasta_loc,
+                params.package_install_loc,
+                params.orfquant_annot_package
                )
-*/
+//*/
 
 // Run plotting scripts here or somewhere else? Might be better to do it in the seperate processes
 // Create multiqc report and add the created plots to it

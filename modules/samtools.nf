@@ -8,12 +8,11 @@ process contaminants_check {
     publishDir "${outdir}/bowtie2", mode: 'copy'
 
     input:
-    tuple val(meta), path(reads)            // Trimmed fastp reads
-    tuple val(meta_2), path(filtered_reads)   // RPF reads
-    tuple val(meta_3), path(sam_file)         // Filtered contaminant reads
-    val bowtie2_index_prefix                // Bowtie2 reference index
-    val outdir                              // Output directory
-    val keep_sam                            // Boolean, keep big SAM file for debugging
+    tuple val(meta), path(reads)                            // Trimmed fastp reads
+    tuple val(meta_2), path(filtered_reads), path(sam_file) // RPF reads
+    val bowtie2_index_prefix                                // Bowtie2 reference index
+    val outdir                                              // Output directory
+    val keep_sam                                            // Boolean, keep big SAM file for debugging
 
     output:
 
@@ -22,8 +21,6 @@ process contaminants_check {
     script:
     def sample_id = meta.sample_id
     """
-    #!/bin/bash
-
     mkdir ${sample_id}
 
     # Create contaminant QC file

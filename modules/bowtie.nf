@@ -43,9 +43,8 @@ process bowtie2 {
     val outdir                    // Output directory
 
     output:
+    tuple val(meta), path("${meta.sample_id}/${meta.sample_id}_filtered.fastq.gz"), path("${meta.sample_id}/${meta.sample_id}_contaminants.sam"), emit: bowtie_output_files
     tuple val(meta), path("${meta.sample_id}/${meta.sample_id}_filtered.fastq.gz"), emit: filtered_reads
-    tuple val(meta), path("${meta.sample_id}/${meta.sample_id}_contaminants.sam"), emit: sam_file
-
     script:
     def sample_id = meta.sample_id
     """
