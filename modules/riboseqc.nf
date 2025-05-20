@@ -39,7 +39,6 @@ process riboseqc {
 
     output:
     tuple val(meta),path("${meta.sample_id}/${meta.sample_id}_for_ORFquant"), emit: orfquant_psites
-    tuple val(meta),path("${meta.sample_id}/${meta.sample_id}_results_RiboseQC_all"), emit: data_files
     path("${meta.sample_id}/${meta.sample_id}*")
 
     script:

@@ -1,60 +1,45 @@
-//include { ref_psites; sample_psites} from "../modules/process_bed.nf"
-include { annotate_orfs; annotate_orfs as annotate_price_orfs; harmonise_orfs} from "../modules/annotation.nf"
+include { annotate_orfs; harmonise_orfs } from "../modules/annotation.nf"
 
 workflow ANNOTATION {
 
     take:
-    orfquant_results
-    orfquant_ppm_matrix
-    price_results
-    price_ppm_matrix
+    orfcaller_output
+    orfcaller_psites
+    ref_psites
     reference_gtf
-    run_orfquant
-    run_price
-    annotation_provider
-    gencode_uniprot_file
-    uniprot_protein_fasta_loc
     package_install_loc
     orfquant_annot_package
+    outdir
    
-
     main:
-    if (run_orfquant){
-        orfcaller = "orfquant"
-        annotate_orfs(
-            orfquant_results,
-            reference_gtf,
-            orfcaller,
-            annotation_provider,
-            gencode_uniprot_file,
-            uniprot_protein_fasta_loc,
-            package_install_loc,
-            orfquant_annot_package
-        )
-    }
-    
-    if (run_price){
-        orfcaller = "price"
-        annotate_price_orfs(
-            price_results,
-            reference_gtf,
-            orfcaller,
-            annotation_provider,
-            gencode_uniprot_file,
-            uniprot_protein_fasta_loc,
-            package_install_loc,
-            orfquant_annot_package
-        )
+    annotate_orfs(
+        orfcaller_output,
+        orfcaller_psites,
+        ref_psites,
+        reference_gtf,
+        package_install_loc,
+        orfquant_annot_package,
+        outdir
+    )
+
+    // Collect ORF tables and sort them alphabetically
+    // TODO: Maybe find a better way to do this, this seems risky
+    harmonise_input = annotate_orfs.out.basic_orf_table
+    .collect()
+    .map { files ->
+        def sorted = files.sort { it.name }
+        tuple( sorted[0], sorted[1] )
     }
 
-    //if (run_orfquant && run_price){
-    //    harmonise_orfs
-    //}
+    harmonise_orfs(harmonise_input,
+                   outdir)
+
+    harmonised_orf_table = harmonise_orfs.out.harmonised_orf_table
+    removed_orf_ids = harmonise_orfs.out.removed_orf_ids
 
 
-
-    //emit:
-    //sqharmonised_orf_table
-
+    emit:
+    harmonised_orf_table
+    removed_orf_ids 
 
 }

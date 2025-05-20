@@ -16,7 +16,6 @@ cpu <- args[4]
 pandoc_dir <- args[5]
 annotation_package <- args[6]
 package_install_loc <- args[7]
-is_test <- args[8]
 
 paths <- c(package_install_loc, .libPaths())
 .libPaths(paths)
@@ -34,16 +33,11 @@ ORFquant_analysis <- function(for_ORFquant_file,
                               ORFquant_plot_data,
                               rannot,
                               cpu,
-                              html_report,
-                              test = FALSE) {
-  if(test == TRUE) {
-    gene_names <- c("MYCN", "TP53", "HCP5")
-    gene_ids <- c("ENSG00000134323", "ENSG00000141510", "ENSG00000206337")
-  } else {
-    gene_names <- NA
-    gene_ids <- NA
-  }
+                              html_report) {
 
+  gene_names <- NA
+  gene_ids <- NA
+  
   if (!file.exists(ORFquant_output_file)) {
 
     run_ORFquant(for_ORFquant_file = for_ORFquant_file,
@@ -91,5 +85,4 @@ ORFquant_analysis(for_ORFquant_file = for_ORFquant_file,
                   ORFquant_plot_data = ORFquant_plot_data,
                   rannot = rannot,
                   cpu = cpu,
-                  html_report = html_report,
-                  test = is_test)
+                  html_report = html_report)

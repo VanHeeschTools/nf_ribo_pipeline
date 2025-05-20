@@ -40,11 +40,9 @@ process price {
     val outdir // Output directory
 
     output:
-    path "${price_prefix}.orfs.cit.bed", emit: price_orfs
-    path "${price_prefix}.*"
+    tuple val("PRICE"), path("${price_prefix}.orfs.cit.bed"), emit: price_orfs
 
     script:
-
     """
     ${gedi_exec_loc}/gedi -e Price \
         -reads ${bamlist} \
@@ -56,4 +54,49 @@ process price {
         > "${price_prefix}.orfs.cit.bed"
     """
 
+}
+
+process price_to_gtf{
+    label "price_to_gtf"
+    publishDir "${outdir}/price", mode: 'copy'
+
+    input:
+    tuple val(orfcaller), val(price_bed_file)
+    val outdir
+
+    output:
+    path "PRICE.gtf", emit: price_gtf
+
+    script:
+    """
+    #!/usr/bin/env Rscript
+
+    library(rtracklayer)
+    library(dplyr)
+    library(stringr)
+    # Load the BED file and generate ORF blocks
+    price_orfs <- import.bed("${price_bed_file}")
+    orf_ranges_list <- blocks(price_orfs)
+
+    # Flatten the blocks and retain the original 'name' for each block
+    orf_ranges <- unlist(orf_ranges_list, use.names = FALSE)
+    orf_ranges\$ORF_id <- rep(price_orfs\$name, elementNROWS(orf_ranges_list))  # Keep 'name' as 'ORF_id'
+
+    # Add additional columns
+    orf_ranges\$type <- "CDS"
+    orf_ranges\$source <- "PRICE"
+    orf_ranges\$score <- "."
+    orf_ranges\$frame <- "."
+
+    # Extract gene and transcript info from the 'name' column
+    orf_ranges_df <- as.data.frame(orf_ranges) %>%
+    mutate(
+        gene_id = str_split_i(ORF_id, "__", 1),
+        transcript_id = str_split_i(ORF_id, "__", 2),
+        start_codon = str_split_i(ORF_id, "__", 5)
+    ) %>%
+    dplyr::select(seqnames, start, end, score, strand, type, source, gene_id, transcript_id, ORF_id, start_codon)
+    export.gff(orf_ranges_df, con = "PRICE.gtf")
+
+    """
 }

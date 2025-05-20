@@ -29,6 +29,7 @@ print(loaded_obj_names)
 my_obj <- get(loaded_obj_names[1])
 
 # Extract p-sites from list of objects
+# TODO: test with P_sites_all
 p_sites <- data.frame(my_obj$P_sites_uniq)
 
 if(nrow(p_sites) == 0) {

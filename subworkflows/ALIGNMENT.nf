@@ -10,12 +10,10 @@ PRICE respectively and creates an index for the ORFquant bam
 
     take:
     rpf_reads       // Output from SELECTION subworkflow
-    genome              // Reference genome used for STAR index
-    star_index_path     // Location of precomputed STAR index
-    gtf                 // Transcriptome used for STAR
-    run_price           // Boolean: whether to run PRICE
-    run_orfquant    // Boolean: whether to run ORFquant
-    outdir              // Output directory
+    genome          // Reference genome used for STAR index
+    star_index_path // Location of precomputed STAR index
+    gtf             // Transcriptome used for STAR
+    outdir          // Output directory
 
     main:
 
@@ -61,37 +59,33 @@ PRICE respectively and creates an index for the ORFquant bam
           run_price,
           run_orfquant)
     */
-    if (run_orfquant == true) {
-        star_local(rpf_reads, 
-          outdir,
-          gtf,
-          star_index_ch)
-        samtools(star_local.out.bams, outdir)
-        bam_list = samtools.out.sorted_bam
-    }
 
-    if (run_price == true) {
-        star_end_to_end(rpf_reads, 
-          outdir,
-          gtf,
-          star_index_ch)
-        samtools_end2end(star_end_to_end.out.bams_end2end, outdir)
-        bam_list_end2end = samtools_end2end.out.sorted_bam
+    star_local(rpf_reads, 
+                outdir,
+                gtf,
+                star_index_ch)
+    samtools(star_local.out.bams, outdir)
+    bam_list = samtools.out.sorted_bam
 
-        price_paths = samtools_end2end.out.bam_files.collect().flatten()
-                    .map { it -> it.toString() } // Change paths to strings
 
-        // Store gtflist to workdir
-        price_filelist = price_paths.collectFile(
-            name: 'bams.bamlist',
-            newLine: true, sort: true )
-    } else {
-        samtools(align.out.bams, outdir)
-        bam_list = samtools.out.sorted_bam
-    }
+    star_end_to_end(rpf_reads, 
+                    outdir,
+                    gtf,
+                    star_index_ch)
+    samtools_end2end(star_end_to_end.out.bams_end2end, outdir)
+    bam_list_end2end = samtools_end2end.out.sorted_bam
+
+    price_paths = samtools_end2end.out.bam_files.collect().flatten()
+                .map { it -> it.toString() } // Change paths to strings
+
+    // Store gtflist to workdir
+    price_filelist = price_paths.collectFile(
+        name: 'bams.bamlist',
+        newLine: true, sort: true )
+
 
     emit:
-    bam_list // bam files for ORFquant
+    bam_list         // bam files for ORFquant
     bam_list_end2end // bam files for PRICE
-    price_filelist // list for PRICE
+    price_filelist   // list for PRICE
 }

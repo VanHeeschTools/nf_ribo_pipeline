@@ -4,52 +4,47 @@ process annotate_orfs {
     publishDir "${outdir}/annotate_orfs", mode: 'copy'
 
     input:
-    val orfs_loc                  // Output of the orf caller (bed or ORFquant object)
-    val reference_gtf             // gtf file
-    val orfcaller                 // Val, name of the orfcaller used
-    val annotation_provider       // Val, name of the location where the IDs come from, ensembl or gencode
-    val gencode_uniprot_file      // File, uniprot file required when annotation_provider is gencode
-    val uniprot_protein_fasta_loc //File, location of uniprot fasta file
+    tuple val(orfcaller), val (orfcaller_output) // Output of the orf caller (bed or ORFquant object)
+    val orfcaller_psites
+    val ref_psites
+    val reference_gtf                    // gtf file
     val package_install_loc
     val orfquant_annot_package
+    val outdir
 
     output:
-    path "${orf_caller}_orfs.csv"
+    path "${orfcaller}_orfs.csv" , emit: basic_orf_table
 
     script:
     """
     orf_annotate.R \
-    "${orfs_loc}" \
+    "${orfcaller_output}" \
+    "${orfcaller_psites}" \
+    "${ref_psites}" \
     "${reference_gtf}" \
     "${orfcaller}" \
-    "${annotation_provider}" \
-    "${gencode_uniprot_file}" \
-    "${uniprot_protein_fasta_loc}" \
     "${package_install_loc}" \
-    "${orfquant_annot_package}" \
-    $task.cpus
+    "${orfquant_annot_package}" 
     """
 }
 
-process harmonise_orfs{
+process harmonise_orfs {
 
-    // Should only be run when both ORFquant and PRICE are run
-
-    label "harmonise_ofs"
+    label "annotate_orfs"
     publishDir "${outdir}/harmonise_orfs", mode: 'copy'
 
     input:
+    tuple path(orfquant_table), path (price_table)
+    val outdir
 
     output:
+    path "harmonised_table.csv", emit: harmonised_orf_table
+    path "removed_orf_ids.txt", emit: removed_orf_ids
 
     script:
     """
     orf_harmonisation.R \
-    ""\
-    ""
-    # Needs a gtf, txdb
-    # Needs the annotation r script output for price and orfquant
-
+    "${orfquant_table}" \
+    "${price_table}" 
     """
-
 }

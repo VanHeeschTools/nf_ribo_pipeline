@@ -4,28 +4,24 @@ include { riboseqc; create_annotation } from "../modules/riboseqc.nf"
 
 workflow RIBOQC {
 
-/*
-Take output from the previous processes and generate QC figures
-using multiQC and riboseQC
-*/
-
     take:
-    orfquant_annotation // ORFquant annotation file
-    orfquant_annot_package // ORFquant annotation R package
-    package_install_loc // Location where R package is installed
-    pandoc_dir // Location of pandoc for R HTML creation
-    orfquant_bams // Output from ALIGNMENT subworkflow
+    orfquant_annotation        // ORFquant annotation file
+    orfquant_annot_package     // ORFquant annotation R package
+    package_install_loc        // Location where R package is installed
+    pandoc_dir                 // Location of pandoc for R HTML creation
+    orfquant_bams              // Output from ALIGNMENT subworkflow
     orfquant_annotation_exists // Boolean: whether to generate annotation
-    gtf // Transcriptome used for STAR
-    twobit // UCSC file format for the fasta
-    outdir // Output directory
-    orfquant_prefix // Naming of ORFquant files
+    gtf                        // Transcriptome used for STAR
+    twobit                     // UCSC file format for the fasta
+    outdir                     // Output directory
+    orfquant_prefix            // Naming of ORFquant files
+
     //contaminants // RPF filtering statistics
     //star_output // STAR statistics per file
     //samtools_output // SAMTOOLS statistics per file
 
     main:
-
+    //TODO: Fix this
     if(!orfquant_annotation_exists) {
         // Create riboseqc annotation
         create_annotation(gtf,
@@ -47,6 +43,12 @@ using multiQC and riboseQC
              package_ch,
              package_install_loc)
 
+
+    /*
+    Take output from the previous processes and generate QC figures
+    using multiQC and riboseQC
+    */
+
     /*
     // Create riboseqc HTML
     riboseqc_plots(outdir,
@@ -67,12 +69,10 @@ using multiQC and riboseQC
     */
   
     for_orfquant_files = riboseqc.out.orfquant_psites
-    riboseqc_results = riboseqc.out.data_files
 
     emit:
-    rannot_ch // Used R annotation
-    package_ch // used R package
+    rannot_ch          // Used R annotation
+    package_ch         // Used R package
     for_orfquant_files // Files for ORFquant
-    riboseqc_results // Files for expression calculations
 
 }

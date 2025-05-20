@@ -16,7 +16,7 @@ process bowtie2_index {
     script:
     """
 
-    mkdir "bowtie2_index"
+    mkdir -p "bowtie2_index"
     bowtie2-build \
     -f \
     --seed 24 \
@@ -35,7 +35,6 @@ process bowtie2 {
 
     tag "${meta.sample_id}"
     label "bowtie2"
-    //publishDir "${outdir}/bowtie2", mode: 'copy'
 
     input:
     val bowtie2_index_prefix      // Bowtie2 reference index
@@ -45,10 +44,11 @@ process bowtie2 {
     output:
     tuple val(meta), path("${meta.sample_id}/${meta.sample_id}_filtered.fastq.gz"), path("${meta.sample_id}/${meta.sample_id}_contaminants.sam"), emit: bowtie_output_files
     tuple val(meta), path("${meta.sample_id}/${meta.sample_id}_filtered.fastq.gz"), emit: filtered_reads
+   
     script:
     def sample_id = meta.sample_id
     """
-    mkdir "${sample_id}"
+    mkdir -p "${sample_id}"
     bowtie2 \
         --seedlen=25 \
         --threads $task.cpus \

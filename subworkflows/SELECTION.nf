@@ -1,4 +1,4 @@
-include { read_trimming } from "../modules/fastp.nf"
+include { trimgalore } from "../modules/fastp.nf"
 include { fastqc } from "../modules/fastqc.nf"
 include { bowtie2; bowtie2_index } from '../modules/bowtie.nf'
 include { contaminants_check } from '../modules/samtools.nf'
@@ -16,9 +16,9 @@ workflow SELECTION {
     outdir              // Output directory
 
     main:
-    // Run FASTP
-    read_trimming(reads, outdir)
-    trimmed_reads = read_trimming.out.reads
+    // Run Trimgalore
+    trimgalore(reads, outdir)
+    trimmed_reads = trimgalore.out.reads
 
     // Run FASTQC
     fastqc(trimmed_reads, outdir)
@@ -43,7 +43,7 @@ workflow SELECTION {
         log.info "Using existing Bowtie2 index: ${bowtie2_index_ch}"
     }
 
-    // Run bowtie2
+    // Run bowtie2 to filter out contaminants
     bowtie2(bowtie2_index_ch,trimmed_reads, outdir)
 
     // Create QC stats

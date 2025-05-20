@@ -1,4 +1,3 @@
-// Used fastqc NFcore module as inspiration
 process fastqc {
 
     // Generate QC files
@@ -9,11 +8,11 @@ process fastqc {
 
     input:
     tuple val(meta), path(reads) // Trimmed FASTQ read from fastp
-    val outdir                        // Output directory
+    val outdir                   // Output directory
 
     output:
-    path("*/*.html") // Output QC summary 
-    path("*/*.zip")  // QC files
+    path "*/*.html" // Output QC summary 
+    path "*/*.zip"  // QC files
 
     script:
     //TODO: put in config file

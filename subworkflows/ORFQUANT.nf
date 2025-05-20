@@ -14,13 +14,13 @@ workflow ORFQUANT {
 
     main:
 
-    orfquant_psites
+    collected_paths = orfquant_psites
     .map { meta, path -> path }
     .collect()
-    .set { collected_paths }
-    write_collected_paths(collected_paths)
 
-    prepare_orfquant(write_collected_paths.out.collected_file_channel,
+    //write_collected_paths(collected_paths)
+
+    prepare_orfquant(collected_paths,
                      orfquant_prefix,
                      outdir)
 
@@ -33,17 +33,17 @@ workflow ORFQUANT {
              outdir)
 
     // Fixed the gtf output of orfquant which is mostly relevant if only orfquant is used
-    fix_orfquant(orfquant.out.orfquant_results_file,
+    fix_orfquant(orfquant.out.orfquant_orfs,
                  orfquant_annotation,
                  orfquant_prefix,
                  package_install_loc,
                  outdir)
 
-    orfquant_orfs = fix_orfquant.out.orfquant_gtf
-    orfquant_results_file = orfquant.out.orfquant_results_file
+    orfquant_orf_gtf = fix_orfquant.out.orfquant_gtf
+    orfquant_orfs = orfquant.out.orfquant_orfs
 
     emit:
+    orfquant_orf_gtf
     orfquant_orfs
-    orfquant_results_file
 
 }

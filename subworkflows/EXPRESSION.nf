@@ -1,53 +1,47 @@
-include { ref_psites; sample_psites} from "../modules/process_bed.nf"
-include { intersect_psites; ppm_matrix } from "../modules/expression.nf"
+include { sample_psites } from "../modules/process_bed.nf"
+include { intersect_psites; ppm_matrix; expression_table } from "../modules/expression.nf"
 
 workflow EXPRESSION {
 
     take:
-    orfs
-    riboseqc_results
+    for_orfquant_files
+    harmonised_orf_table
+    removed_orf_ids
+    orfcaller_psites
     package_install_loc
-    orfcaller
     outdir
 
     main:
 
     // Create sample P-site files
-    sample_psites(riboseqc_results,
+    sample_psites(for_orfquant_files,
                   package_install_loc,
                   outdir
     )
     
-    // Create reference in-frame bed file for the ORF caller
-    ref_psites(orfs,
-               outdir
-    )
-
     // Create intersect between P-sites and in-frame ORF locations
     intersect_psites(sample_psites.out.sample_psite_bed,
-                     ref_psites.out.ref_psite_bed.first(),
-                     orfcaller,
+                     orfcaller_psites,  //.first(),
                      outdir
     )
 
-    collected_paths = intersect_psites.out.sample_intersect_bed
-    .map { meta, path -> path }
-    .collect()
-    //write_collected_paths(collected_paths)
-    //TODO: check if this format is correct for ppm_matrix
-
+    intersect_paths = intersect_psites.out.sample_intersect.collect()
+ 
     // Calculate PPM matrices
-    ppm_matrix(ref_psites.out.ref_psite_bed.first(),
-               collected_paths,
-               orfcaller,
+    ppm_matrix(orfcaller_psites,
+               intersect_paths,
                outdir
     )
 
-    ref_psite_bed = ref_psites.out.ref_psite_bed
     ppm_matrix = ppm_matrix.out.ppm_matrix
 
+    // Merge the PPM results with the ORF table
+    expression_table(harmonised_orf_table,
+                     ppm_matrix,
+                     outdir
+    )
+
     emit:
-    ref_psite_bed
     ppm_matrix
 
 

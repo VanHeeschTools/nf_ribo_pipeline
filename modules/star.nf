@@ -153,7 +153,7 @@ process star_local{
                       "--runDirPerm All_RWX " +
                       "--twopassMode Basic " +
                       "--outFilterMismatchNmax 2 " +
-                      "--outFilterMultimapNmax 20 " +
+                      "--outFilterMultimapNmax 20 " + // Look at this
                       "--outSAMattributes All " +
                       "--outFilterType BySJout " +
                       "--alignSJoverhangMin 1000 " +

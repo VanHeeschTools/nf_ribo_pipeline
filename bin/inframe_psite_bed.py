@@ -66,20 +66,21 @@ def parse_bed(bed):
 	trans = {}
 	for line in open(bed):
 		t_name = line.split('\t')[3]
-		
 		trans.setdefault(t_name,trans_object(line.split("\t")[0],line.split("\t")[3],line.split("\t")[5].rstrip('\n'),[],[],line.split("\t")[5]))
-		trans[t_name].start.append(int(line.split("\t")[1]))
+		# Fixed problem here: Add 1 here to take into account the 0-based index in bed files
+		trans[t_name].start.append(int(line.split("\t")[1]) + 1) 
 		trans[t_name].end.append(int(line.split("\t")[2]))
 
 	[trans[x].start.sort() for x in trans]
 	[trans[x].end.sort() for x in trans]	
-
 	return trans
 
 if gtff.endswith("bed"):
 	gtf = parse_bed(gtff)
 elif gtff.endswith("gtf"):
 	gtf = parse_gtf(gtff,"CDS",id_type)
+else:
+	print("Wrong input format given, or file not found")
 
 status = {}
 if (annot == "yes") and (gtff.endswith("gtf")): #Remove uncomplete proteins 

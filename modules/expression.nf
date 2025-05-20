@@ -9,20 +9,13 @@ process intersect_psites {
     input:
     tuple val(sample_id), path(sample_psite_bed)
     path ref_psite_bed
-    val orfcaller
     val outdir
 
     output:
-    tuple val(sample_id), path("${sample_id}_${orfcaller}_intersect.bed"), emit: sample_intersect_bed
+    path "${sample_id}_intersect.bed", emit: sample_intersect
 
     script:
     """
-    echo ${sample_id}
-    echo ${sample_psite_bed}
-    echo ${ref_psite_bed}
-    echo ${outdir}
-
-
     bedtools intersect \
       -a ${sample_psite_bed} \
       -b ${ref_psite_bed} \
@@ -31,7 +24,7 @@ process intersect_psites {
       -header \
       -f 1.00 \
       -s \
-      -sorted > "${sample_id}_${orfcaller}_intersect.bed"
+      -sorted > "${sample_id}_intersect.bed"
       """
 }
 
@@ -47,18 +40,59 @@ process ppm_matrix {
     input:
     path ref_psite_bed
     path sample_intersect_bed
-    val orfcaller_name
+
     val outdir
 
     output:
-    path("${orfcaller_name}_psites_permillion.csv"), emit: ppm_matrix
-    path("${orfcaller_name}_psites.csv"), emit: psite_matrix
+    path("orf_table_psites_permillion.csv"), emit: ppm_matrix
+    path("orf_table_psites.csv"), emit: psite_matrix
 
     script:
     """
     psite_matrix.R \
     "${ref_psite_bed}" \
-    "${sample_intersect_bed}" \
-    "${orfcaller_name}"
+    "${sample_intersect_bed}"
+    """
+}
+
+process expression_table{
+    label "expression_table"
+    publishDir "${outdir}/final_orf_table", mode: 'copy'
+
+
+    input:
+    val harmonised_orf_table
+    val ppm_matrix
+    val outdir
+
+    output:
+    path("final_orf_table.csv"), emit: final_orf_table
+
+    script:
+    """
+    #!/usr/bin/env Rscript
+
+    library(dplyr)
+
+    # Load ORF table and PPM table
+    orf_table <- read.delim("${harmonised_orf_table}", sep = ",") 
+    combined_ppm_table <- read.csv("${ppm_matrix}", header = TRUE, row.names = NULL)
+
+    # Calculate amount of samples with a PPM of 1 or higher
+    sample_cols <- setdiff(names(combined_ppm_table), "orf_id")
+    combined_ppm_table\$Total_number_samples <-  rowSums(combined_ppm_table[ , sample_cols] >= 1)
+
+    # Join ORF table with PPM results
+    orf_table_joined <- orf_table %>%
+    left_join(
+        combined_ppm_table %>%
+        select(orf_id, Total_number_samples),
+        by = "orf_id"
+    )
+
+    write.table(orf_table_joined, file = "final_orf_table.csv",
+                sep = ",",
+                quote = F,
+                row.names = F)
     """
 }

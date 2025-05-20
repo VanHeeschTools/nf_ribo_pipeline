@@ -7,6 +7,8 @@ suppressPackageStartupMessages({
     library(dplyr)
     library(ORFquant)
     library(Biostrings)
+    library(tibble)
+    library(GenomicRanges)
 })
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -126,5 +128,30 @@ filepath_fasta <- file.path(workdir, paste(orfquant_prefix, "Protein_sequences_f
 Biostrings::writeXStringSet(proteins, filepath = filepath_fasta)
 
 
+# EXTEND LAST CDS +3bp
+cds <- all[all$type == "CDS"]
+
+# Create tibble to track strand and positions
+idxs <- tibble(
+  idx = seq_along(cds),
+  ORF = cds$ORF_id,
+  s = start(cds),
+  e = end(cds),
+  strand = as.character(strand(cds))
+) %>%
+  group_by(ORF) %>%
+  filter((strand == "+" & e == max(e)) | (strand == "-" & s == min(s))) %>%
+  ungroup()
+
+# Apply CDS extension
+end(cds)[idxs$idx[idxs$strand == "+"]] <- end(cds)[idxs$idx[idxs$strand == "+"]] + 3L
+start(cds)[idxs$idx[idxs$strand == "-"]] <- start(cds)[idxs$idx[idxs$strand == "-"]] - 3L
+
+# Replace updated CDS in full GTF object
+all[all$type == "CDS"] <- cds
+
+# Export updated GTF
 filepath_gtf <- file.path(workdir, paste(orfquant_prefix, "Detected_ORFs_fixed.gtf", sep = "_"))
 suppressWarnings(rtracklayer::export.gff2(object = all, con = filepath_gtf))
+
+

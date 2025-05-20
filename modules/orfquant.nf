@@ -4,7 +4,7 @@ process prepare_orfquant {
     publishDir "${outdir}/orfquant", mode: 'copy'
 
     input:
-    val psites_file
+    val collected_paths
     val orfquant_prefix
     val outdir
 
@@ -14,8 +14,10 @@ process prepare_orfquant {
     script:
 
     """
+    printf "%s\n" "${collected_paths.join('\n')}" > file_paths.txt
+
     merge_psites.R \
-    ${psites_file} \
+    "file_paths.txt" \
     ${orfquant_prefix}
     """
 }
@@ -35,8 +37,8 @@ process orfquant {
     val outdir
 
     output:
-    path "${orfquant_prefix}_final_ORFquant_results", emit: orfquant_results_file
-    path "${orfquant_prefix}_*"
+    tuple val("ORFquant"), path("${orfquant_prefix}_final_ORFquant_results"), emit: orfquant_orfs
+    //path "${orfquant_prefix}_*"
 
     script:
     """
@@ -47,21 +49,19 @@ process orfquant {
     $task.cpus \
     ${pandoc_dir} \
     ${orfquant_annot_package} \
-    ${package_install_loc} \
-    "FALSE"
-    # Only set to TRUE for testing purposes
+    ${package_install_loc} 
     """
 }
 
 process fix_orfquant {
 
-    // Fixes ORFquant GTF which has incorrect names
+    // Fixes ORFquant GTF which has incorrect names and doesn't include the stop codon in the coords
 
     label "fix_orfquant"
     publishDir "${outdir}/orfquant", mode: 'copy'
 
     input:
-    path orfquant_results_file
+    tuple val(orfcaller), path(orfquant_orfs)
     path rannot
     val orfquant_prefix
     val package_install_loc
@@ -69,12 +69,12 @@ process fix_orfquant {
 
     output:
     path "${orfquant_prefix}_Detected_ORFs_fixed.gtf", emit: orfquant_gtf
-    path "${orfquant_prefix}_Protein_sequences_fixed.fasta", emit: orfquant_fasta
+    //path "${orfquant_prefix}_Protein_sequences_fixed.fasta", emit: orfquant_fasta
 
     script:
     """
     fix_orfquant_output.R \
-    ${orfquant_results_file} \
+    ${orfquant_orfs} \
     ${rannot} \
     ${orfquant_prefix} \
     ${package_install_loc}
