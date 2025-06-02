@@ -22,6 +22,7 @@ workflow SELECTION {
 
     // Run FASTQC
     fastqc(trimmed_reads, outdir)
+    fastqc_zip = fastqc.out.fastqc_zip
 
     // Define the Bowtie2 index file extensions
     def bowtie2_extensions = ['.1.bt2', '.2.bt2', '.3.bt2', '.4.bt2', '.rev.1.bt2', '.rev.2.bt2']
@@ -45,20 +46,26 @@ workflow SELECTION {
 
     // Run bowtie2 to filter out contaminants
     bowtie2(bowtie2_index_ch,trimmed_reads, outdir)
+    bowtie2_contaminants = bowtie2.out.bowtie_output_files
 
     // Create QC stats
-    contaminants_check(trimmed_reads,
-                       bowtie2.out.bowtie_output_files,
-                       bowtie2_index,
-                       outdir,
-                       keep_sam)
-                       //TODO: write ouput sam to fastq option
+    contaminants_check(bowtie2_contaminants,
+                       keep_sam,
+                       outdir)
+
+    contaminant_samples = contaminants_check.out.contaminant_samples.collect()
+    contaminant_samples_passed = contaminants_check.out.contaminant_samples_passed.collect()
+    total_reads_samples = trimgalore.out.total_reads_samples.collect()
+
+    multiqc_read_samples = fastqc_zip.mix(contaminant_samples,
+                                          contaminant_samples_passed,
+                                          total_reads_samples)
 
     // Gather output tuples into single list
     rpf_reads = bowtie2.out.filtered_reads
-    contaminants_bowtie2 = contaminants_check.out.contaminants_bowtie2
 
     emit:
     rpf_reads            // Selected riboseq reads
-    contaminants_bowtie2 // Contaminant stats per sample
+    multiqc_read_samples // Multiqc input files
+    
 }

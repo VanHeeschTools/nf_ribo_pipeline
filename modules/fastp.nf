@@ -41,10 +41,18 @@ process trimgalore{
     val outdir                    // Output directory
  
     output:
-    tuple val(meta), path("${meta.sample_id}/${reads.simpleName}_trimmed.fq.gz"), emit: reads
+    tuple val(meta), path("${meta.sample_id}/${meta.sample_id}_trimmed.fq.gz"), emit: reads
+    path "total_reads_${meta.sample_id}_mqc.txt", emit: total_reads_samples
 
     script:
     """
+    # Obtain total number of reads at the start and write to multiqc supported file format
+    outfile_total="total_reads_${meta.sample_id}_mqc.txt"
+    total_reads_n=\$(zcat "${reads}" | wc -l)
+    total_reads_n=\$((total_reads_n / 4))
+    echo -e "Sample\\tTotal" >> "\$outfile_total"
+    echo -e "${meta.sample_id}\\t\$total_reads_n" >> "\$outfile_total"
+
     mkdir "${meta.sample_id}"
     
     trim_galore \
@@ -53,7 +61,8 @@ process trimgalore{
     --gzip \
     --length 25 \
     --trim-n \
-    --output_dir "${meta.sample_id}/"
+    --output_dir "${meta.sample_id}/" \
+    --basename "${meta.sample_id}"
     """
 
 }

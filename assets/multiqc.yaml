@@ -1,0 +1,84 @@
+fn_clean_exts:
+  - "_trimmed.fq.gz"
+  - ".gz"
+  - ".fastq"
+  - "_stats"
+  - ".Log.final.out"
+  - ".local"
+
+decimalPoint_format: "."
+thousandsSep_format: ","
+
+title: "Nextflow Ribo_Seq pipeline report"
+subtitle: "The following shows a summary of the output of the Ribo_Seq pipeline"
+intro_text: "MultiQC reports summarise analysis results."
+report_comment: "This is a comment about this report."
+
+#software_versions:
+#  trimgalore: "0"
+#  bowtie_2: "0"
+        
+custom_data:
+  contaminant_counts:
+    file_format: txt
+    section_name: 'Contaminant Mapping'
+    description: 'Known contaminants in the samples. Obtained by running Bowtie2 against a contaminant dataset.'
+
+    # First plot: bargraph
+    plot_type: 'bargraph'
+    categories:
+      Passed:
+        name: "Passed Reads"
+        color: "#003C67"
+      tRNA:
+        name: "tRNA Reads"
+        color: "#0073C2"
+      mtDNA:
+        name: "mtDNA Reads"
+        color: "#EFC000"
+      snoRNA:
+        name: "snoRNA Reads"
+        color: "#868686"
+      rRNA:
+        name: "rRNA Reads"
+        color: "#CD534C"
+      snRNA:
+        name: "snRNA Reads"
+        color: "#7AA6DC"
+    pconfig:
+      id: 'contaminant_bargraph'
+      title: 'Contaminant Reads by Type'
+      ylab: 'Read count'
+      bar_mode: "grouped"
+ 
+  total_reads:
+    file_format: txt
+    plot_type: 'generalstats'
+    section_name: 'Total amount of reads'
+    description: 'Number of reads without any filtering.'
+    headers:
+      - Total:
+          title: "Total reads"
+          description: "Number of reads without any filtering."
+          format: "{:,.0f}"
+          scale: "Greens"
+  reads_after_filtering:
+    file_format: txt
+    plot_type: 'generalstats'
+    section_name: 'Reads After Filtering'
+    description: 'Number of reads remaining after filtering contaminants.'
+    headers:
+      - Passed:
+          title: "Reads after filtering"
+          description: "Reads that pass Trimgalore and the Contaminant filter steps"
+          format: "{:,.0f}"
+          scale: "Greens"
+
+sp:
+  contaminant_counts:
+    fn: 'contaminant_*_mqc.txt'
+  reads_after_filtering:
+    fn: 'passed_contaminant_*_mqc.txt'
+  total_reads:
+    fn: 'total_reads_*_mqc.txt'
+
