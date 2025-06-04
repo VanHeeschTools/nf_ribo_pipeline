@@ -12,7 +12,7 @@ process fastqc {
 
     output:
     path "*/*.html" // Output QC summary 
-    path "*/*.zip"  // QC files
+    path "*/*.zip", emit: fastqc_zip  // QC files
 
     script:
     //TODO: put in config file

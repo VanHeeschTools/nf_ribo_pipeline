@@ -8,7 +8,6 @@ suppressPackageStartupMessages({
 
 args <- commandArgs(trailingOnly = TRUE)
 psites_file <- args[1]
-orfquant_prefix <- args[2]
 
 # Function to process and merge p-sites from GRanges objects
 processAndMergePSites <- function(p_sites_list) {
@@ -84,4 +83,4 @@ for_ORFquant$P_sites_uniq <- merged_p_sites_uniq
 for_ORFquant$P_sites_uniq_mm <- merged_p_sites_uniq_mm
 for_ORFquant$junctions <- merged_junctions
 
-save(for_ORFquant, file = paste0(orfquant_prefix, "_for_ORFquant"))
+save(for_ORFquant, file = "Merged_for_ORFquant")

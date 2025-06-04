@@ -1,6 +1,6 @@
 include { riboseqc; create_annotation } from "../modules/riboseqc.nf"
 // include { multiqc } from "../modules/multiqc.nf"
-// include { create_qc_plots; riboseqc_plots } from '../modules/qcplots.nf'
+include { riboseqc_tables } from '../modules/qcplots.nf'
 
 workflow RIBOQC {
 
@@ -14,7 +14,6 @@ workflow RIBOQC {
     gtf                        // Transcriptome used for STAR
     twobit                     // UCSC file format for the fasta
     outdir                     // Output directory
-    orfquant_prefix            // Naming of ORFquant files
 
     //contaminants // RPF filtering statistics
     //star_output // STAR statistics per file
@@ -43,36 +42,20 @@ workflow RIBOQC {
              package_ch,
              package_install_loc)
 
-
-    /*
-    Take output from the previous processes and generate QC figures
-    using multiQC and riboseQC
-    */
-
-    /*
-    // Create riboseqc HTML
-    riboseqc_plots(outdir,
-                   pandoc_dir,
-                   render_file,
-                   orfquant_prefix)
-
-    // run multiqc
-    multiqc(samtools,
-            star,
-            outdir)
-
-    // Create figures
-    create_qc_plots(multiqc.out.data_files,
-            riboseqc.out.data_files,
-            contaminants,
-            outdir)
-    */
+    // Create riboseqc tables for MultiQC
+    riboseqc_tables(riboseqc.out.riboseqc_all.collect())
   
+    riboseqc_inframe_29 = riboseqc_tables.out.riboseqc_inframe_29
+    riboseqc_category_counts = riboseqc_tables.out.riboseqc_category_counts
+ 
+    multiqc_riboseq = riboseqc_inframe_29.mix(riboseqc_category_counts)
+
     for_orfquant_files = riboseqc.out.orfquant_psites
 
     emit:
     rannot_ch          // Used R annotation
     package_ch         // Used R package
     for_orfquant_files // Files for ORFquant
+    multiqc_riboseq
 
 }

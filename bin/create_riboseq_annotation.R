@@ -12,7 +12,7 @@ args <- commandArgs(trailingOnly = TRUE)
 twobit_file <- args[1]
 gtf <- args[2]
 package_install_loc <- args[3]
-annot_name <- args[4]
+annot_name <- "test_annotation_package"
 
 # Current problem: R tries to use a tmp directory that is not writable (container dir)
 # I tried this to make sure R knows what it can use, but it did not work unfortunately.

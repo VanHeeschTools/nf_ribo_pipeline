@@ -23,22 +23,20 @@ process riboseqc_plots {
     """
 }
 
-process create_qc_plots {
+process riboseqc_tables {
 
-    label "qc_plots"
-    publishDir "${outdir}/qc", mode: 'copy'
+    label "Ribo_Seq_R_scripts"
 
     input:
-    val multiqc_input
-    val contaminants_input
-    val riboseqc_input
-    val outdir
+    val riboseqc_all
 
     output:
-    "*.pdf"
+    path "riboseqc_frame_29nt_mqc.txt", emit: riboseqc_inframe_29
+    path "riboseqc_read_categories_counts_mqc.txt", emit: riboseqc_category_counts
 
     script:
 
     """
+   riboseqc_tables.R ${riboseqc_all.join(' ')}
     """
 }

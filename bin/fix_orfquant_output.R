@@ -14,8 +14,7 @@ suppressPackageStartupMessages({
 args <- commandArgs(trailingOnly = TRUE)
 orfquant_results <- args[1]
 rannot <- args[2]
-orfquant_prefix <- args[3]
-package_install_loc <- args[4]
+package_install_loc <- args[3]
 
 paths <- c(package_install_loc, .libPaths())
 .libPaths(paths)
@@ -102,7 +101,7 @@ names(proteins) <- paste(
   sep = "|"
 )
 proteins <- c(proteins, proteins_readthrough)
-Biostrings::writeXStringSet(proteins, filepath = paste(orfquant_prefix, "Protein_sequences_fixed.fasta", sep = "_"))
+Biostrings::writeXStringSet(proteins, filepath = "ORFquant_Protein_sequences.fasta")
 
 # Create new fixed ORFquant GTF
 map_tx_genes <- GTF_annotation$trann
@@ -124,8 +123,8 @@ names(all) <- NULL
 
 
 # Export output files
-filepath_fasta <- file.path(workdir, paste(orfquant_prefix, "Protein_sequences_fixed.fasta", sep = "_"))
-Biostrings::writeXStringSet(proteins, filepath = filepath_fasta)
+#filepath_fasta <- file.path(workdir, paste(orfquant_prefix, "ORFquant_Protein_sequences.fasta", sep = "_"))
+#Biostrings::writeXStringSet(proteins, filepath = filepath_fasta)
 
 
 # EXTEND LAST CDS +3bp
@@ -151,7 +150,7 @@ start(cds)[idxs$idx[idxs$strand == "-"]] <- start(cds)[idxs$idx[idxs$strand == "
 all[all$type == "CDS"] <- cds
 
 # Export updated GTF
-filepath_gtf <- file.path(workdir, paste(orfquant_prefix, "Detected_ORFs_fixed.gtf", sep = "_"))
+filepath_gtf <- file.path(workdir, "ORFquant_Detected_ORFs.gtf")
 suppressWarnings(rtracklayer::export.gff2(object = all, con = filepath_gtf))
 
 

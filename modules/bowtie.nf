@@ -2,12 +2,12 @@ process bowtie2_index {
 
     // Create index for bowtie2 alignment
 
-    label "bowtie2_index"
+    label "bowtie2"
     publishDir "${outdir}/bowtie2_index", mode: 'copy'
 
     input:
     path contaminants_fasta // FASTA with unwanted sequences
-    val outdir             // Output directory
+    val outdir              // Output directory
 
     output:
     path "bowtie2_index", emit: bowtie2_index_prefix
@@ -15,7 +15,6 @@ process bowtie2_index {
 
     script:
     """
-
     mkdir -p "bowtie2_index"
     bowtie2-build \
     -f \
@@ -23,7 +22,6 @@ process bowtie2_index {
     --threads $task.cpus \
     ${contaminants_fasta} \
     "bowtie2_index/bowtie2_index"
-
     """
 }
  
@@ -38,11 +36,11 @@ process bowtie2 {
 
     input:
     val bowtie2_index_prefix      // Bowtie2 reference index
-    tuple val(meta), path(reads)  // Trimmed fastp reads
+    tuple val(meta), path(reads)  // Trimmed reads
     val outdir                    // Output directory
 
     output:
-    tuple val(meta), path("${meta.sample_id}/${meta.sample_id}_filtered.fastq.gz"), path("${meta.sample_id}/${meta.sample_id}_contaminants.sam"), emit: bowtie_output_files
+    tuple val(meta), path(reads), path("${meta.sample_id}/${meta.sample_id}_filtered.fastq.gz"), path("${meta.sample_id}/${meta.sample_id}_contaminants.sam"), emit: bowtie_output_files
     tuple val(meta), path("${meta.sample_id}/${meta.sample_id}_filtered.fastq.gz"), emit: filtered_reads
    
     script:
@@ -50,12 +48,12 @@ process bowtie2 {
     """
     mkdir -p "${sample_id}"
     bowtie2 \
-        --seedlen=25 \
-        --threads $task.cpus \
-        --time \
-        --un-gz "${sample_id}/${sample_id}_filtered.fastq.gz" \
-        -x ${bowtie2_index_prefix} \
-        -U ${reads} \
-        -S "${sample_id}/${sample_id}_contaminants.sam"
+    --seedlen=25 \
+    --threads $task.cpus \
+    --time \
+    --un-gz "${sample_id}/${sample_id}_filtered.fastq.gz" \
+    -x ${bowtie2_index_prefix} \
+    -U ${reads} \
+    -S "${sample_id}/${sample_id}_contaminants.sam"
     """
 }

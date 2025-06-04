@@ -1,4 +1,4 @@
-include { star_index; align; star_local; star_end_to_end } from '../modules/star.nf'
+include { star_index; star_local; star_end_to_end } from '../modules/star.nf'
 include { samtools; samtools as samtools_end2end } from '../modules/samtools.nf'
 
 workflow ALIGNMENT {
@@ -51,14 +51,6 @@ PRICE respectively and creates an index for the ORFquant bam
         star_index_ch = "${star_index_path}"
         log.info "Using existing STAR index: ${star_index_path}"
     }
-    /*
-    align(rpf_reads, 
-          outdir,
-          gtf,
-          star_index_ch,
-          run_price,
-          run_orfquant)
-    */
 
     star_local(rpf_reads, 
                 outdir,
@@ -66,6 +58,7 @@ PRICE respectively and creates an index for the ORFquant bam
                 star_index_ch)
     samtools(star_local.out.bams, outdir)
     bam_list = samtools.out.sorted_bam
+    star_log_local = star_local.out.star_log_local
 
 
     star_end_to_end(rpf_reads, 
@@ -74,6 +67,7 @@ PRICE respectively and creates an index for the ORFquant bam
                     star_index_ch)
     samtools_end2end(star_end_to_end.out.bams_end2end, outdir)
     bam_list_end2end = samtools_end2end.out.sorted_bam
+    star_log_end_to_end = star_end_to_end.out.star_log_end_to_end
 
     price_paths = samtools_end2end.out.bam_files.collect().flatten()
                 .map { it -> it.toString() } // Change paths to strings
@@ -85,6 +79,8 @@ PRICE respectively and creates an index for the ORFquant bam
 
 
     emit:
+    star_log_local
+    star_log_end_to_end
     bam_list         // bam files for ORFquant
     bam_list_end2end // bam files for PRICE
     price_filelist   // list for PRICE

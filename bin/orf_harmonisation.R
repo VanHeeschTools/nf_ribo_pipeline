@@ -29,7 +29,6 @@ orfquant_orfs <- read.delim(orfquant_table, sep = ",") %>%
 # Combine both ORF tables into a single dataset
 orfs <- dplyr::bind_rows(orfquant_orfs, price_orfs)
 
-
 # PRICE and ORFquant can predict indentical ORF sequences in the same range
 # Identical ORFs should be filtered base on:
 # Gene id, transcript id, Identical protein sequence
@@ -60,6 +59,21 @@ filtered_table_sorted <- filtered_table %>%
 removed_orf_ids <- anti_join(orfs, filtered_table, by = c("gene_id", "gene_name", "Protein", "transcript_id", "orf_id")) %>%
   pull(orf_id)
 
+# FOR TESTING PURPOSES REMOVE LATER
+orfs_sorted <- orfs %>%
+  tidyr::separate(ORF_ranges, into = c("chr", "range"), sep = ":", remove = FALSE) %>%
+  tidyr::separate(range, into = c("start", "end"), sep = "-", convert = TRUE) %>%
+  dplyr::mutate(
+      chr_clean = gsub("^chr", "", chr),
+      chr_numeric = suppressWarnings(as.numeric(chr_clean)),
+      chr_order = ifelse(is.na(chr_numeric), chr_clean, chr_numeric)
+  ) %>%
+  dplyr::arrange(chr_order, start, end) %>%
+  dplyr::select(-chr_clean, -chr_numeric, -chr_order, -start, -end, -chr)
+write.table(orfs_sorted, file = "unfiltered_harmonised_table.csv",
+            sep = ",",
+            quote = F,
+            row.names = F)
 
 write.table(filtered_table_sorted, file = "harmonised_table.csv",
             sep = ",",

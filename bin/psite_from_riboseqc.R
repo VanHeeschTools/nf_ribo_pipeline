@@ -3,11 +3,8 @@
 args = commandArgs(trailingOnly=TRUE)
 
 riboseqc_file <- args[1]
-package_install_loc <- args[2]
 
 # Set location of installed packages for this R version
-paths <- c(package_install_loc,.libPaths())
-.libPaths(paths)
 
 suppressPackageStartupMessages({
     library(RiboseQC)

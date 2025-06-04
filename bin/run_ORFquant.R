@@ -10,13 +10,18 @@ suppressPackageStartupMessages({
 # Get variables from input ------------------------------------------------
 args <- commandArgs(trailingOnly = TRUE)
 for_ORFquant_file <- args[1]
-pool_id <- args[2]
-rannot <- args[3]
-cpu <- args[4]
-pandoc_dir <- args[5]
-annotation_package <- args[6]
-package_install_loc <- args[7]
+rannot <- args[2]
+cpu <- args[3]
+pandoc_dir <- args[4]
+annotation_package <- args[5]
+package_install_loc <- args[6]
 
+
+# REMOVE AFTER TESTING
+source("/hpc/pmc_vanheesch/projects/evanderwerf/nextflow_pipelines/riboseq_pipeline/orfquant_script/orfquant.R")
+source("/hpc/pmc_vanheesch/projects/evanderwerf/nextflow_pipelines/riboseq_pipeline/orfquant_script/FaFile_Circ.R")
+
+pool_id = "output"
 paths <- c(package_install_loc, .libPaths())
 .libPaths(paths)
 

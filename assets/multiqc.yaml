@@ -1,10 +1,17 @@
 fn_clean_exts:
+  - "_merged_R1_001"
   - "_trimmed.fq.gz"
-  - ".gz"
+  - ".fq"
   - ".fastq"
+  - ".gz"
   - "_stats"
   - ".Log.final.out"
   - ".local"
+  - "_500k" # For testing, remove later
+  - "_filtered"
+table_columns_visible:
+  cutadapt:
+    percent_trimmed: False
 
 decimalPoint_format: "."
 thousandsSep_format: ","
@@ -14,12 +21,33 @@ subtitle: "The following shows a summary of the output of the Ribo_Seq pipeline"
 intro_text: "MultiQC reports summarise analysis results."
 report_comment: "This is a comment about this report."
 
-#software_versions:
-#  trimgalore: "0"
-#  bowtie_2: "0"
+report_section_order:
+  cutadapt:
+      order: 70
+  removed_reads:
+      order: 60
+  contaminant_counts:
+      order: 50
+  fastqc:
+      order: 40
+  star:
+      order: 30
+  inframe_reads:
+      order: 20
+  riboseq_counts:
+      order: 10
+#top_module:
+#- total_reads
+
+software_versions:
+  trimgalore: "0"
+  star: "0"
+  bowtie_2: "0"
+  RiboseQC: "0"
         
 custom_data:
   contaminant_counts:
+    id: "contaminant_counts"
     file_format: txt
     section_name: 'Contaminant Mapping'
     description: 'Known contaminants in the samples. Obtained by running Bowtie2 against a contaminant dataset.'
@@ -50,8 +78,71 @@ custom_data:
       title: 'Contaminant Reads by Type'
       ylab: 'Read count'
       bar_mode: "grouped"
+
+  inframe_reads:
+    id: "inframe_reads"
+    file_format: txt
+    section_name: 'RiboseQC in-frame reads'
+    description: 'Percentage of reads of 29nt that are in-frame according to RiboseQC.'
+    plot_type: 'bargraph'
+    categories:
+      FramePreference:
+        name: "In-frame"
+        color: "#003C67"
+    pconfig:
+      id: 'inframe_29nt'
+      title: 'In-frame reads (29nt)'
+      ylab: 'Percentage'
+      bar_mode: "grouped"
+
+  riboseq_counts:
+    id: "riboseq_counts"
+    file_format: txt
+    section_name: 'RiboseQC type counts'
+    description: 'Count of reads on different regions'
+    plot_type: 'bargraph'
+    categories:
+      cds:
+        name: "cds"
+        color: "#FFD32C"
+      fiveutrs:
+        name: "fiveutrs"
+        color:  "#305CDE" 
+      threeutrs:
+        name: "threeutrs"
+        color: "#BBBBBB" 
+      ncIsof:
+        name: "ncIsof"
+        color: "#94AEE3"
+      ncRNAs:
+        name: "ncRNAs"
+        color: "#EE6677"
+      introns:
+        name: "introns"
+        color: "#4477AA"
+      intergenic:
+        name: "intergenic"
+        color: "#B5A642"
+    pconfig:
+      id: 'riboseqc_counts'
+      title: 'Ribo_Seq Reads by Type'
+      ylab: 'Read count'
+      bar_mode: "grouped"
+
+  removed_reads:
+    id: "removed_reads"
+    section_name: "Trim Galore"
+    plot_type: "table"
+    description: "Number of reads discarded by Trim Galore because they are shorter than 25bp after running Cutadapt."
+    format: '{:,}'  
+    pconfig:
+      Reads_Removed_Due_to_Length:
+        title: "Reads Removed"
+        format: '{:,}'  
+  
  
   total_reads:
+    id: "total_reads"
     file_format: txt
     plot_type: 'generalstats'
     section_name: 'Total amount of reads'
@@ -62,16 +153,17 @@ custom_data:
           description: "Number of reads without any filtering."
           format: "{:,.0f}"
           scale: "Greens"
+
   reads_after_filtering:
+    id: "reads_after_filtering"
     file_format: txt
     plot_type: 'generalstats'
-    section_name: 'Reads After Filtering'
     description: 'Number of reads remaining after filtering contaminants.'
     headers:
       - Passed:
-          title: "Reads after filtering"
-          description: "Reads that pass Trimgalore and the Contaminant filter steps"
-          format: "{:,.0f}"
+          title: "Reads passing filters"
+          description: "Reads that pass Trim Galore and the Contaminant filter steps"
+          format: "{:,}"
           scale: "Greens"
 
 sp:
@@ -81,4 +173,9 @@ sp:
     fn: 'passed_contaminant_*_mqc.txt'
   total_reads:
     fn: 'total_reads_*_mqc.txt'
-
+  removed_reads:
+    fn: 'removed_reads_*_mqc.txt'
+  riboseq_counts:
+    fn: 'riboseqc_read_categories_counts_mqc.txt'
+  inframe_reads:
+    fn: 'riboseqc_frame_29nt_mqc.txt'

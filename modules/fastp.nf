@@ -42,12 +42,15 @@ process trimgalore{
  
     output:
     tuple val(meta), path("${meta.sample_id}/${meta.sample_id}_trimmed.fq.gz"), emit: reads
-    path "total_reads_${meta.sample_id}_mqc.txt", emit: total_reads_samples
+    path "${meta.sample_id}/${meta.sample_id}_trimming_report.txt", emit: trimgalore_trimming_report
+    path "total_reads_${meta.sample_id}_mqc.txt", emit: total_reads
+    path "removed_reads_${meta.sample_id}_mqc.txt", emit: removed_reads
 
     script:
     """
     # Obtain total number of reads at the start and write to multiqc supported file format
     outfile_total="total_reads_${meta.sample_id}_mqc.txt"
+    outfile_removed="removed_reads_${meta.sample_id}_mqc.txt"
     total_reads_n=\$(zcat "${reads}" | wc -l)
     total_reads_n=\$((total_reads_n / 4))
     echo -e "Sample\\tTotal" >> "\$outfile_total"
@@ -63,6 +66,15 @@ process trimgalore{
     --trim-n \
     --output_dir "${meta.sample_id}/" \
     --basename "${meta.sample_id}"
+
+    # Rename trimming report so it mathces the sample_id
+    mv ${meta.sample_id}/*_trimming_report.txt ${meta.sample_id}/${meta.sample_id}_trimming_report.txt
+
+    # Obtain amount of removed reads
+    num=\$(grep "Sequences removed" ${meta.sample_id}/${meta.sample_id}_trimming_report.txt | awk -F':' '{print \$2}' | awk '{print \$1}')
+
+    echo -e "Sample\\tTotal input reads\\tRemoved" >> "\$outfile_removed"
+    echo -e "${meta.sample_id}\\t\${total_reads_n}\\t\${num}" >> "\$outfile_removed"
     """
 
 }

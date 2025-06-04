@@ -1,13 +1,12 @@
 process create_annotation {
 
-    label "orfquant_annotation"
+    label "Ribo_Seq_R_scripts"
     publishDir "${outdir}/orfquant_annotation", mode: 'copy'
 
     input:
     val gtf
     val twobit
     val package_install_loc
-    val orfquant_prefix
 
     output:
     val "${orfquant_prefix}_Rannot", emit: orfquant_annotation
@@ -17,8 +16,7 @@ process create_annotation {
     create_riboseq_annotation.R \
     ${twobit} \
     ${gtf} \
-    ${package_install_loc} \
-    ${orfquant_prefix}
+    ${package_install_loc} 
     """
 
 }
@@ -26,7 +24,7 @@ process create_annotation {
 process riboseqc {
 
     tag "${meta.sample_id}"
-    label "riboseqc"
+    label "Ribo_Seq_R_scripts"
     publishDir "${outdir}/riboseqc", mode: 'copy'
 
     input:
@@ -39,7 +37,8 @@ process riboseqc {
 
     output:
     tuple val(meta),path("${meta.sample_id}/${meta.sample_id}_for_ORFquant"), emit: orfquant_psites
-    path("${meta.sample_id}/${meta.sample_id}*")
+    path "${meta.sample_id}/${meta.sample_id}_results_RiboseQC_all", emit: riboseqc_all
+    path "${meta.sample_id}/${meta.sample_id}*"
 
     script:
     """

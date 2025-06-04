@@ -104,6 +104,8 @@ workflow RIBOSEQ {
            // star_output,
            // samtools_output
            )
+    multiqc_files = multiqc_files.mix(RIBOQC.out.multiqc_riboseq)
+
 
     // ORF prediction steps
     if (params.run_orf_prediction ) {

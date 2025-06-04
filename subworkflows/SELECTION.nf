@@ -20,9 +20,11 @@ workflow SELECTION {
     trimgalore(reads, outdir)
     trimmed_reads = trimgalore.out.reads
 
-    // Run FASTQC
-    fastqc(trimmed_reads, outdir)
-    fastqc_zip = fastqc.out.fastqc_zip
+
+    // Files for the MultiQC report
+    trimgalore_report = trimgalore.out.trimgalore_trimming_report.collect()
+    total_reads = trimgalore.out.total_reads.collect()
+    removed_reads = trimgalore.out.removed_reads.collect()
 
     // Define the Bowtie2 index file extensions
     def bowtie2_extensions = ['.1.bt2', '.2.bt2', '.3.bt2', '.4.bt2', '.rev.1.bt2', '.rev.2.bt2']
@@ -47,22 +49,26 @@ workflow SELECTION {
     // Run bowtie2 to filter out contaminants
     bowtie2(bowtie2_index_ch,trimmed_reads, outdir)
     bowtie2_contaminants = bowtie2.out.bowtie_output_files
+    rpf_reads = bowtie2.out.filtered_reads
+
+    // Run FASTQC
+    fastqc(rpf_reads, outdir)
+    fastqc_zip = fastqc.out.fastqc_zip
 
     // Create QC stats
     contaminants_check(bowtie2_contaminants,
                        keep_sam,
                        outdir)
-
     contaminant_samples = contaminants_check.out.contaminant_samples.collect()
     contaminant_samples_passed = contaminants_check.out.contaminant_samples_passed.collect()
-    total_reads_samples = trimgalore.out.total_reads_samples.collect()
 
-    multiqc_read_samples = fastqc_zip.mix(contaminant_samples,
-                                          contaminant_samples_passed,
-                                          total_reads_samples)
+    // Combine all MultiQC files into one channel
+    multiqc_read_samples = trimgalore_report.mix(total_reads,
+                                                 removed_reads,
+                                                 fastqc_zip,
+                                                 contaminant_samples,
+                                                 contaminant_samples_passed)
 
-    // Gather output tuples into single list
-    rpf_reads = bowtie2.out.filtered_reads
 
     emit:
     rpf_reads            // Selected riboseq reads
