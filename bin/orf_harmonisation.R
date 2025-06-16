@@ -36,7 +36,7 @@ orfs <- dplyr::bind_rows(orfquant_orfs, price_orfs)
 filtered_table <- orfs %>%
   # Preference = 0 for PRICE, 1 for everything else
   mutate(pref = ifelse(orf_caller == "PRICE", 0L, 1L)) %>%
-  group_by(gene_id, Protein) %>%
+  group_by(gene_id, Protein, start, end) %>%
   slice_min(pref, n = 1, with_ties = FALSE) %>%
   ungroup() %>%
   select(-pref)

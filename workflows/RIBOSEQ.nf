@@ -80,13 +80,13 @@ workflow RIBOSEQ {
               params.outdir
               )
     multiqc_files = multiqc_files.mix(ALIGNMENT.out.star_log_local)
-    //multiqc_files = multiqc_files.mix(ALIGNMENT.out.star_log_end_to_end)
 
     orfquant_bams = ALIGNMENT.out.bam_list
-    price_bams = ALIGNMENT.out.bam_list_end2end // Currently unused
+    //price_bams = ALIGNMENT.out.bam_list_end2end // Currently unused
     bamlist = ALIGNMENT.out.price_filelist
 
     def orfquant_annotation_exists = file(params.orfquant_annotation).isFile()
+    //def orfquant_annotation_exists = false
 
     RIBOQC(params.orfquant_annotation,
            params.orfquant_annot_package,
@@ -98,14 +98,10 @@ workflow RIBOSEQ {
            orfquant_annotation_exists,
            params.reference_gtf,
            params.reference_twobit,
-           params.outdir,
-           // For multiQC and figures
-           // contaminants,
-           // star_output,
-           // samtools_output
+           params.reference_fasta,
+           params.outdir
            )
     multiqc_files = multiqc_files.mix(RIBOQC.out.multiqc_riboseq)
-
 
     // ORF prediction steps
     if (params.run_orf_prediction ) {

@@ -8,14 +8,12 @@ workflow EXPRESSION {
     harmonised_orf_table
     removed_orf_ids
     orfcaller_psites
-    package_install_loc
     outdir
 
     main:
 
     // Create sample P-site files
     sample_psites(for_orfquant_files,
-                  package_install_loc,
                   outdir
     )
     

@@ -3,206 +3,181 @@ import sys
 import os
 from optparse import OptionParser
 
-parser=OptionParser()
-parser.add_option('-i','--input',dest='gtff',help='GTF or bed file with ORF definitions')
-parser.add_option('-a','--annot',dest='annot',default='yes',help='is input an annotation file (yes/no) [yes]')
-parser.add_option('-o','--outdir',dest='outdir',help='output directory for generated files')
-parser.add_option("-t", "--id-type", dest="id_type", default="transcript_id",help="ID type to use for parsing the GTF file ('transcript_id' or 'ORF_id')", metavar="ID_TYPE")
+parser = OptionParser()
+parser.add_option(
+    "-i", "--input",
+    dest="gtff",
+    help="Input GTF file with ORF definitions"
+)
+parser.add_option(
+    "-a", "--annot",
+    dest="annot",
+    default="yes",
+    help="Is the input an annotation file (yes/no)? Default: yes"
+)
+parser.add_option(
+    "-o", "--outdir",
+    dest="outdir",
+    help="Output directory for generated BED file"
+)
+parser.add_option(
+    "-t", "--id-type",
+    dest="id_type",
+    default="transcript_id",
+    help="Identifier field to use when parsing the GTF ('transcript_id' or 'ORF_id'). Default: transcript_id"
+)
+options, _ = parser.parse_args()
 
-options,args=parser.parse_args()
+gtff    = options.gtff
+annot   = options.annot
+outdir  = options.outdir
+id_type = options.id_type
 
-gtff = options.gtff
-annot = options.annot
-outdir=options.outdir
-id_type=options.id_type
+# Validate required arguments
+if not gtff or not outdir:
+    parser.error("Both -i (input GTF) and -o (output directory) are required.")
+if not gtff.endswith(".gtf"):
+    sys.exit("Error: Only GTF input is supported (must end with .gtf).")
 
-isExist = os.path.exists(outdir)
+# Ensure output directory exists
+os.makedirs(outdir, exist_ok=True)
 
-if not isExist:
-   # Create a new directory because it does not exist 
-  os.makedirs(outdir)
+# Open the output BED file
+output_path = os.path.join(outdir, os.path.basename(gtff) + "_psites_plus_partial.bed")
+out = open(output_path, "w+")
 
-out = open(outdir + "/" + os.path.basename(gtff) + "_psites_plus_partial.bed","w+")
-# Define classes and functions
-class trans_object:
-		def __init__(self, chrm, gene, strand, start, end, code):
-				self.chrm = chrm
-				self.gene = gene
-				self.strand = strand
-				self.start = start
-				self.end = end
-				self.code = code
+# ----------------------------
+# Define a simple transcript container
+# ----------------------------
+class TransObject:
+    def __init__(self, chrom, gene, strand):
+        self.chrom = chrom
+        self.gene = gene
+        self.strand = strand
+        self.start_coords = []
+        self.end_coords = []
 
-def parse_gtf(gtf, field, id_type):
-    # Read a gtf and create a dict with sorted transcript coordinates, chrm, strand, and gene
-    trans = {}
-    for line in open(gtf):
-        if not "\t" + field + "\t" in line:
-            continue
-        if id_type == 'transcript_id':
-            t_name = line.split('transcript_id "')[1].split('"')[0]
-        elif id_type == 'ORF_id':
-            t_name = line.split('ORF_id "')[1].split('"')[0]
+
+# ----------------------------
+# parse_gtf: collect CDS coordinates per transcript
+# ----------------------------
+def parse_gtf(gtf_path, feature, id_field):
+    transcripts = {}
+    with open(gtf_path) as fh:
+        for line in fh:
+            if f"\t{feature}\t" not in line:
+                continue
+
+            fields = line.split("\t")
+            chrom, source, feat, start, end, _, strand, _, attr = fields
+
+            # Extract transcript or ORF ID
+            try:
+                if id_field == "transcript_id":
+                    tid = attr.split('transcript_id "')[1].split('"')[0]
+                else:  # ORF_id
+                    tid = attr.split('ORF_id "')[1].split('"')[0]
+                gid = attr.split('gene_id "')[1].split('"')[0]
+            except IndexError:
+                continue
+
+            if tid not in transcripts:
+                transcripts[tid] = TransObject(chrom, gid, strand)
+
+            transcripts[tid].start_coords.append(int(start))
+            transcripts[tid].end_coords.append(int(end))
+
+    # Sort each transcript's start/end lists
+    for tx in transcripts.values():
+        paired = sorted(zip(tx.start_coords, tx.end_coords))
+        tx.start_coords, tx.end_coords = zip(*paired)
+
+    return transcripts
+
+
+# ----------------------------
+# collect_status: determine coding completeness per transcript
+# ----------------------------
+def collect_status(gtf_path):
+    status_dict = {}
+    with open(gtf_path) as fh:
+        for line in fh:
+            if not any(tag in line for tag in ["\tCDS\t", "\tstart_codon\t", "\tstop_codon\t"]):
+                continue
+
+            try:
+                tid = line.split('transcript_id "')[1].split('"')[0]
+            except IndexError:
+                continue
+
+            if "\tCDS\t" in line:
+                status_dict.setdefault(tid, 0)
+            elif "\tstart_codon\t" in line:
+                if status_dict.get(tid, 0) == 2:
+                    status_dict[tid] = 3
+                else:
+                    status_dict[tid] = 1
+            elif "\tstop_codon\t" in line:
+                if status_dict.get(tid, 0) == 1:
+                    status_dict[tid] = 3
+                else:
+                    status_dict[tid] = 2
+
+    return status_dict
+
+
+# ----------------------------
+# process_transcript: write P-site lines for one transcript
+# ----------------------------
+def process_transcript(tid, tx, coding_status):
+    """
+    For a given transcript 'tx', iterate its CDS coordinates,
+    assign frames (p0, p1, p2) according to 'coding_status' and 'strand',
+    and write to the global 'out' file handle.
+    """
+    # Flatten all CDS positions into a single list
+    coords = []
+    for s, e in zip(tx.start_coords, tx.end_coords):
+        coords.extend(range(s, e + 1))
+
+    # Reverse for minus strand so coords[0] is biologic start codon
+    if tx.strand == "-":
+        coords = coords[::-1]
+
+    # Compute offset for partial codons
+    offset = len(coords) % 3
+
+    for i, pos in enumerate(coords):
+        if coding_status in (1, 3):
+            # Has start codon: frame anchors at coords[0]
+            frame = i % 3
+        elif coding_status == 2:
+            # Stop-codon only: shift frame forward by offset (plus strand logic)
+            if tx.strand == "+":
+                frame = (i + offset) % 3
+            else:
+                # For minus strand, coords reversed: shift backward by offset
+                frame = (i - offset) % 3
         else:
-            raise ValueError(f"Unsupported id_type: {id_type}")
-        g_name = line.split('gene_id "')[1].split('"')[0]
+            # status == 0: no start or stop codon → exclude transcript entirely
+            return
 
-        if 'gene_biotype' in line:
-            biot = line.split("\t")[1]
-        else:
-            biot = "unknown"
-
-        trans.setdefault(t_name, trans_object(line.split("\t")[0], g_name, line.split("\t")[6], [], [], biot))
-        trans[t_name].start.append(int(line.split("\t")[3]))
-        trans[t_name].end.append(int(line.split("\t")[4]))
-
-    [trans[x].start.sort() for x in trans]
-    [trans[x].end.sort() for x in trans]
-
-    return trans
-
-def parse_bed(bed):
-	#Read a bed and create a dict with sorted transcript coordinates, chrm, strand, and gene
-	trans = {}
-	for line in open(bed):
-		t_name = line.split('\t')[3]
-		trans.setdefault(t_name,trans_object(line.split("\t")[0],line.split("\t")[3],line.split("\t")[5].rstrip('\n'),[],[],line.split("\t")[5]))
-		# Fixed problem here: Add 1 here to take into account the 0-based index in bed files
-		trans[t_name].start.append(int(line.split("\t")[1]) + 1) 
-		trans[t_name].end.append(int(line.split("\t")[2]))
-
-	[trans[x].start.sort() for x in trans]
-	[trans[x].end.sort() for x in trans]	
-	return trans
-
-if gtff.endswith("bed"):
-	gtf = parse_bed(gtff)
-elif gtff.endswith("gtf"):
-	gtf = parse_gtf(gtff,"CDS",id_type)
-else:
-	print("Wrong input format given, or file not found")
-
-status = {}
-if (annot == "yes") and (gtff.endswith("gtf")): #Remove uncomplete proteins 
-		for line in open(gtff):
-			if "\tCDS\t" in line:
-				if not line.split('transcript_id "')[1].split('"')[0] in status:
-					status[line.split('transcript_id "')[1].split('"')[0]] =  0				
-			if "\tstart_codon\t" in line:
-				if not line.split('transcript_id "')[1].split('"')[0] in status:
-					status[line.split('transcript_id "')[1].split('"')[0]] =  1
-				elif status[line.split('transcript_id "')[1].split('"')[0]] == 2:
-					status[line.split('transcript_id "')[1].split('"')[0]] = 3
-				else:
-					status[line.split('transcript_id "')[1].split('"')[0]] =  1
-			elif "\tstop_codon\t" in line:
-				if not line.split('transcript_id "')[1].split('"')[0] in status:
-					status[line.split('transcript_id "')[1].split('"')[0]] = 2
-				elif status[line.split('transcript_id "')[1].split('"')[0]] == 1:
-					status[line.split('transcript_id "')[1].split('"')[0]] = 3
-				else:
-					status[line.split('transcript_id "')[1].split('"')[0]] = 2
-
-for orf in gtf:
-	if orf in status:
-		if status[orf] == 0:
-			print(orf + " excluded")
-			continue
-		if status[orf] == 1:
-			stat = 1
-		elif status[orf] == 2:
-			stat = 2
-		elif status[orf] == 3:
-			stat = 3
-	else:
-		stat = 3
-	i = 0
-	x1 = 0
-	x2 = 0
-	x3 = 0
-	y1 = 0
-	y2 = 0
-	y3 = 0
-	for n,ex in enumerate(gtf[orf].start):
-		for co in range(int(gtf[orf].start[n]),int(gtf[orf].end[n])+1):
-			if (gtf[orf].strand == "+") and ((stat == 1) or (stat == 3)):
-				if (i % 3) == 2:
-					out.write(gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tp2\t" + gtf[orf].strand + "\n")
-					y3 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpST2\t" + gtf[orf].strand + "\n"
-					if x3 == 0:
-						x3 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpATG2\t" + gtf[orf].strand + "\n"
-				elif (i % 3) == 0:
-					out.write(gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tp0\t" + gtf[orf].strand + "\n")
-					y1 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpST0\t" + gtf[orf].strand + "\n"
-					if x1 == 0:
-						x1 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpATG0\t" + gtf[orf].strand + "\n"
-				else:
-					out.write(gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tp1\t" + gtf[orf].strand + "\n")
-					y2 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpST1\t" + gtf[orf].strand + "\n"
-					if x2 == 0:
-						x2 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpATG1\t" + gtf[orf].strand + "\n"
-			
-
-			elif (gtf[orf].strand == "+") and (stat == 2):
-				l = (sum(gtf[orf].end) - sum(gtf[orf].start) + len(gtf[orf].end)) % 3
-				if (i % 3) == (l+2) % 3:
-					out.write(gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tp2\t" + gtf[orf].strand + "\n")
-					y3 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpST2\t" + gtf[orf].strand + "\n"
-					if x3 == 0:
-						x3 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpATG2\t" + gtf[orf].strand + "\n"
-				elif (i % 3) == l % 3:
-					out.write(gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tp0\t" + gtf[orf].strand + "\n")
-					y1 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpST0\t" + gtf[orf].strand + "\n"
-					if x1 == 0:
-						x1 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpATG0\t" + gtf[orf].strand + "\n"
-				else:
-					out.write(gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tp1\t" + gtf[orf].strand + "\n")
-					y2 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpST1\t" + gtf[orf].strand + "\n"
-					if x2 == 0:
-						x2 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpATG1\t" + gtf[orf].strand + "\n"
+        # Write the P-site line
+        out.write(f"{tx.chrom}\t{pos}\t{pos}\t{tid}\tp{frame}\t{tx.strand}\n")
 
 
-			elif (gtf[orf].strand == "-") and ((stat == 2) or (stat == 3)):
-				if (i % 3) == 0:
-					x1 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpATG2\t" + gtf[orf].strand + "\n"
-					if y1 == 0:
-						y1 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpST2\t" + gtf[orf].strand + "\n"
-					out.write(gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tp2\t" + gtf[orf].strand + "\n")
-				elif (i % 3) == 1:
-					x2 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpATG1\t" + gtf[orf].strand + "\n"
-					if y2 == 0:
-						y2 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpST1\t" + gtf[orf].strand + "\n"
-					out.write(gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tp1\t" + gtf[orf].strand + "\n")
-				else:
-					x3 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpATG0\t" + gtf[orf].strand + "\n"
-					if y3 == 0:
-						y3 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpST0\t" + gtf[orf].strand + "\n"
-					out.write(gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tp0\t" + gtf[orf].strand + "\n")
+# ----------------------------
+# Main execution flow
+# ----------------------------
+gtf_data = parse_gtf(gtff, "CDS", id_type)
+status   = collect_status(gtff) if annot.lower() == "yes" else {}
 
+for tid, tx in gtf_data.items():
+    st = status.get(tid, 3)
+    if st == 0:
+        print(f"{tid} excluded")
+        continue
 
-			elif (gtf[orf].strand == "-") and (stat == 1):
-				l = (sum(gtf[orf].end) - sum(gtf[orf].start) + len(gtf[orf].end)) % 3
-				if (i % 3) == l % 3:
-					x1 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpATG2\t" + gtf[orf].strand + "\n"
-					if y1 == 0:
-						y1 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpST2\t" + gtf[orf].strand + "\n"
-					out.write(gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tp0\t" + gtf[orf].strand + "\n")
-				elif (i % 3) == (l+1) % 3:
-					x2 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpATG1\t" + gtf[orf].strand + "\n"
-					if y2 == 0:
-						y2 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpST1\t" + gtf[orf].strand + "\n"
-					out.write(gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tp1\t" + gtf[orf].strand + "\n")
-				else:
-					x3 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpATG0\t" + gtf[orf].strand + "\n"
-					if y3 == 0:
-						y3 = gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tpST0\t" + gtf[orf].strand + "\n"
-					out.write(gtf[orf].chrm + "\t" + str(co) + "\t" + str(co) + "\t" + orf + "\tp2\t" + gtf[orf].strand + "\n")
+    process_transcript(tid, tx, st)
 
-			i += 1
-	out.write(x1)
-	out.write(x2)
-	out.write(x3)
-	out.write(y1)
-	out.write(y2)
-	out.write(y3)
 out.close()

@@ -69,7 +69,6 @@ workflow SELECTION {
                                                  contaminant_samples,
                                                  contaminant_samples_passed)
 
-
     emit:
     rpf_reads            // Selected riboseq reads
     multiqc_read_samples // Multiqc input files

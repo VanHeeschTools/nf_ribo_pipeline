@@ -16,11 +16,6 @@ pandoc_dir <- args[4]
 annotation_package <- args[5]
 package_install_loc <- args[6]
 
-
-# REMOVE AFTER TESTING
-source("/hpc/pmc_vanheesch/projects/evanderwerf/nextflow_pipelines/riboseq_pipeline/orfquant_script/orfquant.R")
-source("/hpc/pmc_vanheesch/projects/evanderwerf/nextflow_pipelines/riboseq_pipeline/orfquant_script/FaFile_Circ.R")
-
 pool_id = "output"
 paths <- c(package_install_loc, .libPaths())
 .libPaths(paths)

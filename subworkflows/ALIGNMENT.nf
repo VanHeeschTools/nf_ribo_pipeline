@@ -52,27 +52,32 @@ PRICE respectively and creates an index for the ORFquant bam
         log.info "Using existing STAR index: ${star_index_path}"
     }
 
+    // Run STAR local mode
     star_local(rpf_reads, 
                 outdir,
                 gtf,
                 star_index_ch)
+    // Sort output BAM file 
     samtools(star_local.out.bams, outdir)
     bam_list = samtools.out.sorted_bam
     star_log_local = star_local.out.star_log_local
 
-
+    // Run STAR end2end mode
     star_end_to_end(rpf_reads, 
                     outdir,
                     gtf,
                     star_index_ch)
+    // Sort output BAM file 
     samtools_end2end(star_end_to_end.out.bams_end2end, outdir)
+
     bam_list_end2end = samtools_end2end.out.sorted_bam
     star_log_end_to_end = star_end_to_end.out.star_log_end_to_end
 
+    // Obtain all STAR end2end sorted BAM file paths
     price_paths = samtools_end2end.out.bam_files.collect().flatten()
                 .map { it -> it.toString() } // Change paths to strings
 
-    // Store gtflist to workdir
+    // Store BAM file paths to workdir
     price_filelist = price_paths.collectFile(
         name: 'bams.bamlist',
         newLine: true, sort: true )

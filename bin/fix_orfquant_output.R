@@ -2,6 +2,7 @@
 
 # This script fixes the ORFquant GTF output
 # It has some incorrect ID values for the ORFs
+# It also add 3 bp to the last coords to take the stop codon into account
 
 suppressPackageStartupMessages({
     library(dplyr)

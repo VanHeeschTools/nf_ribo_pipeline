@@ -6,7 +6,7 @@ process create_annotation {
     input:
     val gtf
     val twobit
-    val package_install_loc
+    val reference_fasta
 
     output:
     val "${orfquant_prefix}_Rannot", emit: orfquant_annotation
@@ -16,7 +16,7 @@ process create_annotation {
     create_riboseq_annotation.R \
     ${twobit} \
     ${gtf} \
-    ${package_install_loc} 
+    ${reference_fasta} 
     """
 
 }

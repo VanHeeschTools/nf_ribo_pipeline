@@ -3,12 +3,11 @@ process sample_psites {
   // Create per sample a BED file with sorted in-frame P-sites found in the sample
 
   tag "${meta.sample_id}"
-  label "sample_psites"
+  label "Ribo_Seq_R_scripts"
   publishDir "${outdir}/bedfiles", mode: 'copy'
 
   input:
   tuple val(meta), path(riboseqc_results)
-  path package_install_loc
   val outdir
 
   output:
@@ -16,9 +15,7 @@ process sample_psites {
   
   script:
     """
-    psite_from_riboseqc.R \
-    ${riboseqc_results} \
-    ${package_install_loc}
+    psite_from_riboseqc.R ${riboseqc_results} 
 
     sort -T \$PWD -k1,1 -k2,2n "${meta.sample_id}_psites.bed" > "${meta.sample_id}_psites.sorted.bed"
     """

@@ -9,6 +9,7 @@ fn_clean_exts:
   - ".local"
   - "_500k" # For testing, remove later
   - "_filtered"
+
 table_columns_visible:
   cutadapt:
     percent_trimmed: False
@@ -36,8 +37,6 @@ report_section_order:
       order: 20
   riboseq_counts:
       order: 10
-#top_module:
-#- total_reads
 
 software_versions:
   trimgalore: "0"

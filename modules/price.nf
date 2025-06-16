@@ -1,15 +1,14 @@
 process price_index {
 
-    label "price_index"
+    label "price"
 
     input:
-    path fasta // Genome fasta used for alingment
-    path gtf // Transcriptome GTF used for alignment
-    val price_prefix // name of price files
+    path fasta        // Genome fasta used for alingment
+    path gtf          // Transcriptome GTF used for alignment
     val gedi_exec_loc // Location of gedi installation, until containerisation works
 
     output:
-    path "${price_prefix}.oml", emit: price_index
+    path "PRICE_index.oml", emit: price_index
     path "${gtf.baseName}.*"
     path "${fasta.baseName}.*"
 
@@ -19,10 +18,30 @@ process price_index {
         -s "${fasta}" \
         -a "${gtf}" \
         -f "." \
-        -o "${price_prefix}.oml" \
+        -o "PRICE_index.oml" \
         -nobowtie \
         -nostar \
         -nokallisto
+    """
+
+}
+
+process merge_price_bams{
+    label "samtools"
+    publishDir "${outdir}/price", mode: 'copy'
+
+    input:
+    path bamlist
+    path outdir
+
+    output:
+    path "star_end2end_merged_sorted.bam", emit: merged_end2end_bam
+
+    script:
+    """
+    samtools merge -@ $task.cpus -b ${bamlist} star_end2end_merged.bam 
+    samtools sort -@ $task.cpus -o star_end2end_merged_sorted.bam star_end2end_merged.bam
+    samtools index star_end2end_merged_sorted.bam
     """
 
 }
@@ -33,31 +52,30 @@ process price {
     publishDir "${outdir}/price", mode: 'copy'
 
     input:
-    path bamlist // File that lists all BAM files
-    path price_index // Index for PRICE
-    val price_prefix // Name of price files
+    path bamlist      // File that lists all BAM files
+    path price_index  // Index for PRICE
     val gedi_exec_loc // Location of gedi installation, until containerisation works
-    val outdir // Output directory
+    val outdir        // Output directory
 
     output:
-    tuple val("PRICE"), path("${price_prefix}.orfs.cit.bed"), emit: price_orfs
+    tuple val("PRICE"), path("PRICE.orfs.cit.bed"), emit: price_orfs
 
     script:
     """
     ${gedi_exec_loc}/gedi -e Price \
         -reads ${bamlist} \
         -genomic ${price_index} \
-        -prefix "${price_prefix}"
+        -prefix "PRICE"
     
     ${gedi_exec_loc}/gedi Nashorn -e \
-        'load("'${price_prefix}.orfs.cit'").ei().map(function(o) new BedEntry(o.data.getStartStop(o,true).toMutable().setData(new NameAnnotation(o.data.getGeneId()+"__"+o.data.getTranscript()+"__"+o.data.getType()+"__"+o.data.getOrfid()+"__"+o.data.getStartCodon())))).print()' \
-        > "${price_prefix}.orfs.cit.bed"
+        'load("'PRICE.orfs.cit'").ei().map(function(o) new BedEntry(o.data.getStartStop(o,true).toMutable().setData(new NameAnnotation(o.data.getGeneId()+"__"+o.data.getTranscript()+"__"+o.data.getType()+"__"+o.data.getOrfid()+"__"+o.data.getStartCodon())))).print()' \
+        > "PRICE.orfs.cit.bed"
     """
 
 }
 
 process price_to_gtf{
-    label "price_to_gtf"
+    label "Ribo_Seq_R_scripts"
     publishDir "${outdir}/price", mode: 'copy'
 
     input:

@@ -1,12 +1,13 @@
 include { orfcaller_psites; sample_psites; orfcaller_psites as ref_psites; merge_orfcaller_psites } from "../modules/process_bed.nf"
 
+// Obtain P0 sites of all reference transcripts and all predicted ORFs
+// Required to classify intORFs
 workflow PSITE {
 
     take:
-    orfcaller_gtf
-    reference_gtf
-    riboseqc_results
-    package_install_loc
+    orfcaller_gtf       // Path to ORFcaller output in gtf format
+    reference_gtf       // Path to input reference gtf
+    riboseqc_results    // Path to riboseqc results
     outdir
 
     main:

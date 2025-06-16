@@ -15,8 +15,6 @@ input_files <- commandArgs(trailingOnly = TRUE)
 
 if (length(input_files) == 0) stop("No input files provided.")
 
-#riboseqc_files <- list.files("riboseqc", pattern = "results_RiboseQC_all", full.names = T, recursive = T)
-
 # ------------------------------------------------------------------------------
 # Initialize empty data frames for collecting statistics from each sample
 # ------------------------------------------------------------------------------

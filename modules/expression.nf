@@ -34,7 +34,7 @@ process ppm_matrix {
     // Create a matrix object for raw P-sites and PPM for each ORF and
     // each sample included in the cohort
 
-    label "calculate_matrix"
+    label "Ribo_Seq_R_scripts"
     publishDir "${outdir}/orf_expression", mode: 'copy'
 
     input:
@@ -56,7 +56,7 @@ process ppm_matrix {
 }
 
 process expression_table{
-    label "expression_table"
+    label "Ribo_Seq_R_scripts"
     publishDir "${outdir}/final_orf_table", mode: 'copy'
 
 
