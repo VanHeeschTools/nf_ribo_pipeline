@@ -11,18 +11,21 @@ process fastqc {
     val outdir                   // Output directory
 
     output:
-    path "*/*.html" // Output QC summary 
-    path "*/*.zip", emit: fastqc_zip  // QC files
+    path "${meta.sample_id}/${meta.sample_id}_filtered_fastqc.html" // Output QC summary 
+    path "${meta.sample_id}/${meta.sample_id}_filtered_fastqc.zip", emit: fastqc_zip  // QC files
 
     script:
     //TODO: put in config file
     def sample_id = meta.sample_id
     """
+    mkdir -p tmp
     mkdir ${sample_id}
     fastqc \
         ${reads} \
         --threads $task.cpus \
-        --outdir "${sample_id}"
+        -d "tmp" \
+        --outdir "${sample_id}" 
+    rm -r tmp
     """
 
 }

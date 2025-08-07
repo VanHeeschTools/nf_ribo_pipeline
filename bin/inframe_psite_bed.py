@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+
+
+#TODO: Currently won't work properly if the exact same CDS for one ORF occurs twice. Needs to throw an error or filter for uniqueness
 import sys
 import os
 from optparse import OptionParser
@@ -43,13 +46,15 @@ if not gtff.endswith(".gtf"):
 os.makedirs(outdir, exist_ok=True)
 
 # Open the output BED file
-output_path = os.path.join(outdir, os.path.basename(gtff) + "_psites_plus_partial.bed")
+file_basename = os.path.splitext(os.path.basename(gtff))[0]
+output_path = os.path.join(outdir, file_basename + "_psites_plus_partial.bed")
 out = open(output_path, "w+")
 
 # ----------------------------
-# Define a simple transcript container
+# Define class to hold transcript or ORF information
 # ----------------------------
-class TransObject:
+#TODO: Add a unique coord check
+class Coord_Object:
     def __init__(self, chrom, gene, strand):
         self.chrom = chrom
         self.gene = gene
@@ -59,7 +64,7 @@ class TransObject:
 
 
 # ----------------------------
-# parse_gtf: collect CDS coordinates per transcript
+# parse_gtf: collect CDS coordinates per transcript or ORF
 # ----------------------------
 def parse_gtf(gtf_path, feature, id_field):
     transcripts = {}
@@ -82,7 +87,7 @@ def parse_gtf(gtf_path, feature, id_field):
                 continue
 
             if tid not in transcripts:
-                transcripts[tid] = TransObject(chrom, gid, strand)
+                transcripts[tid] = Coord_Object(chrom, gid, strand)
 
             transcripts[tid].start_coords.append(int(start))
             transcripts[tid].end_coords.append(int(end))

@@ -1,5 +1,7 @@
 #!/usr/bin/env Rscript
 
+# CHECK IF THIS SCRIPT IS STILL BEING USED!!!
+
 suppressPackageStartupMessages({
     library(magrittr)
     library(dplyr)

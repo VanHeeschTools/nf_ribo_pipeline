@@ -3,10 +3,10 @@ process contaminants_check {
 
     tag "multi-sample-contaminants"
     label "samtools"
-    publishDir "${outdir}/bowtie2", mode: 'copy'
+    publishDir "${outdir}/bowtie2/mqc_files", mode: 'copy'
 
     input:
-    tuple val(meta), path(reads), path(filtered_reads), path(sam_file)
+    tuple val(meta), path(reads), path(filtered_reads), val(sam_file)
     val keep_sam
     val outdir
 
@@ -39,7 +39,7 @@ process contaminants_check {
     echo -e "Sample\\tPassed" >> "\$outfile_passed"
     echo -e "\$sample_id\\t\$filtered_reads_n" >> "\$outfile_passed"
 
-    if [ "$keep_sam" = "false" ]; then
+    if [ "$keep_sam" = false ]; then
         rm -f "${sam_file}"
     fi
     """
@@ -49,23 +49,21 @@ process samtools {
 
     // Get mapping stats, sorted bam and .bai with SAMTOOLS
 
-    tag "${meta.sample_id}"
+    tag "${sample_id}"
     label "samtools"
     publishDir "${outdir}/star/", mode: 'copy'
 
     input: 
-    tuple val(meta), path(bam) // Aligned BAMs
+    tuple val(sample_id), path(bam) // Aligned BAMs
     val outdir                 // Output directory
 
     output:
-    tuple val(meta), path("${meta.sample_id}/${meta.sample_id}*.Aligned.sortedByCoord.out.bam"), emit:sorted_bam
-    path "${meta.sample_id}/${meta.sample_id}*.Aligned.sortedByCoord.out.bam", emit:bam_files
-    path "${meta.sample_id}/${meta.sample_id}*" // Output all files to publishDir
-
+    tuple val(sample_id), path("${sample_id}/${sample_id}*.Aligned.sortedByCoord.out.bam"), emit:sorted_bam
+    path "${sample_id}/${sample_id}*.Aligned.sortedByCoord.out.bam", emit:bam_files
+    path "${sample_id}/${sample_id}*" // Output all files to publishDir
 
     script:
     def new_bam = "${bam.name.replaceFirst('.Aligned.out.bam', '.Aligned.sortedByCoord.out.bam')}"
-    def sample_id = meta.sample_id
     """
     mkdir -p ${sample_id}
     mkdir -p tmp/
@@ -80,8 +78,8 @@ process samtools {
     rm -r tmp/
 
     # Create mapping statistics with samtools
-    # TODO: will this work for both local and end2end or will it overwrite itself?
-    samtools stats -@ $task.cpus "${sample_id}/${new_bam}" > "${sample_id}/${sample_id}_stats.txt"
+    # TODO: will this work for both local and end2end or will it overwrite itself? Probably overwrite
+    samtools stats -@ $task.cpus "${sample_id}/${new_bam}" > "${sample_id}/${new_bam}_stats.txt"
 
     # Index the bam with samtools
     samtools index -@ $task.cpus "${sample_id}/${new_bam}"

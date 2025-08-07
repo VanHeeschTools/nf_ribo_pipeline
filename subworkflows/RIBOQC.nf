@@ -1,4 +1,4 @@
-include { riboseqc; create_annotation } from "../modules/riboseqc.nf"
+include { riboseqc; create_annotation } from '../modules/riboseqc.nf'
 include { riboseqc_tables } from '../modules/qcplots.nf'
 
 workflow RIBOQC {
@@ -12,11 +12,11 @@ workflow RIBOQC {
     orfquant_annotation_exists // Boolean: whether to generate annotation
     gtf                        // Transcriptome used for STAR
     twobit                     // UCSC file format for the fasta
-    reference_fasta
+    reference_fasta            // Path to genome fasta file
     outdir                     // Output directory
 
     main:
-    //TODO: Fix this
+    //TODO: This currently doesn't work, set paths in the param.config file
     if(!orfquant_annotation_exists) {
         // Create riboseqc annotation
         create_annotation(gtf,
@@ -41,12 +41,12 @@ workflow RIBOQC {
     riboseqc_tables(riboseqc.out.riboseqc_all.collect())
     riboseqc_inframe_29 = riboseqc_tables.out.riboseqc_inframe_29
     riboseqc_category_counts = riboseqc_tables.out.riboseqc_category_counts
- 
-    // Combine into one channel for multiqc
+
+    // Combine into one channel for MultiQC
     multiqc_riboseq = riboseqc_inframe_29.mix(riboseqc_category_counts)
 
     // Obtain ORFquant input files
-    // Collect will be done in the RIBOSEQ workflow
+    // Collect is done in the RIBOSEQ workflow
     for_orfquant_files = riboseqc.out.orfquant_psites
 
     emit:

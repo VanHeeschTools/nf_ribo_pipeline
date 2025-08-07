@@ -1,7 +1,7 @@
-include { trimgalore } from "../modules/fastp.nf"
-include { fastqc } from "../modules/fastqc.nf"
+include { trimgalore }             from "../modules/fastp.nf"
+include { fastqc }                 from "../modules/fastqc.nf"
 include { bowtie2; bowtie2_index } from '../modules/bowtie.nf'
-include { contaminants_check } from '../modules/samtools.nf'
+include { contaminants_check }     from '../modules/samtools.nf'
 
 workflow SELECTION {
 
@@ -19,7 +19,6 @@ workflow SELECTION {
     // Run Trimgalore
     trimgalore(reads, outdir)
     trimmed_reads = trimgalore.out.reads
-
 
     // Files for the MultiQC report
     trimgalore_report = trimgalore.out.trimgalore_trimming_report.collect()
@@ -67,10 +66,10 @@ workflow SELECTION {
                                                  removed_reads,
                                                  fastqc_zip,
                                                  contaminant_samples,
-                                                 contaminant_samples_passed)
+                                                 contaminant_samples_passed
+                                                )
 
     emit:
     rpf_reads            // Selected riboseq reads
     multiqc_read_samples // Multiqc input files
-    
 }

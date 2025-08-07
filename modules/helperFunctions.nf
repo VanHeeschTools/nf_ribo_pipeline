@@ -90,3 +90,90 @@ process write_collected_paths {
     printf "%s\n" "${collected_paths.join('\n')}" > file_paths.txt
     """
 }
+
+def validateGTF(String gtfPath) {
+    def requiredAttrs = [
+        gene      : ["gene_id", "gene_biotype", "gene_name"],
+        transcript: ["gene_id", "gene_biotype", "gene_name", "transcript_id"],
+        exon      : ["gene_id", "gene_biotype", "gene_name", "transcript_id", "exon_number"]
+    ]
+
+    def exonByTranscript = [:].withDefault { [] }
+    def missingAttrs = []
+    def seenTranscripts = new LinkedHashSet()
+
+    println "Validating input GTF: ${gtfPath}"
+
+    // Parse gtf and obtain attributes
+    new File(gtfPath).eachLine { line ->
+        if (line.startsWith("#") || !line.trim()) return
+
+        def fields = line.split("\t")
+        if (fields.size() < 9) return
+
+        def type   = fields[2]
+        def start  = fields[3].toInteger()
+        def strand = fields[6]
+        def attrText = fields[8]
+
+        // Parse attributes into map
+        def attrs = [:]
+        attrText.split(";").each { part ->
+            part = part.trim()
+            if (!part) return
+            def kv = part.split(/\s+/, 2)
+            if (kv.size() == 2) {
+                def key = kv[0]
+                def value = kv[1].replaceAll(/^"|"$/, "")
+                attrs[key] = value
+            }
+        }
+
+        // Check if required attributes are present
+        if (requiredAttrs.containsKey(type)) {
+            def missing = requiredAttrs[type].findAll { !attrs.containsKey(it) || !attrs[it] }
+            if (missing) {
+                missingAttrs << "Missing ${missing.join(", ")} in ${type} line: ${line.take(80)}..."
+            }
+        }
+
+        // Collect exons for first 10k transcripts
+        if (type == "exon" && attrs.transcript_id) {
+            def tid = attrs.transcript_id
+            seenTranscripts << tid
+            if (seenTranscripts.size() <= 10_000) {
+                exonByTranscript[tid] << [start: start, strand: strand]
+            }
+        }
+    }
+
+    // Throw error if attributes are missing
+    if (missingAttrs) {
+        println "Attribute check failed:"
+        missingAttrs.take(10).each { println "- $it" }
+        if (missingAttrs.size() > 10)
+            println "... and ${missingAttrs.size() - 10} more."
+        System.exit(1)
+    } else {
+        println "All required attributes are present."
+    }
+
+    // Check if exons are sorted correctly
+    exonByTranscript.each { tid, exons ->
+        def strand = exons[0].strand
+        def starts = exons*.start
+
+        // Check that the starts follow correct strand-specific order
+        def isOrdered = (strand == "+") ? 
+            starts.inject([true, starts[0]]) { acc, val -> [acc[0] && val >= acc[1], val] }[0] :
+            starts.inject([true, starts[0]]) { acc, val -> [acc[0] && val <= acc[1], val] }[0]
+        // Throw error if not sorted correctly
+        if (!isOrdered) {
+            println "Exons not sorted correctly for transcript ${tid} on strand '${strand}'"
+            println "Start positions: ${starts}"
+            System.exit(1)
+        }
+    }
+    println "Exons ordered correctly in first 10,000 transcripts."
+    println "GTF validation passed for ${exonByTranscript.size()} transcripts."
+}

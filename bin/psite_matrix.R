@@ -11,12 +11,12 @@ suppressPackageStartupMessages({
 # Input args --------------------------------------------------------------
 args = commandArgs(trailingOnly = TRUE)
 
-ref_bedf <- args[1]
+ref_bed <- args[1]
 bedfile_loc <- args[2]
 analysis_name <- "orf_table"
 
 # Get lengths of reference ORFs -------------------------------------------
-ref_bed <- data.table::fread(ref_bedf,
+ref_bed <- data.table::fread(ref_bed,
                              col.names = c("chrom", "start", "end", "ref_id", "frame", "strand")) %>%
   subset(!grepl("pATG|pST", .$frame))
 
@@ -94,7 +94,7 @@ for (int_file in bed_file_list) {
   # Ensure psites_overlap has the correct number of rows
   if (nrow(psites_overlap) > 0) {
     # Calculate PPM
-    scaling_factor <- sum(psites_overlap$psites_perkb) / 1000000 # This might be the problem
+    scaling_factor <- sum(psites_overlap$psites_perkb) / 1000000 
 
     psites_overlap$ppm <- psites_overlap$psites_perkb / scaling_factor
     

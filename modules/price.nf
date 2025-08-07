@@ -1,3 +1,4 @@
+// Create index file for PRICE run
 process price_index {
 
     label "price"
@@ -26,13 +27,14 @@ process price_index {
 
 }
 
+// Merge end2end BAM files for PRICE
 process merge_price_bams{
     label "samtools"
     publishDir "${outdir}/price", mode: 'copy'
 
     input:
     path bamlist
-    path outdir
+    val outdir
 
     output:
     path "star_end2end_merged_sorted.bam", emit: merged_end2end_bam
@@ -46,6 +48,7 @@ process merge_price_bams{
 
 }
 
+// Run PRICE
 process price {
 
     label "price"
@@ -74,6 +77,7 @@ process price {
 
 }
 
+// Convert PRICE output bed file to a semi gtf format only keeping the CDS rows
 process price_to_gtf{
     label "Ribo_Seq_R_scripts"
     publishDir "${outdir}/price", mode: 'copy'

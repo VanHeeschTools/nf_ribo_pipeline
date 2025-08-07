@@ -33,6 +33,8 @@ process bowtie2 {
 
     tag "${meta.sample_id}"
     label "bowtie2"
+    publishDir "${outdir}/bowtie2", mode: 'copy', pattern: "${meta.sample_id}/${meta.sample_id}_filtered.fastq.gz"
+
 
     input:
     val bowtie2_index_prefix      // Bowtie2 reference index

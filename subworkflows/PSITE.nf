@@ -17,7 +17,7 @@ workflow PSITE {
                "ORF_id",
                outdir
     )
-   
+
     // Merge the bed files of all ORFcallers
     merge_orfcaller_psites(orfcaller_psites.out.collect()
     )

@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
 # =============================================================================
-# 01 | LOAD LIBRARIES----
+# 01 | LOAD LIBRARIES ----
 # =============================================================================
 suppressPackageStartupMessages({
   library(dplyr)
@@ -71,8 +71,7 @@ gtf_df <- as.data.frame(rtracklayer::import(gtf)) %>%
 #' Prepare PRICE ORF Data for Analysis
 #'
 #' Imports and processes ORFs predicted by PRICE from a BED file, generating
-#' both genomic ranges and ORF-level metadata including transcript and gene 
-#' annotations, and predicted protein sequences.
+#' both genomic ranges and ORF-level metadata.
 #'
 #' @param price_orfs_loc A character string indicating the file path to the 
 #'   PRICE ORFs in BED format.
@@ -156,8 +155,8 @@ prepare_price <- function(price_orfs_loc, tx2gene, gtf_df) {
 
 #' Prepare ORFquant Data for Analysis
 #'
-#' Imports the ORFquant resultobject and processes its contents to extract 
-#' ORF genomic ranges and associated metadata in a structured format. 
+#' Imports the ORFquant result object and processes its contents to extract 
+#' ORF genomic ranges and associated ORF metadata in a structured format. 
 #' Returns both the ORF ranges and a metadata table with transcript- and 
 #' gene-level annotations.
 #'
@@ -175,8 +174,8 @@ prepare_price <- function(price_orfs_loc, tx2gene, gtf_df) {
 #' @details
 #' The function adjusts the ORF ranges to include the stop codon (which is 
 #' omitted in ORFquant output), computes protein lengths, and ensures all 
-#' entries are distinct. It uses tidyverse functions for data manipulation and 
-#' joins the genomic and transcript-level information using the ORF ID.
+#' entries are distinct. It joins the genomic and transcript-level 
+#' information using the ORF ID.
 #'
 prepare_orfquant <- function(orfquant_orfs_loc) {
 
@@ -232,6 +231,53 @@ prepare_orfquant <- function(orfquant_orfs_loc) {
   
   return(list(orf_ranges,
               orf_table))
+}
+
+prepare_ribotie <- function(ribotie_orfs_loc) {
+  # Load RiboTIE merged ORF table
+  orf_summary_tbl <- read.csv(ribotie_orfs_loc) %>%
+    dplyr::rename("orf_id" = "ORF_id",
+                  "Protein" = "protein_seq") %>%
+    dplyr::mutate(
+      start_coord = ifelse(strand == "+", TIS_coord, LTS_coord - 3 ),
+      end_coord = ifelse(strand == "+", LTS_coord + 3, TIS_coord)
+    ) %>%
+    dplyr::mutate(ORF_ranges = paste0(seqname, ":", start_coord, "-", end_coord),
+                  Protein_Length = nchar(Protein))
+
+  # Parse CDS_coords into flat GRanges 
+  cds_df <- orf_summary_tbl %>%
+    dplyr::select(orf_id, CDS_coords) %>%
+    dplyr::filter(!is.na(CDS_coords)) %>%
+    dplyr::mutate(CDS_coords = str_split(CDS_coords, ";\\s*")) %>%
+    tidyr::unnest(CDS_coords) %>%
+    dplyr::mutate(
+      seqname = str_extract(CDS_coords, "^[^:]+"),
+      start   = as.integer(str_extract(CDS_coords, "(?<=:)[0-9]+")),
+      end     = as.integer(str_extract(CDS_coords, "(?<=-)[0-9]+")),
+      strand  = str_extract(CDS_coords, "(?<=\\()[+-](?=\\))")
+    )
+  
+  # Construct GRanges object
+  cds_gr <- GRanges(
+    seqnames = cds_df$seqname,
+    ranges   = IRanges(cds_df$start, cds_df$end),
+    strand   = cds_df$strand
+  )
+  names(cds_gr) <- cds_df$orf_id
+  
+  # Split GRanges by ORF_id
+  orf_ranges <- split(cds_gr, cds_df$orf_id)
+  
+  # Remove columns that are no longer required
+  orf_summary_tbl <- orf_summary_tbl %>%
+    dplyr::select(-TIS_coord,-LTS_coord,-start_coord,-end_coord)
+  
+  # Return list
+  return(list(
+    orf_ranges = orf_ranges,
+    orf_table = orf_summary_tbl
+  ))
 }
 
 
@@ -359,9 +405,7 @@ annotate_new_orfs <- function(orf_ranges, orf_table, cds_matches_grl, orf_caller
   # Convert ORF caller name to lowercase for consistency
   orf_caller <- tolower(orf_caller)
   # Adjust stop codon handling based on ORF caller
-  # CHECK IF THIS STILL NEEDS TO BE DONE
-  adjust_stop <- ifelse(orf_caller == "orfquant", 3, 0)  
-  #adjust_stop <- 0
+  adjust_stop <- ifelse(orf_caller == "price", 0, 3)  
   
   # Calculate similarity between ORF and CDS range
   cds_range_similarity <- width(range(orf_ranges)) / (width(range(cds_matches_grl)) - adjust_stop)
@@ -423,19 +467,19 @@ annotate_new_orfs <- function(orf_ranges, orf_table, cds_matches_grl, orf_caller
   ) 
   
   # Remove start_codon column for "price" ORF caller 
-  # star_codon column already exists in price table
+  # start_codon column already exists in price table
   if (tolower(orfcaller) == "orfquant"){
     orf_table <- orf_table %>%
       dplyr::left_join(new_category_df, by = "orf_id")
   }
   
-  if (tolower(orfcaller) == "price") {
+  if (tolower(orfcaller) %in% c("price","ribotie")) {
     new_category_df <- new_category_df %>%
       dplyr::select(!start_codon)
     orf_table <- orf_table %>%
       dplyr::left_join(new_category_df, by = "orf_id")
   }
-
+  
   return(orf_table)
 }
 
@@ -446,14 +490,14 @@ annotate_new_orfs <- function(orf_ranges, orf_table, cds_matches_grl, orf_caller
 #' groups and refines ORF category annotations (`orf_category_new`) based on
 #' the updated gene biotypes and CDS similarity information.
 #'
-#' @param orf_table A data frame or tibble containing ORF annotations,
+#' @param orf_table A data frame containing ORF annotations,
 #'   including the columns `gene_biotype`, `orf_category_new`, and optionally
 #'   `cds_range_similarity`.
 #'
 #' @return The input `orf_table` with two columns updated:
 #'   - `gene_biotype`: grouped into better fitting categories.
 #'   - `orf_category_new`: re-annotated based on the new `gene_biotype` and
-#'     overlap with CDS (`cds_range_similarity`).
+#'      overlap with CDS (`cds_range_similarity`).
 re_annotate_new_orfs <- function(orf_table) {
   orf_table <- orf_table %>%
     # Step 1: Group gene biotypes into simplified categories
@@ -608,6 +652,8 @@ if (tolower(orfcaller) == "orfquant") {
     tx2gene = tx2gene,
     gtf_df = gtf_df
   )
+} else if (tolower(orfcaller) == "ribotie") {
+    prep_orfs <- prepare_ribotie(ribotie_orfs_loc = orfs_loc) 
 }
 
 # Step_2: Set same annotation style

@@ -37,6 +37,6 @@ process riboseqc_tables {
     script:
 
     """
-   riboseqc_tables.R ${riboseqc_all.join(' ')}
+    riboseqc_tables.R ${riboseqc_all.join(' ')}
     """
 }

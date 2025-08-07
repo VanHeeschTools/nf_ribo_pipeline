@@ -1,3 +1,4 @@
+// Merge RiboseQC output 
 process prepare_orfquant {
 
     label "orfquant"
@@ -14,6 +15,7 @@ process prepare_orfquant {
     script:
 
     """
+    #Collect all RiboseQC output paths in one file
     printf "%s\n" "${collected_paths.join('\n')}" > file_paths.txt
 
     merge_psites.R \
@@ -21,6 +23,7 @@ process prepare_orfquant {
     """
 }
 
+// Run ORFquant
 process orfquant {
 
     label "orfquant"
@@ -36,7 +39,6 @@ process orfquant {
 
     output:
     tuple val("ORFquant"), path("output_final_ORFquant_results"), emit: orfquant_orfs
-    //path "${orfquant_prefix}_*"
 
     script:
     """
@@ -50,10 +52,8 @@ process orfquant {
     """
 }
 
+// Fixes ORFquant GTF which has incorrect names and doesn't include the stop codon in the coords
 process fix_orfquant {
-
-    // Fixes ORFquant GTF which has incorrect names and doesn't include the stop codon in the coords
-
     label "Ribo_Seq_R_scripts"
     publishDir "${outdir}/orfquant", mode: 'copy'
 

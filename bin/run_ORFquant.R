@@ -34,7 +34,7 @@ ORFquant_analysis <- function(for_ORFquant_file,
                               rannot,
                               cpu,
                               html_report) {
-
+  # Can be used to run ORFquant only for certain genes
   gene_names <- NA
   gene_ids <- NA
   
@@ -72,13 +72,7 @@ ORFquant_analysis <- function(for_ORFquant_file,
 
 }
 
-# Run script --------------------------------------------------------------
-# See if script works without annotation
-# if (!require(basename(annotation_package), character.only = TRUE)) {
-#   install.packages(annotation_package,
-#                    repos = NULL, type = "source")
-# }
-
+# Run script
 ORFquant_analysis(for_ORFquant_file = for_ORFquant_file,
                   sample_id = pool_id,
                   ORFquant_output_file = ORFquant_output_file,

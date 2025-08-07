@@ -123,10 +123,6 @@ all$`source` = "ORFquant"
 names(all) <- NULL
 
 
-# Export output files
-#filepath_fasta <- file.path(workdir, paste(orfquant_prefix, "ORFquant_Protein_sequences.fasta", sep = "_"))
-#Biostrings::writeXStringSet(proteins, filepath = filepath_fasta)
-
 
 # EXTEND LAST CDS +3bp
 cds <- all[all$type == "CDS"]

@@ -1,3 +1,20 @@
+process filter_removed_orf_ids{
+    tag "${sample_id}"
+    label "filter_removed_orf_ids"
+
+    input:
+    path removed_orf_ids
+    path orfcaller_psites
+
+    output:
+    path "combined_psites_filtered.bed", emit: orfcaller_psites_filtered
+
+    script:
+    """
+    grep -v -F -f ${removed_orf_ids} ${orfcaller_psites} > combined_psites_filtered.bed
+    """
+}
+
 process intersect_psites {
 
     // Intersect a reference BED with p-site positions with p-sites from a sample
@@ -59,7 +76,6 @@ process expression_table{
     label "Ribo_Seq_R_scripts"
     publishDir "${outdir}/final_orf_table", mode: 'copy'
 
-
     input:
     val harmonised_orf_table
     val ppm_matrix
@@ -80,7 +96,11 @@ process expression_table{
 
     # Calculate amount of samples with a PPM of 1 or higher
     sample_cols <- setdiff(names(combined_ppm_table), "orf_id")
-    combined_ppm_table\$Total_number_samples <-  rowSums(combined_ppm_table[ , sample_cols] >= 1)
+    # combined_ppm_table\$Total_number_samples <-  rowSums(combined_ppm_table[ , sample_cols] >= 1)
+
+    combined_ppm_table\$Total_number_samples <- rowSums(
+        combined_ppm_table[, sample_cols, drop = FALSE] >= 1
+    )
 
     # Join ORF table with PPM results
     orf_table_joined <- orf_table %>%
