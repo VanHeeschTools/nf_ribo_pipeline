@@ -58,7 +58,8 @@ ribotie_multiqc = ribotie_predict_samples.out.ribotie_multiqc
 
 merge_ribotie_output(ribotie_orf_csv.collect(),
                     genomic_h5_db,
-                    ribotie_min_samples)
+                    ribotie_min_samples,
+                    outdir)
 
 ribotie_orf_gtf = merge_ribotie_output.out.ribotie_merge_gtf
 ribotie_merged = merge_ribotie_output.out.ribotie_merged_csv

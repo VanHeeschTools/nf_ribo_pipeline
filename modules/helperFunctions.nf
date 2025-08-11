@@ -18,6 +18,7 @@ def check_files(name, path, type) {
     if(!path) {
         error "When running merge without assembly you must provide `${name}`."
     } else {
+        def file_to_check = null
         if (type == "dir") {
             file_to_check = file(path, type: "dir")
         } else {
@@ -48,8 +49,8 @@ def checkInputFiles() {
     //Check inputs
 
     // Locate bams
-    default_bams = "${params.outdir}/star/**/*.Aligned.sortedByCoord.out.bam"
-    bam_avail = true
+    def default_bams = "${params.outdir}/star/**/*.Aligned.sortedByCoord.out.bam"
+    def bam_avail = true
     if (!params.align) {
         if (!params.bam_files && !file(default_bams).isEmpty()) {
             log.info "bam files     : ${default_bams}".stripIndent()

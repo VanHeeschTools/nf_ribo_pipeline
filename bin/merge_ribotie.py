@@ -3,7 +3,7 @@
 import sys
 import polars as pl
 import re
-import gtfutils
+import gffutils
 from typing import List
 from transcript_transformer.processing import csv_to_gtf, filter_CDS_variants
 
@@ -151,38 +151,50 @@ def convert_to_gtf(h5_path, top_orfs_df):
 def add_cds_summary_to_orfs(gtf_path: str, orf_df: pl.DataFrame) -> pl.DataFrame:
     """
     Appends a 'CDS_coords' column to the ORF DataFrame by summarizing
-    all CDS regions per ORF_id from a GTF file, using gtfutils for parsing.
+    all CDS regions per ORF_id from a GTF file, using gffutils for parsing.
 
     Parameters
+    ----------
     gtf_path : str
         Path to the GTF file with CDS lines
     orf_df : pl.DataFrame
-        ORF DataFrame containing
+        ORF DataFrame with 'ORF_id' column
 
     Returns
+    -------
     pl.DataFrame
-        Input ORF DataFrame with a new 'CDS_coords' column
+        Original ORF DataFrame with a new 'CDS_coords' column added
     """
-    # Parse the GTF and collect CDS coords per ORF_id
-    cds_map = {}
-    for feature in gtfutils.GTF(gtf_path).features_of_type("CDS"):
-        orf = feature.attrs.get("ORF_id", [None])[0]
-        if not orf: 
-            continue
-        coord = f"{feature.seqname}:{feature.start}-{feature.end}({feature.strand})"
-        cds_map.setdefault(orf, []).append((feature.start if feature.strand=="+" else -feature.start, coord))
-
-    # Obtain the cds coords for every ORF, sorting coords by strand
-    cds_df = (
-        pl.DataFrame(
-            ((orf, "; ".join([c for _,c in sorted(coords)]))
-            for orf, coords in cds_map.items()),
-            schema=["ORF_id","CDS_coords"]
-        )
+    # Create a temporary gffutils DB (in-memory)
+    db = gffutils.create_db(
+        gtf_path,
+        dbfn=":memory:",
+        force=True,
+        keep_order=True,
+        disable_infer_genes=True,
+        disable_infer_transcripts=True
     )
 
-    # Join back on ORF_id
+    # Collect CDS coords grouped by ORF_id
+    cds_map = {}
+    for feature in db.features_of_type("CDS"):
+        orf = feature.attributes.get("ORF_id", [None])[0]
+        if orf is None:
+            continue
+        coord = f"{feature.seqid}:{feature.start}-{feature.end}({feature.strand})"
+        key = feature.start if feature.strand == "+" else -feature.start
+        cds_map.setdefault(orf, []).append((key, coord))
+
+    # Create a summary DataFrame from sorted coordinate strings
+    cds_df = pl.DataFrame(
+        [(orf, "; ".join([c for _, c in sorted(coords)]))
+        for orf, coords in cds_map.items()],
+        schema=["ORF_id", "CDS_coords"]
+    )
+
+    # Join with original ORF dataframe
     return orf_df.join(cds_df, on="ORF_id", how="left")
+
 
 if __name__ == "__main__":
     main()

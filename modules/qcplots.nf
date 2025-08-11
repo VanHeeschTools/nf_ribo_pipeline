@@ -11,12 +11,12 @@ process riboseqc_plots {
     val orfquant_prefix
 
     output:
-    "*.html"
+    path "*.html"
 
     script:
     """
     Rscript riboseqc_html.R \
-    ${input_files}
+    ${data_files}
     ${pandoc_dir} \
     ${render_file} \
     ${orfquant_prefix}

@@ -1,5 +1,4 @@
 process filter_removed_orf_ids{
-    tag "${sample_id}"
     label "filter_removed_orf_ids"
 
     input:

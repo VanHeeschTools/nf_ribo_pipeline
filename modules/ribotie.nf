@@ -124,6 +124,7 @@ process merge_ribotie_output{
     val csv_files
     path genomic_h5_db
     val ribotie_min_samples
+    val outdir
 
     output:
     tuple val("RiboTIE"), path("RiboTIE_merged.csv"), emit: ribotie_merged_csv
