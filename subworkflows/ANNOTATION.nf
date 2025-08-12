@@ -20,7 +20,7 @@ workflow ANNOTATION {
         reference_gtf,
         package_install_loc,
         orfquant_annot_package,
-        outdir,
+        outdir
     )
 
     // Collect ORF tables and sort them alphabetically
@@ -50,7 +50,14 @@ workflow ANNOTATION {
     harmonised_orf_table = harmonise_orfs.out.harmonised_orf_table
     removed_orf_ids = harmonise_orfs.out.removed_orf_ids
 
+    orfcaller_multiq = harmonise_orfs.out.orfcaller_multiq
+    merged_multiqc = harmonise_orfs.out.merged_multiqc
+    caller_count_multiqc = harmonise_orfs.out.caller_count_multiqc
+
     emit:
     harmonised_orf_table
     removed_orf_ids
+    orfcaller_multiq
+    merged_multiqc
+    caller_count_multiqc
 }

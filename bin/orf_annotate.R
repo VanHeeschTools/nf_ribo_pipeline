@@ -270,16 +270,26 @@ prepare_ribotie <- function(ribotie_orfs_loc) {
   orf_ranges <- split(cds_gr, cds_df$orf_id)
   
   # Remove columns that are no longer required
-  orf_summary_tbl <- orf_summary_tbl %>%
-    dplyr::select(-TIS_coord,-LTS_coord,-start_coord,-end_coord)
+  #orf_summary_tbl <- orf_summary_tbl %>%
+  #  dplyr::select(-TIS_coord,-LTS_coord,-start_coord,-end_coord)
   
+  # Only keep required columns
+  orf_summary_tbl <- orf_summary_tbl %>%
+  dplyr::select(orf_id,seqname,ORF_len,
+                transcript_id,start_codon,
+                strand,ORF_type,
+                Protein,gene_id,
+                gene_name, gene_biotype,
+                ORF_ranges, Protein_Length,
+                CDS_coords
+  )
+
   # Return list
   return(list(
     orf_ranges = orf_ranges,
     orf_table = orf_summary_tbl
   ))
 }
-
 
 #' Match Sequence Level Style Between Genomic Ranges
 #'
@@ -298,7 +308,6 @@ check_annot_style <- function(orf_ranges, annotated_gen) {
   GenomeInfoDb::seqlevelsStyle(orf_ranges) <- GenomeInfoDb::seqlevelsStyle(annotated_gen)[1]
   return(orf_ranges)
 }
-
 
 #' Match predicted ORFs to annotated CDS regions, choosing the best overlap or 
 #' in the case of no overlap falling back on gene-level CDSs
@@ -319,10 +328,10 @@ check_annot_style <- function(orf_ranges, annotated_gen) {
 #'   - If no overlaps are found, all CDSs of the ORF’s parent gene are returned.  
 #'   - If the parent gene has no CDS, the element remains an empty `GRanges`.
 check_orf_cds_similarity <- function(orf_ranges, orf_table, 
-                                     annotated_gen, annotated_gen_unlist) {
+                                    annotated_gen, annotated_gen_unlist) {
   
-   # Find all pairwise overlaps between predicted ORFs and annotated CDSs
-   overlaps <- GenomicRanges::findOverlaps(orf_ranges, annotated_gen)
+  # Find all pairwise overlaps between predicted ORFs and annotated CDSs
+  overlaps <- GenomicRanges::findOverlaps(orf_ranges, annotated_gen)
   
   # Compute the width (in base pairs) of each overlap region
   overlap_width <- sum(
@@ -344,7 +353,7 @@ check_orf_cds_similarity <- function(orf_ranges, orf_table,
   
   # Keep only the highest-overlap CDS for each ORF
   max_overlaps <- overlap_df[order(overlap_df$queryIdx, 
-                                   -overlap_df$overlapWidth), ]
+                                  -overlap_df$overlapWidth), ]
   max_overlaps <- max_overlaps[!duplicated(max_overlaps$queryIdx), ]
   
   # Extract ORF and CDS indices for these best overlaps
@@ -387,7 +396,6 @@ check_orf_cds_similarity <- function(orf_ranges, orf_table,
   
   return(result_list)
 }
-
 
 #' Compare CDS vs ORFcaller ORF, and make a new annotation based on a virtual 
 #' longest possible ORF of the annotated set.  

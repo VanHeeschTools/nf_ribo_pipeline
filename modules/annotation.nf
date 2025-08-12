@@ -36,13 +36,16 @@ process harmonise_orfs {
     publishDir "${outdir}/harmonise_orfs", mode: 'copy'
 
     input:
-    tuple path(orfquant_table), path(price_table), val(ribotie_table) // Tuple, path of orfquant and price annotation tables
+    tuple path(orfquant_table), path(price_table), path(ribotie_table) // Tuple, path of orfquant and price annotation tables
     val outdir                                                        // Path to output directory
 
     output:
     path "harmonised_table.csv", emit: harmonised_orf_table
     path "removed_orf_ids.txt", emit: removed_orf_ids
     path "unfiltered_harmonised_table.csv"
+    path "orfcaller_orf_categories_mqc.txt", emit: orfcaller_multiq
+    path "merged_orf_categories_mqc.txt", emit: merged_multiqc
+    path "merged_orf_caller_count_mqc.txt", emit: caller_count_multiqc
 
     //TODO: Add a proper preference checker in case of duplicate ORFs between ORFcallers
     script:

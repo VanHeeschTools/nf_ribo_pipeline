@@ -169,6 +169,9 @@ workflow RIBOSEQ {
             params.run_ribotie,
             params.outdir,
         )
+        multiqc_files = multiqc_files.mix(ANNOTATION.out.orfcaller_multiq)
+        multiqc_files = multiqc_files.mix(ANNOTATION.out.merged_multiqc)
+        multiqc_files = multiqc_files.mix(ANNOTATION.out.caller_count_multiqc)
 
         // Calculate PPM values for ORFs and add to final output table
         EXPRESSION(

@@ -101,11 +101,22 @@ def get_top_orf_scores(df: pl.DataFrame, min_samples: int = 1) -> pl.DataFrame:
     df_filtered = df.filter(pl.col("ORF_id").is_in(valid_orfs))
 
     # Return the highest ribotie_score of each ORF_id
-    return (
+    highest_score = (
         df_filtered.sort("ribotie_score", descending=True)
-                   .group_by("ORF_id")
-                   .agg(pl.all().first())
+            .group_by("ORF_id")
+            .agg(pl.all().first())
     )
+
+    # Filter out identical ORFs on different transcripts keep the ORF 
+    # with the highest ribotie_score
+    df_dedup = (
+        highest_score.sort(["ribotie_score"], descending=[True])  # highest score first
+        .group_by(["gene_id", "protein_seq", "TIS_coord", "TTS_coord"])
+        .agg(pl.all().first())
+    )
+
+    # Return the highest ribotie_score of each ORF_id
+    return (df_dedup)
 
 def save_dataframe(df: pl.DataFrame, output_path: str) -> None:
     """
@@ -154,14 +165,12 @@ def add_cds_summary_to_orfs(gtf_path: str, orf_df: pl.DataFrame) -> pl.DataFrame
     all CDS regions per ORF_id from a GTF file, using gffutils for parsing.
 
     Parameters
-    ----------
     gtf_path : str
         Path to the GTF file with CDS lines
     orf_df : pl.DataFrame
         ORF DataFrame with 'ORF_id' column
 
     Returns
-    -------
     pl.DataFrame
         Original ORF DataFrame with a new 'CDS_coords' column added
     """

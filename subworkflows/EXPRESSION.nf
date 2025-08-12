@@ -12,7 +12,7 @@ workflow EXPRESSION {
     main:
     filter_removed_orf_ids(
         removed_orf_ids,
-        orfcaller_psites,
+        orfcaller_psites
     )
     orfcaller_psites_filtered = filter_removed_orf_ids.out.orfcaller_psites_filtered
 
@@ -20,14 +20,14 @@ workflow EXPRESSION {
     // Create sample P-site files
     sample_psites(
         for_orfquant_files,
-        outdir,
+        outdir
     )
 
     // Create intersect between P-sites and ORF locations
     intersect_psites(
         sample_psites.out.sample_psite_bed,
         orfcaller_psites_filtered,
-        outdir,
+        outdir
     )
 
     intersect_paths = intersect_psites.out.sample_intersect.collect()
@@ -36,7 +36,7 @@ workflow EXPRESSION {
     ppm_matrix(
         orfcaller_psites_filtered,
         intersect_paths,
-        outdir,
+        outdir
     )
 
     ppm_matrix = ppm_matrix.out.ppm_matrix
@@ -45,7 +45,7 @@ workflow EXPRESSION {
     expression_table(
         harmonised_orf_table,
         ppm_matrix,
-        outdir,
+        outdir
     )
 
     emit:
