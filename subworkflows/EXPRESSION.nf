@@ -3,19 +3,19 @@ include { filter_removed_orf_ids ; intersect_psites ; ppm_matrix ; expression_ta
 
 workflow EXPRESSION {
     take:
-    for_orfquant_files
-    harmonised_orf_table
-    removed_orf_ids
-    orfcaller_psites
-    outdir
+    for_orfquant_files   // Path, RiboseQC output files
+    harmonised_orf_table // Path, harmonised orf table csv file
+    removed_orf_ids      // Path, txt file of filtered out ORF ids
+    orfcaller_psites     // Path, merged p0 sites of all used ORFcallers
+    outdir               // Path, output directory
 
     main:
+    // Remove filtered out ORF ids from the merged ORFcaller p0 site bed file
     filter_removed_orf_ids(
         removed_orf_ids,
         orfcaller_psites
     )
     orfcaller_psites_filtered = filter_removed_orf_ids.out.orfcaller_psites_filtered
-
 
     // Create sample P-site files
     sample_psites(
@@ -30,6 +30,7 @@ workflow EXPRESSION {
         outdir
     )
 
+    // Obtain all intersect files before continuing with next step
     intersect_paths = intersect_psites.out.sample_intersect.collect()
 
     // Calculate PPM matrices
@@ -39,6 +40,7 @@ workflow EXPRESSION {
         outdir
     )
 
+    // Define output ppm_matrix
     ppm_matrix = ppm_matrix.out.ppm_matrix
 
     // Merge the PPM results with the ORF table, creating the final output table

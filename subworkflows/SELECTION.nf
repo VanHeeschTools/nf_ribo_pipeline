@@ -9,11 +9,11 @@ workflow SELECTION {
     // Also outputs QC based on fastq information
 
     take:
-    reads               // Riboseq reads with associated sample ID in tuple format
-    bowtie2_index       // Precomputed contaminants index for bowtie2
-    contaminants_fasta  // Fasta file with rRNA, tRNA, and other contaminants
+    reads               // Tuple, path to ribo-seq reads with associated sample ID
+    bowtie2_index       // Path, precomputed contaminants index for bowtie2
+    contaminants_fasta  // Path, fasta file with rRNA, tRNA, and other contaminants
     keep_bam            // Boolean, keep big SAM file for debugging
-    outdir              // Output directory
+    outdir              // Path, output directory
 
     main:
     // Run Trimgalore
@@ -63,10 +63,9 @@ workflow SELECTION {
                     keep_bam,
                     outdir)
 
+    // Combine all MultiQC files into one channel
     contaminant_samples = contaminants_check.out.contaminant_samples.collect()
     contaminant_samples_passed = contaminants_check.out.contaminant_samples_passed.collect()
-
-    // Combine all MultiQC files into one channel
     multiqc_read_samples = trimgalore_report.mix(total_reads,
                                                 removed_reads,
                                                 fastqc_zip,

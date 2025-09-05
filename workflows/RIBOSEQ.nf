@@ -128,6 +128,7 @@ workflow RIBOSEQ {
             params.outdir,
         )
 
+        // Run RiboTIE if parameter is set to TRUE
         if (params.run_ribotie) {
             RIBOTIE(
                 ribotie_bams,
@@ -169,9 +170,7 @@ workflow RIBOSEQ {
             params.run_ribotie,
             params.outdir
         )
-        multiqc_files = multiqc_files.mix(ANNOTATION.out.orfcaller_multiq)
-        multiqc_files = multiqc_files.mix(ANNOTATION.out.merged_multiqc)
-        multiqc_files = multiqc_files.mix(ANNOTATION.out.caller_count_multiqc)
+        multiqc_files = multiqc_files.mix(ANNOTATION.out.annotation_multiqc)
 
         // Calculate PPM values for ORFs and add to final output table
         EXPRESSION(

@@ -4,17 +4,16 @@ include { write_collected_paths } from '../modules/helperFunctions.nf'
 // Run ORFquant using merged riboseqc output file
 workflow ORFQUANT {
     take:
-    orfquant_psites
-    orfquant_annotation
-    orfquant_annot_package
-    package_install_loc
-    pandoc_dir
-    outdir
+    for_orfquant_files      // Path, RiboseQC output files
+    orfquant_annotation     // Path, ORFquant Rannot file location
+    orfquant_annot_package  // Path, BSgenome index directory
+    package_install_loc     // Path, location where BSgenome package is installed
+    pandoc_dir              // Path, location of directory where pandoc is located
+    outdir                  // Path, output directory
 
     main:
-
     // Collect RiboseQC ouput paths into a single channel
-    collected_paths = orfquant_psites
+    collected_paths = for_orfquant_files
         .map { _meta, path -> path }
         .collect()
 
@@ -42,6 +41,7 @@ workflow ORFQUANT {
         outdir,
     )
 
+    // Define ORFquant subworkflow output
     orfquant_orf_gtf = fix_orfquant.out.orfquant_gtf
     orfquant_orfs = orfquant.out.orfquant_orfs
 

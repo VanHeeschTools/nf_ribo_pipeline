@@ -2,14 +2,14 @@ include { annotate_orfs ; harmonise_orfs } from "../modules/annotation.nf"
 
 workflow ANNOTATION {
     take:
-    orfcaller_output
-    orfcaller_psites
-    ref_psites
-    reference_gtf
-    package_install_loc
-    orfquant_annot_package
-    run_ribotie
-    outdir
+    orfcaller_output        // Path, ORFcaller output file
+    orfcaller_psites        // Path, merged p0 sites of all used ORFcallers
+    ref_psites              // Path, p0 sites of reference gtf
+    reference_gtf           // Path, input gtf file
+    package_install_loc     // Path, Location where BSgenome R package is installed
+    orfquant_annot_package  // Path, BSgenome index directory
+    run_ribotie             // Bool, True if RiboTIE should be run in the pipeline
+    outdir                  // Path, output directory
 
     main:
     // Parses and annotates the output of the ORFcallers
@@ -47,17 +47,18 @@ workflow ANNOTATION {
         outdir,
     )
 
+    // Define subworkflow output
     harmonised_orf_table = harmonise_orfs.out.harmonised_orf_table
     removed_orf_ids = harmonise_orfs.out.removed_orf_ids
 
+    // Annotation multiqc output files
     orfcaller_multiq = harmonise_orfs.out.orfcaller_multiq
     merged_multiqc = harmonise_orfs.out.merged_multiqc
     caller_count_multiqc = harmonise_orfs.out.caller_count_multiqc
+    annotation_multiqc = orfcaller_multiq.mix(merged_multiqc, caller_count_multiqc)
 
     emit:
     harmonised_orf_table
     removed_orf_ids
-    orfcaller_multiq
-    merged_multiqc
-    caller_count_multiqc
+    annotation_multiqc
 }

@@ -4,12 +4,12 @@ include { price; price_index; price_to_gtf; merge_price_bams } from '../modules/
 workflow PRICE {
 
   take:
-  bamlist           // List of PRICE input BAM files
-  price_index_path  // Path to the PRICE index file
-  fasta             // Reference FASTA file
-  gtf               // Input GTF file
-  gedi_exec_loc     // Location of local GEDI installation
-  outdir            // Output directory
+  bamlist           // List, PRICE input BAM files
+  price_index_path  // Path, PRICE index file
+  fasta             // Path, reference FASTA file
+  gtf               // Path, input GTF file
+  gedi_exec_loc     // Path, location of local GEDI installation
+  outdir            // Path, output directory
 
   main:
   // Check if PRICE index exists
@@ -44,7 +44,7 @@ workflow PRICE {
     outdir
   )
 
-  // Set output variables
+  // Define PRICE subworkflow output directory
   price_orfs = price.out.price_orfs
   price_orf_gtf = price_to_gtf.out.price_gtf
 

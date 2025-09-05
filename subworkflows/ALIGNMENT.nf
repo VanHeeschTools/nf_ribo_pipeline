@@ -3,15 +3,14 @@ include { samtools ; samtools as samtools_end2end } from '../modules/samtools.nf
 
 workflow ALIGNMENT {
     take:
-    rpf_reads          // Output from SELECTION subworkflow
-    genome             // Reference genome used for STAR index
-    star_index_path    // Location of precomputed STAR index
-    gtf                // Transcriptome used for STAR
+    rpf_reads          // Path, output from SELECTION subworkflow
+    genome             // Path, reference genome used for STAR index
+    star_index_path    // Path, location of precomputed STAR index
+    gtf                // Path, reference gtf file
     run_orf_prediction // Bool, True if orf callers should be run
-    outdir             // Output directory
+    outdir             // Path, output directory
 
     main:
-
     // List of files for which to check existence
     def star_index_files = [
         'chrLength.txt',
@@ -61,6 +60,8 @@ workflow ALIGNMENT {
     bam_list = samtools.out.sorted_bam
     star_log_local = star_local.out.star_log_local
 
+    // Only run the PRICE and RiboTIE STAR run if the ORF calling will be run
+    // At the moment only the ORFquant BAM file is used for MultiQC output
     if (run_orf_prediction) {
         // Run STAR end2end mode
         star_end_to_end(
@@ -76,12 +77,11 @@ workflow ALIGNMENT {
         samtools_end2end(star_end_to_end.out.bams_end2end, outdir)
         star_log_end_to_end = star_end_to_end.out.star_log_end_to_end
 
-        // Obtain all STAR end2end sorted BAM file paths
+        // Obtain all STAR end2end sorted BAM file paths and change path to string
         price_paths = samtools_end2end.out.bam_files
             .collect()
             .flatten()
             .map { it -> it.toString() }
-        // Change paths to strings
 
         // Store BAM file paths to workdir
         price_filelist = price_paths.collectFile(

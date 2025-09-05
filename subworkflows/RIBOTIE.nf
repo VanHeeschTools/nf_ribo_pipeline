@@ -2,17 +2,13 @@ include { create_template ; parse_genomic_features ; parse_samples ; ribotie_pre
 
 workflow RIBOTIE {
     take:
-    ribotie_bams        // List of PRICE input BAM files
-    fasta               // Reference FASTA file
-    gtf                 // Input GTF file
-    ribotie_min_samples // Min amount of samples the ORF should be found in 
-    outdir              // Output directory
+    ribotie_bams        // List, RiboTIE input BAM files
+    fasta               // Path, reference FASTA file
+    gtf                 // Path, input GTF file
+    ribotie_min_samples // Val, min amount of samples the ORF should be found in 
+    outdir              // Path, output directory
 
     main:
-
-    //test = ribotie_bams.collect(flat: false)
-    //test.view()
-
     //Create sample template for use in RiboTIE
     create_template(
         ribotie_bams.collect(flat: false),
@@ -29,7 +25,7 @@ workflow RIBOTIE {
         fasta,
         outdir
     )
-
+    // Define genomic h5 database
     genomic_h5_db = parse_genomic_features.out.h5_path
 
     // Create h5 database for every sample
@@ -41,6 +37,7 @@ workflow RIBOTIE {
         fasta,
         outdir
     )
+    // Define sample h5 database
     sample_h5 = parse_samples.out.h5_path
 
     //Run RiboTIE for all samples individually
@@ -52,14 +49,13 @@ workflow RIBOTIE {
         fasta,
         outdir
     )
-    //ribotie_orf_gtf = ribotie_predict_samples.out.ribotie_orf_gtf
+    // Define RiboTIE output
     ribotie_orf_csv = ribotie_predict_samples.out.ribotie_orf_csv
-
+    
+    // Define RiboTIE generated MultiQC output FOR TESTING
     ribotie_multiqc = ribotie_predict_samples.out.ribotie_multiqc
 
-    //merge_ribotie_output(ribotie_orf_csv.collect(), 
-    //                     ribotie_orf_gtf.collect())
-
+    // Merge all RiboTIE output files
     merge_ribotie_output(
         ribotie_orf_csv.collect(),
         genomic_h5_db,
@@ -67,6 +63,7 @@ workflow RIBOTIE {
         outdir
     )
 
+    // Define RIBOTIE subworkflow output 
     ribotie_orf_gtf = merge_ribotie_output.out.ribotie_merge_gtf
     ribotie_merged = merge_ribotie_output.out.ribotie_merged_csv
 

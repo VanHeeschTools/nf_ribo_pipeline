@@ -4,12 +4,12 @@ include { riboseqc_tables } from '../modules/qcplots.nf'
 workflow RIBOQC {
 
     take:
-    orfquant_annotation        // ORFquant annotation file
-    orfquant_annot_package     // ORFquant annotation R package
-    package_install_loc        // Location where R package is installed
-    pandoc_dir                 // Location of pandoc for R HTML creation
-    orfquant_bams              // Output from ALIGNMENT subworkflow
-    outdir                     // Output directory
+    orfquant_annotation        // Path, ORFquant annotation file
+    orfquant_annot_package     // Path, ORFquant annotation R package
+    package_install_loc        // Path, location where BSgenome package is installed
+    pandoc_dir                 // Path, location of pandoc for R HTML creation
+    orfquant_bams              // List, output from ALIGNMENT subworkflow
+    outdir                     // Path, output directory
 
     main:
     // Create riboseqc files

@@ -4,12 +4,11 @@ include { orfcaller_psites ; sample_psites ; orfcaller_psites as ref_psites ; me
 // Required to classify intORFs
 workflow PSITE {
     take:
-    orfcaller_gtf // Path to ORFcaller output in gtf format
-    reference_gtf // Path to input reference gtf
+    orfcaller_gtf // Path, ORFcaller output in gtf format
+    reference_gtf // Path, input reference gtf
     outdir
 
     main:
-
     // Create reference in-frame bed file for the ORF caller
     orfcaller_psites(
         orfcaller_gtf,
@@ -20,8 +19,6 @@ workflow PSITE {
     // Merge the bed files of all ORFcallers
     merge_orfcaller_psites(orfcaller_psites.out.collect(), outdir)
 
-    orfcaller_psites.out.collect().view()
-
     // Create reference in-frame bed file for the reference gtf
     ref_psites(
         reference_gtf,
@@ -29,6 +26,7 @@ workflow PSITE {
         outdir,
     )
 
+    // Define PSITE subworkflow output
     orfcaller_psites = merge_orfcaller_psites.out.combined_psites
     ref_psites = ref_psites.out.psite_bed
 
