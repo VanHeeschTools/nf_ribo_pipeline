@@ -24,12 +24,14 @@ report_comment: 'The pipeline is still in development if you have ideas for inte
 
 report_section_order:
   cutadapt:
-      order: 100
+      order: 110
   removed_reads:
-      order: 90
+      order: 100
   contaminant_counts:
-      order: 80
+      order: 90
   fastqc:
+      order: 80
+  size_distribution:
       order: 70
   star:
       order: 60
@@ -57,8 +59,6 @@ custom_data:
     file_format: txt
     section_name: 'Contaminant Mapping'
     description: 'Known contaminants in the samples. Obtained by running Bowtie2 against a contaminant dataset.'
-
-    # First plot: bargraph
     plot_type: 'bargraph'
     categories:
       Passed:
@@ -178,6 +178,18 @@ custom_data:
       Reads_Removed_Due_to_Length:
         title: 'Reads Removed'
         format: '{:,}'  
+
+  size_distribution:
+    id: 'size_distribution'
+    section_name: 'Size Distribution'
+    plot_type: 'linegraph'
+    description: 'The size distribution of reads bewteen 20-40 bp after filtering'
+    format: '{:,}'  
+    pconfig:
+      Reads_Removed_Due_to_Length:
+        title: 'Size distribution 20-40 bp'
+        style: 'lines+markers'
+        format: '{:,}'  
   
   total_reads:
     id: 'total_reads'
@@ -223,3 +235,5 @@ sp:
     fn: 'merged_orf_categories_mqc.txt'
   caller_counts:
     fn: 'merged_orf_caller_count_mqc.txt'
+  size_distribution:
+    fn: '*_size_distribution_mqc.txt'

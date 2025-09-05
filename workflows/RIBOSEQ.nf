@@ -74,8 +74,8 @@ workflow RIBOSEQ {
         ch_reads,
         params.bowtie2_index_path,
         params.contaminants_fasta,
-        params.keep_sam,
-        params.outdir,
+        params.keep_bam,
+        params.outdir
     )
     rpf_reads = SELECTION.out.rpf_reads
     multiqc_files = multiqc_files.mix(SELECTION.out.multiqc_read_samples)
@@ -87,7 +87,7 @@ workflow RIBOSEQ {
         params.star_index_path,
         params.reference_gtf,
         params.run_orf_prediction,
-        params.outdir,
+        params.outdir
     )
     multiqc_files = multiqc_files.mix(ALIGNMENT.out.star_log_local)
 
@@ -102,7 +102,7 @@ workflow RIBOSEQ {
         params.package_install_loc,
         params.pandoc_dir,
         orfquant_bams,
-        params.outdir,
+        params.outdir
     )
     multiqc_files = multiqc_files.mix(RIBOQC.out.multiqc_riboseq)
 
@@ -152,7 +152,7 @@ workflow RIBOSEQ {
         PSITE(
             orfcaller_gtf,
             params.reference_gtf,
-            params.outdir,
+            params.outdir
         )
 
         orfcaller_psites = PSITE.out.orfcaller_psites
@@ -167,7 +167,7 @@ workflow RIBOSEQ {
             params.package_install_loc,
             params.orfquant_annot_package,
             params.run_ribotie,
-            params.outdir,
+            params.outdir
         )
         multiqc_files = multiqc_files.mix(ANNOTATION.out.orfcaller_multiq)
         multiqc_files = multiqc_files.mix(ANNOTATION.out.merged_multiqc)
@@ -179,7 +179,7 @@ workflow RIBOSEQ {
             ANNOTATION.out.harmonised_orf_table,
             ANNOTATION.out.removed_orf_ids,
             orfcaller_psites,
-            params.outdir,
+            params.outdir
         )
     }
 
@@ -188,6 +188,6 @@ workflow RIBOSEQ {
     MULTIQC(
         multiqc_files.collect(),
         multiqc_config,
-        params.outdir,
+        params.outdir
     )
 }

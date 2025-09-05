@@ -28,10 +28,15 @@ def main():
     # Step 4: Filter CDS overlap
     filtered_top_orfs_df = filter_CDS_variants(top_orfs_df)
 
+    # Step 4b: Remove fully contained annotated CDS ORFs
+    #filtered_no_contained = remove_contained_annotated_CDS(filtered_top_orfs_df)
+    filtered_no_contained = filtered_top_orfs_df
+
+
     # Step 5: Convert the result to GTF format using the HDF5 file
     print("Convert df to gtf file")
-    convert_to_gtf(h5_path, filtered_top_orfs_df)
-    merged_gtf = add_cds_summary_to_orfs("RiboTIE_merged.gtf", filtered_top_orfs_df)
+    convert_to_gtf(h5_path, filtered_no_contained)
+    merged_gtf = add_cds_summary_to_orfs("RiboTIE_merged.gtf", filtered_no_contained)
 
     # Step 6: Save the filtered and merged output to a CSV file
     print("Save filtered df to csv file")
@@ -204,6 +209,52 @@ def add_cds_summary_to_orfs(gtf_path: str, orf_df: pl.DataFrame) -> pl.DataFrame
     # Join with original ORF dataframe
     return orf_df.join(cds_df, on="ORF_id", how="left")
 
+def remove_contained_annotated_CDS(df: pl.DataFrame) -> pl.DataFrame:
+    """
+    Remove annotated CDS ORFs that are fully contained within another annotated CDS ORF
+    of the same gene, based on TIS_coord (start) and TTS_coord (end).
+
+    Parameters:
+    df : pl.DataFrame
+        DataFrame with columns:
+        - 'gene_id'
+        - 'ORF_type' (should include 'annotated CDS')
+        - 'TIS_coord' (start coordinate, int)
+        - 'TTS_coord' (end coordinate, int)
+        - 'ORF_id' (unique ORF identifier)
+
+    Returns:
+    pl.DataFrame
+        Filtered DataFrame with fully contained annotated CDS ORFs removed.
+    """
+
+    # Split annotated CDS and non-annotated ORFs
+    annotated = df.filter(pl.col("ORF_type") == "annotated CDS")
+    non_annotated = df.filter(pl.col("ORF_type") != "annotated CDS")
+
+    to_remove = set()
+
+    # Group by gene_id for containment check
+    for gene, group in annotated.group_by("gene_id"):
+        starts = group["TIS_coord"].to_list()
+        ends = group["TTS_coord"].to_list()
+        orf_ids = group["ORF_id"].to_list()
+        n = len(orf_ids)
+
+        # Check each ORF if fully contained within another in same gene
+        for i in range(n):
+            for j in range(n):
+                if i != j:
+                    if starts[j] <= starts[i] and ends[i] <= ends[j]:
+                        to_remove.add(orf_ids[i])
+                        break
+
+    filtered_annotated = annotated.filter(~pl.col("ORF_id").is_in(to_remove))
+
+    # Combine filtered annotated with non-annotated
+    result = pl.concat([filtered_annotated, non_annotated])
+
+    return result.sort(["gene_id", "TIS_coord"])
 
 if __name__ == "__main__":
     main()

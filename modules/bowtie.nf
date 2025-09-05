@@ -42,9 +42,9 @@ process bowtie2 {
     val outdir                    // Output directory
 
     output:
-    tuple val(meta), path(reads), path("${meta.sample_id}/${meta.sample_id}_filtered.fastq.gz"), path("${meta.sample_id}/${meta.sample_id}_contaminants.sam"), emit: bowtie_output_files
+    tuple val(meta), path(reads), path("${meta.sample_id}/${meta.sample_id}_filtered.fastq.gz"), path("${meta.sample_id}/${meta.sample_id}_contaminants.bam"), emit: bowtie_output_files
     tuple val(meta), path("${meta.sample_id}/${meta.sample_id}_filtered.fastq.gz"), emit: filtered_reads
-   
+
     script:
     def sample_id = meta.sample_id
     """
@@ -55,7 +55,6 @@ process bowtie2 {
     --time \
     --un-gz "${sample_id}/${sample_id}_filtered.fastq.gz" \
     -x ${bowtie2_index_prefix} \
-    -U ${reads} \
-    -S "${sample_id}/${sample_id}_contaminants.sam"
+    -U ${reads} |samtools view -@ $task.cpus -bS - > "${sample_id}/${sample_id}_contaminants.bam"
     """
 }

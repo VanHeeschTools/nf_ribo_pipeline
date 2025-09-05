@@ -29,3 +29,21 @@ process fastqc {
     """
 
 }
+
+// Generate size_distibution between 20-40 nucleotides 
+process size_distribution {
+    label "Ribo_Seq_R_scripts"
+
+    input:
+    tuple val(meta), path(reads) // Trimmed FASTQ read from fastp
+
+    output:
+    path "${meta.sample_id}_size_distribution_mqc.txt", emit: size_distribution
+
+    script:
+
+    """
+    size_distribution.R ${meta.sample_id} ${reads}
+    """
+
+}

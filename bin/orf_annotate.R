@@ -313,7 +313,7 @@ check_annot_style <- function(orf_ranges, annotated_gen) {
 #' in the case of no overlap falling back on gene-level CDSs
 #'
 #' For each ORF in `orf_ranges`, this function identifies the annotated CDS 
-#' with which it has the greatestgenomic overlap. If an ORF has no direct 
+#' with which it has the greatest genomic overlap. If an ORF has no direct 
 #' overlap with any CDS, it is assigned all CDS regions of its parent gene 
 #' Returns a `GRangesList` aligned to `orf_ranges`.
 #'
@@ -490,7 +490,6 @@ annotate_new_orfs <- function(orf_ranges, orf_table, cds_matches_grl, orf_caller
   
   return(orf_table)
 }
-
 
 #' Reclassify and Refine ORF Annotations Based on Gene Biotypes
 #'

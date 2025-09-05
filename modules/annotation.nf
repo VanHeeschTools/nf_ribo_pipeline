@@ -36,8 +36,8 @@ process harmonise_orfs {
     publishDir "${outdir}/harmonise_orfs", mode: 'copy'
 
     input:
-    tuple path(orfquant_table), path(price_table), path(ribotie_table) // Tuple, path of orfquant and price annotation tables
-    val outdir                                                        // Path to output directory
+    tuple path(orfquant_table), path(price_table), val(ribotie_table) // Tuple, path of orfquant and price annotation tables
+    val outdir                                                         // Path to output directory
 
     output:
     path "harmonised_table.csv", emit: harmonised_orf_table

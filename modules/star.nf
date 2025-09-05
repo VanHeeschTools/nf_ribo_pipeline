@@ -77,7 +77,7 @@ process star_end_to_end {
 
     tag "${meta.sample_id}"
     label "alignment"
-    publishDir "${outdir}/star/", mode: 'copy', pattern: "${meta.sample_id}/${meta.sample_id}.end2end.Aligned.toTranscriptome.out.bam"
+    //publishDir "${outdir}/star/", mode: 'copy', pattern: "${meta.sample_id}/${meta.sample_id}.end2end.Aligned.toTranscriptome.out.bam"
 
     input: 
     tuple val(meta), path(reads) // Trimmed RPF reads

@@ -1,4 +1,5 @@
 
+// Create statistic output files of known contaminants in the input fastq file
 process contaminants_check {
 
     tag "multi-sample-contaminants"
@@ -6,8 +7,8 @@ process contaminants_check {
     publishDir "${outdir}/bowtie2/mqc_files", mode: 'copy'
 
     input:
-    tuple val(meta), path(reads), path(filtered_reads), val(sam_file)
-    val keep_sam
+    tuple val(meta), path(reads), path(filtered_reads), val(bam_file)
+    val keep_bam
     val outdir
 
     output:
@@ -23,7 +24,7 @@ process contaminants_check {
     filtered_reads_n=\$(zcat "${filtered_reads}" | wc -l)
     filtered_reads_n=\$((filtered_reads_n / 4))
 
-    read_counts=\$(samtools view -@ $task.cpus "${sam_file}" | awk '
+    read_counts=\$(samtools view -@ $task.cpus "${bam_file}" | awk '
         /rRNA/   {rRNA++}
         /tRNA/   {tRNA++}
         /snRNA/  {snRNA++}
@@ -39,19 +40,18 @@ process contaminants_check {
     echo -e "Sample\\tPassed" >> "\$outfile_passed"
     echo -e "\$sample_id\\t\$filtered_reads_n" >> "\$outfile_passed"
 
-    if [ "$keep_sam" = false ]; then
-        rm -f "${sam_file}"
+    if [ "$keep_bam" = false ]; then
+        rm -f "${bam_file}"
     fi
     """
 }
 
+// Get mapping stats, sorted bam and .bai with SAMTOOLS
 process samtools {
-
-    // Get mapping stats, sorted bam and .bai with SAMTOOLS
 
     tag "${sample_id}"
     label "samtools"
-    publishDir "${outdir}/star/", mode: 'copy'
+    //publishDir "${outdir}/star/", mode: 'copy'
 
     input: 
     tuple val(sample_id), path(bam) // Aligned BAMs

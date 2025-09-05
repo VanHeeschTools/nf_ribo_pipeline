@@ -10,7 +10,7 @@ process filter_removed_orf_ids{
 
     script:
     """
-    grep -v -F -f ${removed_orf_ids} ${orfcaller_psites} > combined_psites_filtered.bed
+    grep -v -w -F -f  ${removed_orf_ids} ${orfcaller_psites} > combined_psites_filtered.bed
     """
 }
 
@@ -33,15 +33,15 @@ process intersect_psites {
     script:
     """
     bedtools intersect \
-      -a ${sample_psite_bed} \
-      -b ${ref_psite_bed} \
-      -wa \
-      -wb \
-      -header \
-      -f 1.00 \
-      -s \
-      -sorted > "${sample_id}_intersect.bed"
-      """
+    -a ${sample_psite_bed} \
+    -b ${ref_psite_bed} \
+    -wa \
+    -wb \
+    -header \
+    -f 1.00 \
+    -s \
+    -sorted > "${sample_id}_intersect.bed"
+    """
 }
 
 

@@ -1,7 +1,7 @@
-include { trimgalore }             from "../modules/fastp.nf"
-include { fastqc }                 from "../modules/fastqc.nf"
-include { bowtie2; bowtie2_index } from '../modules/bowtie.nf'
-include { contaminants_check }     from '../modules/samtools.nf'
+include { trimgalore }                from "../modules/fastp.nf"
+include { fastqc; size_distribution } from "../modules/fastqc.nf"
+include { bowtie2; bowtie2_index }    from '../modules/bowtie.nf'
+include { contaminants_check }        from '../modules/samtools.nf'
 
 workflow SELECTION {
 
@@ -12,7 +12,7 @@ workflow SELECTION {
     reads               // Riboseq reads with associated sample ID in tuple format
     bowtie2_index       // Precomputed contaminants index for bowtie2
     contaminants_fasta  // Fasta file with rRNA, tRNA, and other contaminants
-    keep_sam            // Boolean, keep big SAM file for debugging
+    keep_bam            // Boolean, keep big SAM file for debugging
     outdir              // Output directory
 
     main:
@@ -54,19 +54,24 @@ workflow SELECTION {
     fastqc(rpf_reads, outdir)
     fastqc_zip = fastqc.out.fastqc_zip
 
+    // Create size distribution data
+    size_distribution(rpf_reads)
+    size_distribution = size_distribution.out.size_distribution
+    
     // Create QC stats
     contaminants_check(bowtie2_contaminants,
-                       keep_sam,
-                       outdir)
+                    keep_bam,
+                    outdir)
+
     contaminant_samples = contaminants_check.out.contaminant_samples.collect()
     contaminant_samples_passed = contaminants_check.out.contaminant_samples_passed.collect()
 
     // Combine all MultiQC files into one channel
     multiqc_read_samples = trimgalore_report.mix(total_reads,
-                                                 removed_reads,
-                                                 fastqc_zip,
-                                                 contaminant_samples,
-                                                 contaminant_samples_passed
+                                                removed_reads,
+                                                fastqc_zip,
+                                                contaminant_samples,
+                                                contaminant_samples_passed,
                                                 )
 
     emit:

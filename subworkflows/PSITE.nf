@@ -18,7 +18,9 @@ workflow PSITE {
     )
 
     // Merge the bed files of all ORFcallers
-    merge_orfcaller_psites(orfcaller_psites.out.collect())
+    merge_orfcaller_psites(orfcaller_psites.out.collect(), outdir)
+
+    orfcaller_psites.out.collect().view()
 
     // Create reference in-frame bed file for the reference gtf
     ref_psites(

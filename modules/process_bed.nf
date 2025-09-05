@@ -48,15 +48,17 @@ process merge_orfcaller_psites {
   // Combine the p_site bed files from all ORFcallers
 
   label "merge_psites"
+  publishDir "${outdir}/annotation", mode: 'copy'
 
   input:
   path orfcaller_psites
+  val outdir
 
   output:
   path "combined_psites.bed", emit: combined_psites
 
   script:
   """
-  cat ${orfcaller_psites.join(' ')} | sort -T \$PWD --parallel=$task.cpus -k1,1 -k2,2n |uniq > combined_psites.bed
+  cat ${orfcaller_psites.join(' ')} | sort -T \$PWD --parallel=$task.cpus -k1,1 -k2,2n > combined_psites.bed
   """
 }
