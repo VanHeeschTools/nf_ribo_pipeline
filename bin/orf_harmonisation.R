@@ -140,6 +140,33 @@ write_results <- function(sorted_df, output_file){
               row.names = F)
 }
 
+#' Write a FASTA file from a dataframe
+#'
+#' This function takes the orf_table dataframe and writes a compressed FASTA file (.fa.gz). 
+#' Each `orf_id` is used as the FASTA header, and the corresponding `Protein` entry 
+#' is written as the sequence, wrapped at 60 characters per line.
+#'
+#' @param sorted_df
+#' @param fasta_file
+
+write_orf_fasta <- function(sorted_df, fasta_file) {
+  # Open a gzipped file connection
+  con <- gzfile(fasta_file, "w")
+  on.exit(close(con))
+  
+  # Helper: wrap sequence into 60-char lines
+  wrap_seq <- function(seq, width = 60) {
+    paste(strwrap(seq, width = width), collapse = "\n")
+  }
+  
+  # Build FASTA entries
+  fasta_entries <- paste0(">", sorted_df$orf_id, "\n",
+                          vapply(sorted_df$Protein, wrap_seq, character(1)))
+  
+  # Write to file
+  writeLines(fasta_entries, con)
+}
+
 #' Generate MultiQC table of ORF categories per ORFcaller
 #'
 #' @param orf_dfs Named list of data frames, each corresponding to an ORFcaller
@@ -247,6 +274,9 @@ write_results(sorted_df, "harmonised_table.csv")
 # For testing purposes sort and write unfiltered harmonised orf table
 sorted_unfiltered_df <- sort_orfs(orfs)
 write_results(sorted_unfiltered_df, "unfiltered_harmonised_table.csv")
+
+# Step 5: Write ORF protein sequences to fasta file
+write_orf_fasta(sorted_df, "orf_sequences.fa.gz")
 
 # =============================================================================
 # 05 | CREATE MULTIQC TABLES ----

@@ -1,3 +1,4 @@
+//TODO: check if still required
 process riboseqc_plots {
 
     label "riboseqc_plots"
@@ -23,6 +24,7 @@ process riboseqc_plots {
     """
 }
 
+// Create RiboseQC statistics tables for MultiQC
 process riboseqc_tables {
 
     label "Ribo_Seq_R_scripts"

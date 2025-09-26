@@ -20,7 +20,7 @@ workflow ORFQUANT {
     // Merge RiboseQC output 
     prepare_orfquant(
         collected_paths,
-        outdir,
+        outdir
     )
 
     // Run ORFquant using merged RiboseQC output
@@ -30,7 +30,7 @@ workflow ORFQUANT {
         pandoc_dir,
         orfquant_annot_package,
         package_install_loc,
-        outdir,
+        outdir
     )
 
     // Corrects the IDs of the ORFquant GTF and adds plus three to the end coordinates of CDS
@@ -38,7 +38,7 @@ workflow ORFQUANT {
         orfquant.out.orfquant_orfs,
         orfquant_annotation,
         package_install_loc,
-        outdir,
+        outdir
     )
 
     // Define ORFquant subworkflow output

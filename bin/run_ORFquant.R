@@ -16,7 +16,6 @@ pandoc_dir <- args[4]
 annotation_package <- args[5]
 package_install_loc <- args[6]
 
-
 pool_id = "output"
 paths <- c(package_install_loc, .libPaths())
 .libPaths(paths)

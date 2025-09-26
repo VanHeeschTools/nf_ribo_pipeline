@@ -30,7 +30,7 @@ process price_index {
 // Merge end2end BAM files for PRICE
 process merge_price_bams{
     label "samtools"
-    publishDir "${outdir}/price", mode: 'copy'
+    //publishDir "${outdir}/price", mode: 'copy'
 
     input:
     path bamlist

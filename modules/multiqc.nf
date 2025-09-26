@@ -3,9 +3,9 @@ process MULTIQC {
     publishDir "${outdir}/multiqc/", mode: 'copy'
 
     input:
-    path multiqc_files, stageAs: "?/*" // Channel with paths to all files that should be in the report
-    val multiqc_config                 // Path of the multiqc_config 
-    val outdir                         // Path of output directory
+    path multiqc_files, stageAs: "?/*" // List, channel with paths to all files that should be in the report
+    val multiqc_config                 // Path, multiqc_config 
+    val outdir                         // Path, output directory
 
     output:
     path "*multiqc_report.html", emit: multiqc_report

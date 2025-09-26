@@ -16,6 +16,7 @@ workflow PRICE {
   def price_index_exists = file("${price_index_path}/PRICE_index.oml").exists()
   log.info "PRICE index exists: ${price_index_exists}"
 
+  // Create PRICE index if it is not found
   if (!price_index_exists) {
       // Create PRICE annotation
       log.warn "PRICE index file missing. Running PRICE indexing."
@@ -30,7 +31,7 @@ workflow PRICE {
   
   // Merge bam files before running PRICE
   merge_price_bams(bamlist,
-                    outdir)
+    outdir)
 
   // Run PRICE
   price(merge_price_bams.out.merged_end2end_bam,
@@ -44,7 +45,7 @@ workflow PRICE {
     outdir
   )
 
-  // Define PRICE subworkflow output directory
+  // Define PRICE subworkflow output
   price_orfs = price.out.price_orfs
   price_orf_gtf = price_to_gtf.out.price_gtf
 

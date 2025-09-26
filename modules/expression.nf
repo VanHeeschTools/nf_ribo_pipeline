@@ -1,4 +1,7 @@
 process filter_removed_orf_ids{
+
+    // Remove filtred out orf_ids from the orfcaller psites bed file
+
     label "filter_removed_orf_ids"
 
     input:
@@ -44,7 +47,6 @@ process intersect_psites {
     """
 }
 
-
 process ppm_matrix {
 
     // Create a matrix object for raw P-sites and PPM for each ORF and
@@ -72,6 +74,9 @@ process ppm_matrix {
 }
 
 process expression_table{
+
+    // Add the expression information to the harmonised orf table
+
     label "Ribo_Seq_R_scripts"
     publishDir "${outdir}/final_orf_table", mode: 'copy'
 

@@ -11,7 +11,7 @@ process annotate_orfs {
     val reference_gtf                            // Input gtf file
     val package_install_loc                      // Package install location
     val orfquant_annot_package                   // BSgenome location
-    val outdir                                   // Path to output directory
+    val outdir                                   // Path, output directory
 
     output:
     path "${orfcaller}_orfs.csv" , emit: basic_orf_table
@@ -34,20 +34,21 @@ process harmonise_orfs {
 
     label "Ribo_Seq_R_scripts"
     publishDir "${outdir}/harmonise_orfs", mode: 'copy'
+    publishDir "${outdir}/final_orf_table", mode: 'copy', pattern: 'orf_sequences.fa.gz'
 
     input:
-    tuple path(orfquant_table), path(price_table), val(ribotie_table) // Tuple, path of orfquant and price annotation tables
-    val outdir                                                         // Path to output directory
+    tuple path(orfquant_table), path(price_table), val(ribotie_table) // Tuple, path of ORFcaller annotation tables
+    val outdir                                                        // Path, output directory
 
     output:
     path "harmonised_table.csv", emit: harmonised_orf_table
+    path "orf_sequences.fa.gz", emit: orf_sequences
     path "removed_orf_ids.txt", emit: removed_orf_ids
     path "unfiltered_harmonised_table.csv"
     path "orfcaller_orf_categories_mqc.txt", emit: orfcaller_multiq
     path "merged_orf_categories_mqc.txt", emit: merged_multiqc
     path "merged_orf_caller_count_mqc.txt", emit: caller_count_multiqc
 
-    //TODO: Add a proper preference checker in case of duplicate ORFs between ORFcallers
     script:
     """
     orf_harmonisation.R \

@@ -128,9 +128,9 @@ process merge_ribotie_output{
 
     output:
     tuple val("RiboTIE"), path("RiboTIE_merged.csv"), emit: ribotie_merged_csv
-    path("RiboTIE_merged.gtf"), emit: ribotie_merge_gtf
-    path("RiboTIE_duplicate_filtered_merged.csv")
-    path("RiboTIE_unfiltered_merged.csv")
+    path "RiboTIE_merged.gtf", emit: ribotie_merge_gtf
+    path "RiboTIE_duplicate_filtered_merged.csv"
+    path "RiboTIE_unfiltered_merged.csv"
 
     script:
     """    
