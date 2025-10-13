@@ -53,7 +53,7 @@ workflow RIBOTIE {
     ribotie_orf_csv = ribotie_predict_samples.out.ribotie_orf_csv
     
     // Define RiboTIE generated MultiQC output FOR TESTING
-    ribotie_multiqc = ribotie_predict_samples.out.ribotie_multiqc
+    //ribotie_multiqc = ribotie_predict_samples.out.ribotie_multiqc
 
     // Merge all RiboTIE output files
     merge_ribotie_output(
@@ -70,5 +70,5 @@ workflow RIBOTIE {
     emit:
     ribotie_merged
     ribotie_orf_gtf
-    ribotie_multiqc
+    //ribotie_multiqc
 }

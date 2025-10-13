@@ -96,10 +96,10 @@ process ribotie_predict_samples {
 
     output:
     //path "${sample_id}.npy", emit: predicted_path
-    path "*" // Output all for testing
+    //path "*" // Output all for testing
     path "genomic_features_db_${sample_id}.csv", emit: ribotie_orf_csv
     path "genomic_features_db_${sample_id}.gtf", emit: ribotie_orf_gtf
-    path "multiqc_${sample_id}", emit: ribotie_multiqc
+    //path "multiqc_${sample_id}", emit: ribotie_multiqc
 
     script:
     """

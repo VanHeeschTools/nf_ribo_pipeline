@@ -1,5 +1,5 @@
 include { sample_psites } from "../modules/process_bed.nf"
-include { filter_removed_orf_ids ; intersect_psites ; ppm_matrix ; expression_table } from "../modules/expression.nf"
+include { filter_removed_orf_ids ; intersect_psites ; ppm_matrix ; expression_table; multiqc_expression_plot } from "../modules/expression.nf"
 
 workflow EXPRESSION {
     take:
@@ -50,6 +50,16 @@ workflow EXPRESSION {
         outdir
     )
 
+    multiqc_expression_plot(
+        harmonised_orf_table,
+        ppm_matrix,
+        outdir
+    )
+
+    multiqc_expression_plot_txt = multiqc_expression_plot.out
+
+
     emit:
     ppm_matrix
+    multiqc_expression_plot_txt
 }

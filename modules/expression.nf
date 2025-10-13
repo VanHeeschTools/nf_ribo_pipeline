@@ -1,6 +1,5 @@
+// Remove filtred out orf_ids from the orfcaller psites bed file
 process filter_removed_orf_ids{
-
-    // Remove filtred out orf_ids from the orfcaller psites bed file
 
     label "filter_removed_orf_ids"
 
@@ -17,9 +16,8 @@ process filter_removed_orf_ids{
     """
 }
 
+// Intersect a reference BED with p-site positions with p-sites from a sample
 process intersect_psites {
-
-    // Intersect a reference BED with p-site positions with p-sites from a sample
 
     tag "${sample_id}"
     label "intersect_psites"
@@ -47,10 +45,9 @@ process intersect_psites {
     """
 }
 
+// Create a matrix object for raw P-sites and PPM for each ORF and
+// each sample included in the cohort
 process ppm_matrix {
-
-    // Create a matrix object for raw P-sites and PPM for each ORF and
-    // each sample included in the cohort
 
     label "Ribo_Seq_R_scripts"
     publishDir "${outdir}/orf_expression", mode: 'copy'
@@ -62,8 +59,8 @@ process ppm_matrix {
     val outdir
 
     output:
-    path("orf_table_psites_permillion.csv"), emit: ppm_matrix
-    path("orf_table_psites.csv"), emit: psite_matrix
+    path "orf_table_psites_permillion.csv", emit: ppm_matrix
+    path "orf_table_psites.csv", emit: psite_matrix
 
     script:
     """
@@ -73,9 +70,8 @@ process ppm_matrix {
     """
 }
 
+// Add the expression information to the harmonised orf table
 process expression_table{
-
-    // Add the expression information to the harmonised orf table
 
     label "Ribo_Seq_R_scripts"
     publishDir "${outdir}/final_orf_table", mode: 'copy'
@@ -118,5 +114,27 @@ process expression_table{
                 sep = ",",
                 quote = F,
                 row.names = F)
+    """
+}
+
+// Create plot of translated Canonical and Non-canonical ORFs for MultiQC
+process multiqc_expression_plot{
+
+    label "Ribo_Seq_R_scripts"
+
+    input:
+    path harmonised_orf_table
+    path ppm_matrix
+
+    val outdir
+
+    output:
+    path "canonical_orf_counts_mqc.txt"
+
+    script:
+    """
+    canonical_plot.R \
+    "${harmonised_orf_table}" \
+    "${ppm_matrix}"
     """
 }

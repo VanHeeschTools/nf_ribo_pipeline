@@ -1,6 +1,5 @@
+// Create index for STAR if a valid path is not given in parm file
 process star_index {
-
-    // Create index for STAR
 
     label "alingment"
     publishDir "${outdir}/star_index/", mode: 'copy'
@@ -26,13 +25,11 @@ process star_index {
     """
 }
 
+// Aligns RPF reads to the reference genome to create input for RiboseQC
 process star_local{
-
-    // Aligns RPF reads to the reference genome to create input for RiboseQC
 
     tag "${meta.sample_id}"
     label "alignment"
-    //publishDir "${outdir}/star/", mode: 'copy'
 
     input: 
     tuple val(meta), path(reads)   // Trimmed RPF reads
@@ -71,13 +68,11 @@ process star_local{
 
 }
 
+// Aligns RPF reads to the reference genome to create PRICE input
 process star_end_to_end {
-
-    // Aligns RPF reads to the reference genome to create PRICE input
 
     tag "${meta.sample_id}"
     label "alignment"
-    //publishDir "${outdir}/star/", mode: 'copy', pattern: "${meta.sample_id}/${meta.sample_id}.end2end.Aligned.toTranscriptome.out.bam"
 
     input: 
     tuple val(meta), path(reads) // Trimmed RPF reads

@@ -89,11 +89,6 @@ orf_filter <- function(orfs){
   return(filtered_table)
 }
 
-#filtered_table <- orfs %>%
-#  group_by(gene_id, Protein, ORF_ranges) %>%
-#  slice_sample(n = 1) %>% 
-#  ungroup()
-
 #' Sort ORF table by chromosome and coordinates
 #'
 #' @param filtered_orfs Data frame of filtered ORFs
@@ -139,6 +134,11 @@ write_results <- function(sorted_df, output_file){
               quote = F,
               row.names = F)
 }
+
+# =============================================================================
+# 04 | EXTRA OUTPUT FUNCTIONS ----
+# =============================================================================
+
 
 #' Write a FASTA file from a dataframe
 #'
@@ -244,7 +244,7 @@ multiqc_caller_count <- function(sorted_df, outfile = "caller_count_mqc.txt") {
 }
 
 # =============================================================================
-# 04 | RUN HARMONISATION ----
+# 05 | RUN HARMONISATION ----
 # =============================================================================
 
 # Step 1: Load and merge ORFS
@@ -279,7 +279,7 @@ write_results(sorted_unfiltered_df, "unfiltered_harmonised_table.csv")
 write_orf_fasta(sorted_df, "orf_sequences.fa.gz")
 
 # =============================================================================
-# 05 | CREATE MULTIQC TABLES ----
+# 06 | CREATE MULTIQC TABLES ----
 # =============================================================================
 
 if (!is.na(ribotie_table)) {

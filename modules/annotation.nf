@@ -57,3 +57,24 @@ process harmonise_orfs {
     "${ribotie_table}"
     """
 }
+
+// Use all used ORFcaller gtf files to create a harmonised ORF gtf file
+process convert_csv_to_gtf {
+    label "Ribo_Seq_R_scripts"
+    publishDir "${outdir}/final_orf_table", mode: 'copy'
+
+    input:
+    path harmonised_orf_table // Path, harmonised orf table
+    path orfcaller_gtf        // Channel, contains all generated ORFcaller gtf files
+    val outdir                // Path, output directory
+
+    output:
+    path "combined_orfcallers.gtf", emit: harmonised_orf_table
+
+    script:
+    """
+    convert_csv_to_gtf.R \
+    "${harmonised_orf_table}" \
+    ${orfcaller_gtf.join(' ')}
+    """
+}

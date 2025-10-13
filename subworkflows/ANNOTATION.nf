@@ -1,4 +1,4 @@
-include { annotate_orfs ; harmonise_orfs } from "../modules/annotation.nf"
+include { annotate_orfs ; harmonise_orfs; convert_csv_to_gtf } from "../modules/annotation.nf"
 
 workflow ANNOTATION {
     take:
@@ -9,6 +9,7 @@ workflow ANNOTATION {
     package_install_loc     // Path, Location where BSgenome R package is installed
     orfquant_annot_package  // Path, BSgenome index directory
     run_ribotie             // Bool, True if RiboTIE should be run in the pipeline
+    orfcaller_gtf
     outdir                  // Path, output directory
 
     main:
@@ -50,6 +51,11 @@ workflow ANNOTATION {
     // Define subworkflow output
     harmonised_orf_table = harmonise_orfs.out.harmonised_orf_table
     removed_orf_ids = harmonise_orfs.out.removed_orf_ids
+
+    convert_csv_to_gtf(harmonised_orf_table, 
+                    orfcaller_gtf,
+                    outdir)
+
 
     // Annotation multiqc output files
     orfcaller_multiq = harmonise_orfs.out.orfcaller_multiq

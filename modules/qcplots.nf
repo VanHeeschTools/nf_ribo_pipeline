@@ -1,26 +1,20 @@
-//TODO: check if still required
+// Create RiboseQC statistics plots for MultiQC
 process riboseqc_plots {
 
-    label "riboseqc_plots"
+    label "Ribo_Seq_R_scripts"
     publishDir "${outdir}/qc", mode: 'copy'
 
     input:
-    val data_files
+    path riboseqc_all
     val outdir
-    val pandoc_dir
-    val render_file
-    val orfquant_prefix
 
     output:
-    path "*.html"
+    path "Metagene_profile_combined_mqc.png", emit: metagene_plot
+    path "Periodicity_bar_combined_mqc.png", emit: periodicity_plot
 
     script:
     """
-    Rscript riboseqc_html.R \
-    ${data_files}
-    ${pandoc_dir} \
-    ${render_file} \
-    ${orfquant_prefix}
+    periodicity_plot.R ${riboseqc_all.join(' ')}
     """
 }
 

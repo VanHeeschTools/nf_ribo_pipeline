@@ -31,7 +31,7 @@ process contaminants_check {
         /snoRNA/ {snoRNA++}
         /mtDNA/  {mtDNA++}
         END {
-          printf "%d\\t%d\\t%d\\t%d\\t%d", rRNA+0, tRNA+0, snRNA+0, snoRNA+0, mtDNA+0
+            printf "%d\\t%d\\t%d\\t%d\\t%d", rRNA+0, tRNA+0, snRNA+0, snoRNA+0, mtDNA+0
         }
     ')
     echo -e "Sample\\tPassed\\trRNA\\ttRNA\\tsnRNA\\tsnoRNA\\tmtDNA" >> "\$outfile"
@@ -51,11 +51,11 @@ process samtools {
 
     tag "${sample_id}"
     label "samtools"
-    //publishDir "${outdir}/star/", mode: 'copy'
+    publishDir "${outdir}/star/${sample_id}", mode: 'copy'
 
     input: 
     tuple val(sample_id), path(bam) // Aligned BAMs
-    val outdir                 // Output directory
+    val outdir                      // Output directory
 
     output:
     tuple val(sample_id), path("${sample_id}/${sample_id}*.Aligned.sortedByCoord.out.bam"), emit:sorted_bam

@@ -24,26 +24,32 @@ report_comment: 'The pipeline is still in development if you have ideas for inte
 
 report_section_order:
   cutadapt:
-      order: 110
+      order: 140
   removed_reads:
-      order: 100
+      order: 130
   contaminant_counts:
-      order: 90
+      order: 120
   fastqc:
-      order: 80
+      order: 110
   size_distribution:
-      order: 70
+      order: 100
   star:
-      order: 60
+      order: 90
   inframe_reads:
-      order: 50
+      order: 80
   riboseq_counts:
-      order: 40
+      order: 70
+  periodicity_plot:
+      order: 60
+  metagene_plot:
+      order: 50
   orfcaller_categories:
-      order: 30
+      order: 40
   merged_categories:
-      order: 20
+      order: 30
   caller_counts:
+      order: 20
+  canonical_expression:
       order: 10
 
 
@@ -135,6 +141,18 @@ custom_data:
       ylab: 'Read count'
       bar_mode: 'grouped'
 
+  periodicity_plot:
+    id: 'periodicity_plot'
+    file_format: png
+    section_name: 'RiboseQC periodicity'
+    description: 'Periodicity percentage of reads of 29 nt'
+
+  metagene_plot:
+    id: 'metagene_plot'
+    file_format: png
+    section_name: 'RiboseQC metagene'
+    description: 'Metagene profile plot of the first 150 nt of cds using reads of 29 nt'
+
   orfcaller_categories:
     id: 'orfcaller_categories'
     file_format: txt
@@ -150,7 +168,7 @@ custom_data:
     id: 'merged_categories'
     file_format: txt
     section_name: 'Merged ORF Type counts'
-    description: 'Shows the combined ORF set created by counting ORFs by ORF category, after merging results from all ORF callers and applying duplicate filtering.'
+    description: 'Shows the combined ORF set created by counting ORFs by ORF category, after merging results from all ORF callers and applying duplicate filtering. This does not include any ORF expression information'
     plot_type: 'bargraph'
     pconfig:
       id: 'merged_categories'
@@ -161,7 +179,7 @@ custom_data:
     id: 'caller_counts'
     file_format: txt
     section_name: 'Caller Count Distribution'
-    description: 'Counts of ORFs found in N different ORF callers. Shows the overlap between callers, where higher numbers indicate ORFs called by multiple methods.'
+    description: 'Counts of ORFs found in N different ORF callers. Shows the overlap between callers, where higher numbers indicate ORFs called by multiple methods. This does not include any ORF expression information'
     plot_type: 'bargraph'
     pconfig:
       id: 'caller_counts'
@@ -191,6 +209,18 @@ custom_data:
         style: 'lines+markers'
         format: '{:,}'  
   
+  canonical_expression:
+    id: 'canonical_expression'
+    file_format: txt
+    section_name: 'Canonical ORF counts'
+    description: 'The amount of Canonical and Non-canonical ORFs in every sample. Only ORFS with a PPM >=1 in the given sample are shown '
+    plot_type: 'bargraph'
+    pconfig:
+      id: 'canonical_expression'
+      title: 'Canonical vs Non-canonical ORF counts'
+      bar_mode: 'grouped'
+
+  
   total_reads:
     id: 'total_reads'
     file_format: txt
@@ -215,7 +245,7 @@ custom_data:
           description: 'Reads that pass Trim Galore and the Contaminant filter steps'
           format: '{:,}'
           scale: 'Greens'
-  
+
 sp:
   contaminant_counts:
     fn: 'contaminant_*_mqc.txt'
@@ -227,6 +257,10 @@ sp:
     fn: 'removed_reads_*_mqc.txt'
   riboseq_counts:
     fn: 'riboseqc_read_categories_counts_mqc.txt'
+  periodicity_plot:
+    fn: 'Periodicity_bar_combined_mqc.png'
+  metagene_plot:
+    fn: 'Metagene_profile_combined_mqc.png'
   inframe_reads:
     fn: 'riboseqc_frame_29nt_mqc.txt'
   orfcaller_categories:
@@ -237,3 +271,5 @@ sp:
     fn: 'merged_orf_caller_count_mqc.txt'
   size_distribution:
     fn: '*_size_distribution_mqc.txt'
+  canonical_expression:
+    fn: 'canonical_orf_counts_mqc.txt'

@@ -101,6 +101,7 @@ workflow RIBOSEQ {
         params.orfquant_annot_package,
         params.package_install_loc,
         params.pandoc_dir,
+        params.reference_fasta_fai,
         orfquant_bams,
         params.outdir
     )
@@ -135,17 +136,19 @@ workflow RIBOSEQ {
                 params.reference_fasta,
                 params.reference_gtf,
                 params.ribotie_min_samples,
-                params.outdir,
+                params.outdir
             )
-            multiqc_files = multiqc_files.mix(RIBOTIE.out.ribotie_multiqc)
+            //multiqc_files = multiqc_files.mix(RIBOTIE.out.ribotie_multiqc)
 
             // Combine outputs of ORFcallers into one channel including RiboTIE output
             orfcaller_gtf = PRICE.out.price_orf_gtf.mix(ORFQUANT.out.orfquant_orf_gtf, RIBOTIE.out.ribotie_orf_gtf)
+            collect_orfcaller_gtf = PRICE.out.price_orf_gtf.mix(ORFQUANT.out.orfquant_orf_gtf, RIBOTIE.out.ribotie_orf_gtf).collect()
             orfcaller_output = PRICE.out.price_orfs.mix(ORFQUANT.out.orfquant_orfs, RIBOTIE.out.ribotie_merged)
         }
         else {
             // Combine outputs of ORFcallers into one channel excluding RiboTIE output
             orfcaller_gtf = PRICE.out.price_orf_gtf.mix(ORFQUANT.out.orfquant_orf_gtf)
+            collect_orfcaller_gtf = PRICE.out.price_orf_gtf.mix(ORFQUANT.out.orfquant_orf_gtf).collect()
             orfcaller_output = PRICE.out.price_orfs.mix(ORFQUANT.out.orfquant_orfs)
         }
 
@@ -168,6 +171,7 @@ workflow RIBOSEQ {
             params.package_install_loc,
             params.orfquant_annot_package,
             params.run_ribotie,
+            collect_orfcaller_gtf,
             params.outdir
         )
         multiqc_files = multiqc_files.mix(ANNOTATION.out.annotation_multiqc)
@@ -180,6 +184,8 @@ workflow RIBOSEQ {
             orfcaller_psites,
             params.outdir
         )
+        multiqc_files = multiqc_files.mix(EXPRESSION.out.multiqc_expression_plot_txt)
+
     }
 
     multiqc_config = file("${projectDir}/${params.multiqc_config}")

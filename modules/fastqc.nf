@@ -1,6 +1,5 @@
+// Generate QC files using fastqc, shown in the MultiQC report
 process fastqc {
-
-    // Generate QC files
 
     tag "${meta.sample_id}"
     label "fastqc"
@@ -19,7 +18,7 @@ process fastqc {
     def sample_id = meta.sample_id
     """
     mkdir -p tmp
-    mkdir ${sample_id}
+    mkdir -p ${sample_id}
     fastqc \
         ${reads} \
         --threads $task.cpus \
@@ -41,7 +40,6 @@ process size_distribution {
     path "${meta.sample_id}_size_distribution_mqc.txt", emit: size_distribution
 
     script:
-
     """
     size_distribution.R ${meta.sample_id} ${reads}
     """

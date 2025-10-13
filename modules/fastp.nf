@@ -1,7 +1,7 @@
+// Remove low-quality and short reads from fastq file using fastp
+// Currently not being used in favor of trimgalore
+
 process read_trimming {
-
-    // Remove low-quality and short reads from fastq file
-
     tag "${meta.sample_id}"
     label "read_trimming"
 
@@ -31,6 +31,7 @@ process read_trimming {
     """
 }
 
+// Remove low-quality and short reads from fastq file using trimgalore
 process trimgalore{
 
     tag "${meta.sample_id}"

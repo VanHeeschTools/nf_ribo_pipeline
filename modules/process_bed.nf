@@ -1,6 +1,5 @@
+ // Create per sample a BED file with sorted in-frame P-sites found in the sample
 process sample_psites {
-
-  // Create per sample a BED file with sorted in-frame P-sites found in the sample
 
   tag "${sample_id}"
   label "Ribo_Seq_R_scripts"
@@ -20,9 +19,8 @@ process sample_psites {
   """
 }
 
+// Create reference in-frame P-sites file from GTF
 process orfcaller_psites {
-
-  // Create reference in-frame P-sites file from GTF
 
   label "obtain_psites"
   publishDir "${outdir}/annotation", mode: 'copy'
@@ -43,9 +41,8 @@ process orfcaller_psites {
 
 }
 
+// Combine the p_site bed files from all ORFcallers
 process merge_orfcaller_psites {
-
-  // Combine the p_site bed files from all ORFcallers
 
   label "merge_psites"
   publishDir "${outdir}/annotation", mode: 'copy'

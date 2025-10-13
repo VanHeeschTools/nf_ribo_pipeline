@@ -1,4 +1,4 @@
-// Create index file for PRICE run
+// Create PRICE index file
 process price_index {
 
     label "price"
@@ -27,7 +27,7 @@ process price_index {
 
 }
 
-// Merge end2end BAM files for PRICE
+// Merge all end2end BAM files into a single BAM to be used by PRICE
 process merge_price_bams{
     label "samtools"
     //publishDir "${outdir}/price", mode: 'copy'
@@ -48,7 +48,7 @@ process merge_price_bams{
 
 }
 
-// Run PRICE
+// Run PRICE on merged bam
 process price {
 
     label "price"
