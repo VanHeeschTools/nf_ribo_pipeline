@@ -98,9 +98,7 @@ workflow RIBOSEQ {
     // RiboseQC run on all local aligned BAM files
     RIBOQC(
         params.orfquant_annotation,
-        params.orfquant_annot_package,
         params.package_install_loc,
-        params.pandoc_dir,
         params.reference_fasta_fai,
         orfquant_bams,
         params.outdir
@@ -113,7 +111,6 @@ workflow RIBOSEQ {
         ORFQUANT(
             RIBOQC.out.for_orfquant_files,
             params.orfquant_annotation,
-            params.orfquant_annot_package,
             params.package_install_loc,
             params.pandoc_dir,
             params.outdir,

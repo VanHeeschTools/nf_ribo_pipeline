@@ -9,8 +9,6 @@ process riboseqc {
     tuple val(sample_id), path(bam)
     val outdir
     val orfquant_annotation
-    val pandoc_dir
-    val orfquant_annot_package
     val package_install_loc
 
     output:
@@ -28,8 +26,6 @@ process riboseqc {
         ${bam} \
         ${sample_id}/${sample_id} \
         ${orfquant_annotation} \
-        ${pandoc_dir} \
-        ${orfquant_annot_package} \
         ${package_install_loc}
     """
 }

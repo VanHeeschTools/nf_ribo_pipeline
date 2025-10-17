@@ -65,7 +65,7 @@ process convert_csv_to_gtf {
 
     input:
     path harmonised_orf_table // Path, harmonised orf table
-    path orfcaller_gtf        // Channel, contains all generated ORFcaller gtf files
+    val orfcaller_gtf        // Channel, contains all generated ORFcaller gtf files
     val outdir                // Path, output directory
 
     output:

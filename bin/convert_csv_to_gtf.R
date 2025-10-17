@@ -64,6 +64,7 @@ alter_gtf <- function(gtf_df, orf_table, caller) {
     
     print(colnames(gtf_df))
     # Drop caller-specific columns
+    #TODO: Sometimes P_sites is not found figure out why
     gtf_df <- switch(caller,
                     "ORFquant" = select(gtf_df, -P_sites, -ORF_pct_P_sites, -ORF_pct_P_sites_pN, -ORFs_pM),
                     "RiboTIE"  = select(gtf_df, -ORF_type, -ribotie_score),

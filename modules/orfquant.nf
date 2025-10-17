@@ -32,8 +32,6 @@ process orfquant {
     input:
     val psites_merged
     val rannot
-    val pandoc_dir
-    val orfquant_annot_package
     val package_install_loc
     val outdir
 
@@ -46,8 +44,6 @@ process orfquant {
     ${psites_merged} \
     ${rannot} \
     $task.cpus \
-    ${pandoc_dir} \
-    ${orfquant_annot_package} \
     ${package_install_loc} 
     """
 }

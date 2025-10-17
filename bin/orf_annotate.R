@@ -37,6 +37,8 @@ paths <- c(package_install_loc, .libPaths())
 .libPaths(paths)
 bsgenome_path = bsgenome_path
 bsgenome_name <- basename(bsgenome_path)
+#bsgenome_dirs <- list.dirs(bsgenome_path, full.names = FALSE, recursive = FALSE)
+#bsgenome_name <- bsgenome_dirs[grepl("^BSgenome\\.", bsgenome_dirs)]
 load_bsgenome <- function(pkg) {
   ns <- asNamespace(pkg)
   bsgenome_obj <- Filter(function(x) inherits(get(x, envir = ns), "BSgenome"), ls(ns))

@@ -32,6 +32,11 @@ workflow ANNOTATION {
                 def sorted = files.sort { it.name }
                 tuple(sorted[0], sorted[1], sorted[2])
             }
+        orfcaller_gtf_sorted = orfcaller_gtf
+            .map { files ->
+                def sorted = files.sort { it.name }
+                tuple(sorted[0], sorted[1], sorted[2])
+            }
     }
     else {
         harmonise_input = annotate_orfs.out.basic_orf_table
@@ -39,6 +44,11 @@ workflow ANNOTATION {
             .map { files ->
                 def sorted = files.sort { it.name }
                 tuple(sorted[0], sorted[1], null)
+            }
+        orfcaller_gtf_sorted = orfcaller_gtf
+            .map { files ->
+                def sorted = files.sort { it.name }
+                tuple(sorted[0], sorted[1])
             }
     }
 
@@ -53,7 +63,7 @@ workflow ANNOTATION {
     removed_orf_ids = harmonise_orfs.out.removed_orf_ids
 
     convert_csv_to_gtf(harmonised_orf_table, 
-                    orfcaller_gtf,
+                    orfcaller_gtf_sorted,
                     outdir)
 
 

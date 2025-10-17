@@ -6,7 +6,6 @@ workflow ORFQUANT {
     take:
     for_orfquant_files      // Path, RiboseQC output files
     orfquant_annotation     // Path, ORFquant Rannot file location
-    orfquant_annot_package  // Path, BSgenome index directory
     package_install_loc     // Path, location where BSgenome package is installed
     pandoc_dir              // Path, location of directory where pandoc is located
     outdir                  // Path, output directory
@@ -27,8 +26,6 @@ workflow ORFQUANT {
     orfquant(
         prepare_orfquant.out.psites_merged,
         orfquant_annotation,
-        pandoc_dir,
-        orfquant_annot_package,
         package_install_loc,
         outdir
     )
