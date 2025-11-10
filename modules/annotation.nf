@@ -1,4 +1,32 @@
 // Annotate ORFcaller output
+process get_orf_category{
+
+    label "Ribo_Seq_R_scripts"
+    publishDir "${outdir}/annotate_orfs", mode: 'copy'
+
+    input:
+    tuple path(orfcaller_gtf), path(cds_orf_bed_file)
+    path reference_gtf         // Path, input reference gtf file
+    path ref_cds_rds           // RDS file altered CDS regions that have a proper start and stop
+    path package_install_loc   // Path, BSgenome package install location
+    val outdir                 // Path, output directory
+
+    output:
+    path "${orfcaller_gtf.baseName}_orfs.csv", emit: basic_orf_table
+
+    script:
+    """
+    get_orf_categories.R \
+    "${reference_gtf}" \
+    "${orfcaller_gtf}" \
+    "${cds_orf_bed_file}" \
+    "${ref_cds_rds}" \
+    "${package_install_loc}" \
+    "${orfcaller_gtf.baseName}" # ORFcaller name
+    """
+}
+
+// Annotate ORFcaller output
 process annotate_orfs {
 
     label "Ribo_Seq_R_scripts"
@@ -35,16 +63,20 @@ process harmonise_orfs {
     label "Ribo_Seq_R_scripts"
     publishDir "${outdir}/harmonise_orfs", mode: 'copy'
     publishDir "${outdir}/final_orf_table", mode: 'copy', pattern: 'orf_sequences.fa.gz'
+    publishDir "${outdir}/final_orf_table", mode: 'copy', pattern: 'orf_harmonised.gtf'
 
     input:
     tuple path(orfquant_table), path(price_table), val(ribotie_table) // Tuple, path of ORFcaller annotation tables
     val outdir                                                        // Path, output directory
 
     output:
-    path "harmonised_table.csv", emit: harmonised_orf_table
-    path "orf_sequences.fa.gz", emit: orf_sequences
+    path "harmonised_orf_table.csv", emit: harmonised_orf_table
+    path "orf_protein_sequences.fa.gz"
+    path "orf_dna_sequences.fa.gz"
     path "removed_orf_ids.txt", emit: removed_orf_ids
-    path "unfiltered_harmonised_table.csv"
+    path "harmonised_orf_table.gtf"
+
+    path "unfiltered_harmonised_orf_table.csv"
     path "orfcaller_orf_categories_mqc.txt", emit: orfcaller_multiq
     path "merged_orf_categories_mqc.txt", emit: merged_multiqc
     path "merged_orf_caller_count_mqc.txt", emit: caller_count_multiqc
@@ -59,13 +91,13 @@ process harmonise_orfs {
 }
 
 // Use all used ORFcaller gtf files to create a harmonised ORF gtf file
-process convert_csv_to_gtf {
+process merge_orfcaller_gtf {
     label "Ribo_Seq_R_scripts"
     publishDir "${outdir}/final_orf_table", mode: 'copy'
 
     input:
     path harmonised_orf_table // Path, harmonised orf table
-    val orfcaller_gtf        // Channel, contains all generated ORFcaller gtf files
+    val orfcaller_gtf         // Channel, contains all generated ORFcaller gtf files
     val outdir                // Path, output directory
 
     output:
@@ -73,7 +105,7 @@ process convert_csv_to_gtf {
 
     script:
     """
-    convert_csv_to_gtf.R \
+    merge_orfcaller_gtf.R \
     "${harmonised_orf_table}" \
     ${orfcaller_gtf.join(' ')}
     """

@@ -48,6 +48,8 @@ process sort_bedgraphs{
 // Merge sorted bedgraphs into the correct groups
 process merge_bedgraphs{
 
+    label "intersect_psites"
+
     input:
     path bedgraphs
 

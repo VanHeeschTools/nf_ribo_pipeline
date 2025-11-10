@@ -16,12 +16,12 @@ process star_index {
     script:
     """
     STAR \
-        --runMode genomeGenerate \
-        --runThreadN $task.cpus \
-        --sjdbGTFfile ${gtf} \
-        --sjdbOverhang 29 \
-        --genomeDir "star_index" \
-        --genomeFastaFiles ${genome}
+    --runMode genomeGenerate \
+    --runThreadN $task.cpus \
+    --sjdbGTFfile ${gtf} \
+    --sjdbOverhang 29 \
+    --genomeDir "star_index" \
+    --genomeFastaFiles ${genome}
     """
 }
 

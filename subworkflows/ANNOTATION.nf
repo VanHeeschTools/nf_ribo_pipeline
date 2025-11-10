@@ -1,54 +1,41 @@
-include { annotate_orfs ; harmonise_orfs; convert_csv_to_gtf } from "../modules/annotation.nf"
+include { get_orf_category; annotate_orfs ; harmonise_orfs; merge_orfcaller_gtf } from "../modules/annotation.nf"
 
 workflow ANNOTATION {
     take:
-    orfcaller_output        // Path, ORFcaller output file
-    orfcaller_psites        // Path, merged p0 sites of all used ORFcallers
-    ref_psites              // Path, p0 sites of reference gtf
     reference_gtf           // Path, input gtf file
     package_install_loc     // Path, Location where BSgenome R package is installed
-    orfquant_annot_package  // Path, BSgenome index directory
     run_ribotie             // Bool, True if RiboTIE should be run in the pipeline
-    orfcaller_gtf
+    orf_gtf_bed             // Path, bed-like file of ORF and ref CDS overlap
+    ref_cds_rds             // Path, RDS file of altered reference CDS
     outdir                  // Path, output directory
 
     main:
-    // Parses and annotates the output of the ORFcallers
-    annotate_orfs(
-        orfcaller_output,
-        orfcaller_psites,
-        ref_psites,
+    // Load ORFcaller gtf and annotates the ORFs
+    get_orf_category(
+        orf_gtf_bed,
         reference_gtf,
+        ref_cds_rds,
         package_install_loc,
-        orfquant_annot_package,
         outdir
     )
 
-    // Collect ORF tables and sort them alphabetically
+    //TODO: put this logic dynamically in the orf_harmonisation_script
     if (run_ribotie) {
-        harmonise_input = annotate_orfs.out.basic_orf_table
+        // Collect ORF tables and sort them alphabetically
+        harmonise_input = get_orf_category.out.basic_orf_table
             .collect()
-            .map { files ->
-                def sorted = files.sort { it.name }
-                tuple(sorted[0], sorted[1], sorted[2])
-            }
-        orfcaller_gtf_sorted = orfcaller_gtf
             .map { files ->
                 def sorted = files.sort { it.name }
                 tuple(sorted[0], sorted[1], sorted[2])
             }
     }
     else {
-        harmonise_input = annotate_orfs.out.basic_orf_table
+        // Collect ORF tables and sort them alphabetically
+        harmonise_input = get_orf_category.out.basic_orf_table
             .collect()
             .map { files ->
                 def sorted = files.sort { it.name }
                 tuple(sorted[0], sorted[1], null)
-            }
-        orfcaller_gtf_sorted = orfcaller_gtf
-            .map { files ->
-                def sorted = files.sort { it.name }
-                tuple(sorted[0], sorted[1])
             }
     }
 
@@ -61,10 +48,6 @@ workflow ANNOTATION {
     // Define subworkflow output
     harmonised_orf_table = harmonise_orfs.out.harmonised_orf_table
     removed_orf_ids = harmonise_orfs.out.removed_orf_ids
-
-    convert_csv_to_gtf(harmonised_orf_table, 
-                    orfcaller_gtf_sorted,
-                    outdir)
 
 
     // Annotation multiqc output files

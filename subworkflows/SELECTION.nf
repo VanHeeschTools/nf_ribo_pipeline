@@ -1,4 +1,4 @@
-include { trimgalore }                from "../modules/fastp.nf"
+include { trimgalore }                from "../modules/trimgalore.nf"
 include { fastqc; size_distribution } from "../modules/fastqc.nf"
 include { bowtie2; bowtie2_index }    from '../modules/bowtie.nf'
 include { contaminants_check }        from '../modules/samtools.nf'
@@ -70,8 +70,8 @@ workflow SELECTION {
                                                 removed_reads,
                                                 fastqc_zip,
                                                 contaminant_samples,
-                                                contaminant_samples_passed,
-                                                )
+                                                contaminant_samples_passed)
+                                                .collect()
 
     emit:
     rpf_reads            // Selected riboseq reads

@@ -22,8 +22,7 @@ orf_table <- orf_table %>%
 # -------------------------------
 # Define canonical ORF categories
 # -------------------------------
-annotated_vector <- c("ORF_annotated", "N_truncation", "canonical_ORF", 
-                    "C_truncation", "N_extension", "C_extension", "NC_extension")
+annotated_vector <- c("ORF-annotated", "NC-variant")
 
 # -------------------------------
 # Select all expression columns added by orf_expression (except orf_id)
@@ -50,7 +49,7 @@ orf_table <- orf_table %>%
                             as.numeric(.) >= 1,   # TRUE if PPM >= 1
                             FALSE))) %>%
     # Define ORF category group: Canonical vs Non-Canonical
-    mutate(orf_category_group = if_else(orf_category_new %in% annotated_vector,
+    mutate(orf_category_group = if_else(orf_biotype_single %in% annotated_vector,
                                     "Canonical", "Non-canonical"))
 
 # -------------------------------

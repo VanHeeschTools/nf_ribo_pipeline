@@ -30,7 +30,7 @@ cds_reads_df <- data.frame()
 for (fname in input_files) {
   parts <- str_split(basename(fname), "_")[[1]]
   sample_id <- paste(parts[1:(length(parts) - 3)], collapse = "_")
-   
+
   message("Loading ", sample_id)
   load(fname)
   
@@ -39,7 +39,7 @@ for (fname in input_files) {
   summary_P_sites_sample$sample_id <- sample_id
   
   summary_reads_sample <- as.data.frame(t(colSums(as.data.frame(res_all$read_stats$reads_summary_unq$nucl))))
-  rownames(summary_reads_sample) <- sample_id
+  summary_reads_sample$sample_id <- sample_id
   
   inframe_sample <- as.data.frame(t(res_all$selection_cutoffs$analysis_frame_cutoff$nucl$all$frames_res))
   rownames(inframe_sample) <- sample_id
@@ -59,18 +59,38 @@ for (fname in input_files) {
 }
 
 # ------------------------------------------------------------------------------
-# Frame Preference Table (29-nt reads, nucleotide composition)
+# Frame Preference Table
 # Output: MultiQC-compatible table
 # ------------------------------------------------------------------------------
-summary_P_sites_df_s <- summary_P_sites_df  # Ensure scoped correctly
-frame_29 <- summary_P_sites_df_s %>%
-  filter(read_length == 29, comp == "nucl") %>%
-  select(sample_id, frame_preference)
+summary_P_sites_df_s <- summary_P_sites_df  
 
-writeLines(c(
-  "Sample\tFramePreference",
-  paste(frame_29$sample_id, round(frame_29$frame_preference, 2), sep = "\t")
-), con = "riboseqc_frame_29nt_mqc.txt")
+# Frame preference
+df_wide <- summary_P_sites_df_s %>%
+  filter(read_length %in% 28:31, comp == "nucl") %>%
+  select(sample_id, read_length, frame_preference) %>%
+  pivot_wider(
+    id_cols = sample_id,
+    names_from = read_length,
+    values_from = frame_preference,
+    names_prefix = "percentage_",
+    values_fill = NA
+  )
+# Sort the "percentage_" columns numerically
+cols <- setdiff(names(df_wide), "sample_id")
+cols_sorted <- cols[order(as.numeric(gsub("\\D", "", cols)))]
+
+# Reorder and show result
+df_wide <- df_wide %>%
+  select(sample_id, all_of(cols_sorted))
+
+write.table(
+  df_wide,
+  file = "inframe_percentages_mqc.txt",  
+  sep = "\t",                        
+  quote = FALSE,                    
+  row.names = FALSE           
+)
+
 
 # ------------------------------------------------------------------------------
 # Read Category Counts Table

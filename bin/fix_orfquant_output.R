@@ -5,17 +5,20 @@
 # It also add 3 bp to the last coords to take the stop codon into account
 
 suppressPackageStartupMessages({
-    library(dplyr)
-    library(ORFquant)
-    library(Biostrings)
-    library(tibble)
-    library(GenomicRanges)
+  library(tidyverse)
+  library(ORFquant)
+  library(Biostrings)
+  library(tibble)
+  library(GenomicFeatures)
+  library(GenomicRanges)
+  library(rtracklayer)
 })
 
 args <- commandArgs(trailingOnly = TRUE)
 orfquant_results <- args[1]
 rannot <- args[2]
 package_install_loc <- args[3]
+reference_gtf <- args[4]
 
 paths <- c(package_install_loc, .libPaths())
 .libPaths(paths)
@@ -27,6 +30,14 @@ workdir <- getwd()
 orfquant_orfs <- get(load(orfquant_results))
 load_annotation(rannot)
 
+# Import reference GTF
+ref_gtf <- rtracklayer::import(reference_gtf) %>% as.data.frame()
+
+# Obtain reference exons
+txdb <- txdbmaker::makeTxDbFromGFF(reference_gtf)
+ref_exons <- exonsBy(txdb, by = "tx", use.names = TRUE)
+
+# Fix ORFquant annotation
 ORFs_txs_feats <- orfquant_orfs$ORFs_txs_feats
 selected_txs <- sort(unique(unlist(ORFs_txs_feats$txs_selected)))
 
@@ -63,46 +74,11 @@ ORFs_gen$P_sites <- round(map_tx_genes[match_ORF, "P_sites"], digits = 4)
 ORFs_gen$ORF_pct_P_sites <- round(map_tx_genes[match_ORF, "ORF_pct_P_sites"],
                                   digits = 4)
 ORFs_gen$ORF_pct_P_sites_pN <- round(map_tx_genes[match_ORF, "ORF_pct_P_sites_pN"],
-                                     digits = 4)
+                                    digits = 4)
 ORFs_gen$ORFs_pM <- round(map_tx_genes[match_ORF, "ORFs_pM"], 
                           digits = 4)
-ORFs_readthroughs <- ORFquant_results$ORFs_readthroughs
+#ORFs_readthroughs <- ORFquant_results$ORFs_readthroughs
 
-# Fix protein FASTA
-if (is(ORFs_readthroughs$Protein, "list")) {
-  proteins_readthrough <- Biostrings::AAStringSet(lapply(ORFs_readthroughs$Protein, "[[", 1))
-}else {
-  proteins_readthrough <- Biostrings::AAStringSet(ORFs_readthroughs$Protein)
-}
-if (length(proteins_readthrough) > 0) {
-  names(proteins_readthrough) <- paste(
-    ORFs_readthroughs$ORF_id_tr,
-    ORFs_readthroughs$gene_biotype,
-    ORFs_readthroughs$gene_id,
-    "readthrough",
-    "readthrough",
-    sep = "|"
-  )
-  proteins_readthrough <- GenomicRanges::narrow(proteins_readthrough, start = start(proteins_readthrough)[1] +
-                                                  1)
-  proteins_readthrough <- Biostrings::AAStringSet(gsub(
-    proteins_readthrough,
-    pattern = "[*]",
-    replacement = "X"
-  ))
-}
-
-proteins <- Biostrings::AAStringSet(ORFs_tx$Protein)
-names(proteins) <- paste(
-  ORFs_tx$ORF_id_tr,
-  ORFs_tx$gene_biotype,
-  ORFs_tx$gene_id,
-  ORFs_tx$ORF_category_Gen,
-  ORFs_tx$ORF_category_Tx_compatible,
-  sep = "|"
-)
-proteins <- c(proteins, proteins_readthrough)
-Biostrings::writeXStringSet(proteins, filepath = "ORFquant_Protein_sequences.fasta")
 
 # Create new fixed ORFquant GTF
 map_tx_genes <- GTF_annotation$trann
@@ -123,31 +99,91 @@ all$`source` = "ORFquant"
 names(all) <- NULL
 
 
+# Add 3 to CDS taking into account exon boundaries
 
-# EXTEND LAST CDS +3bp
-cds <- all[all$type == "CDS"]
+# Group ORFs by ORF_id
+orf_gtf <- all[all$type == "CDS"]
 
-# Create tibble to track strand and positions
-idxs <- tibble(
-  idx = seq_along(cds),
-  ORF = cds$ORF_id,
-  s = start(cds),
-  e = end(cds),
-  strand = as.character(strand(cds))
-) %>%
-  group_by(ORF) %>%
-  filter((strand == "+" & e == max(e)) | (strand == "-" & s == min(s))) %>%
-  ungroup()
+# Clean ORF_ids to keep transcript_id
+mcols(orf_gtf)$transcript_id <- sapply(mcols(orf_gtf)$transcript_id, function(id) {
+  if (grepl("^TCONS_", id)) {
+    # keep everything before the second underscore
+    parts <- unlist(strsplit(id, "_"))
+    paste(parts[1:2], collapse = "_")
+  } else {
+    # keep everything before the first underscore
+    sub("_.*$", "", id)
+  }
+})
 
-# Apply CDS extension
-end(cds)[idxs$idx[idxs$strand == "+"]] <- end(cds)[idxs$idx[idxs$strand == "+"]] + 3L
-start(cds)[idxs$idx[idxs$strand == "-"]] <- start(cds)[idxs$idx[idxs$strand == "-"]] - 3L
+# Group ORFs by ORF_id
+orf_gtf_group <- split(orf_gtf, orf_gtf$ORF_id)
 
-# Replace updated CDS in full GTF object
-all[all$type == "CDS"] <- cds
+# Get transcript list
+orf_transcripts <- data.frame(orf_gtf) %>% 
+  distinct(ORF_id, transcript_id) %>% 
+  arrange(ORF_id) %>% 
+  pull(transcript_id)
+  
+# Map ORFs to transcript exons
+tx_coord <- pmapToTranscripts(orf_gtf_group, ref_exons[orf_transcripts]) 
+tx_coord <- unlist(tx_coord)
+end(tx_coord) <- end(tx_coord) + 3 # Add plus 3 to end coordinate strand aware
 
-# Export updated GTF
-filepath_gtf <- file.path(workdir, "ORFquant_Detected_ORFs.gtf")
-suppressWarnings(rtracklayer::export.gff2(object = all, con = filepath_gtf))
+# Map ORFs back to genome to obtain original coordinates
+genomic_coord <- pmapFromTranscripts(tx_coord, ref_exons[orf_transcripts]) %>% 
+  setNames(names(orf_gtf_group)) %>% 
+  data.frame() %>% 
+  dplyr::filter(hit) %>% 
+  group_by(orf_id = group_name, chr = seqnames, strand) %>% 
+  summarise(starts = paste0(start, collapse = ","),
+            ends = paste0(end, collapse = ","),
+            genomic_start = min(start),
+            genomic_end = max(end),
+            .groups = "keep")
 
+# Split into one row for each start and stop pair
+genomic_coord_expanded <- genomic_coord %>% 
+  separate_rows(starts, ends, sep = ",") %>% 
+  mutate(starts = as.numeric(starts),
+         ends = as.numeric(ends)) %>%
+  dplyr::rename(ORF_id = orf_id) %>%
+  ungroup() %>%
+  dplyr::select(ORF_id, starts, ends) 
 
+# Obtain reference transcript features
+tx_info <- ref_gtf %>%
+  dplyr::filter(type == "transcript") %>%
+  dplyr::select(transcript_id, transcript_biotype, gene_id)
+
+# Obtain reference gene features
+gene_info <- ref_gtf %>%
+  dplyr::filter(type == "gene") %>%
+  dplyr::select(gene_id, gene_biotype, gene_name)
+
+# Turn ORF rows into gtf ready GRanges object
+orf_gtf_df <- as.data.frame(orf_gtf) %>%
+  dplyr::filter(type == "CDS") %>%
+  dplyr::select(seqnames, strand, source, type, transcript_id, ORF_id) %>%
+  distinct() %>%
+  # Join transcript biotype
+  left_join(tx_info, by = "transcript_id") %>%
+  # Join gene biotype
+  left_join(gene_info, by = "gene_id") %>%
+  # Join expanded genomic coordinates per ORF
+  left_join(genomic_coord_expanded, by = "ORF_id") %>%
+  mutate(
+    start = as.integer(starts),
+    end   = as.integer(ends)
+  ) %>%
+  dplyr::select(-starts, -ends) %>%
+  makeGRangesFromDataFrame(
+    seqnames.field = "seqnames",
+    start.field    = "start",
+    end.field      = "end",
+    strand.field   = "strand",
+    keep.extra.columns = TRUE
+  )
+
+# write proper GTF
+rtracklayer::export(orf_gtf_df, "ORFquant_Detected_ORFs.gtf", format = "gtf")

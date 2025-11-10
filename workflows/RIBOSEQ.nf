@@ -55,9 +55,8 @@ workflow RIBOSEQ {
             meta.sample_type = row.sample_type
             meta.sequence_type = row.sequence_type
             meta.file_type = row.file_type
-            // Use 'realpath' to resolve the symlink
+            // Use 'realpath' to resolve potential symlinks
             def resolvedPath = "realpath ${row.filename_1}".execute().text.trim()
-
             [meta, file(resolvedPath)]
         }
 
@@ -91,6 +90,7 @@ workflow RIBOSEQ {
     )
     multiqc_files = multiqc_files.mix(ALIGNMENT.out.star_log_local)
 
+    // Star output channels
     orfquant_bams = ALIGNMENT.out.bam_list
     bamlist = ALIGNMENT.out.price_filelist
     ribotie_bams = ALIGNMENT.out.bam_list_end2end_transcriptome
@@ -111,8 +111,8 @@ workflow RIBOSEQ {
         ORFQUANT(
             RIBOQC.out.for_orfquant_files,
             params.orfquant_annotation,
+            params.reference_gtf,
             params.package_install_loc,
-            params.pandoc_dir,
             params.outdir,
         )
 
@@ -135,40 +135,38 @@ workflow RIBOSEQ {
                 params.ribotie_min_samples,
                 params.outdir
             )
-            //multiqc_files = multiqc_files.mix(RIBOTIE.out.ribotie_multiqc)
 
             // Combine outputs of ORFcallers into one channel including RiboTIE output
             orfcaller_gtf = PRICE.out.price_orf_gtf.mix(ORFQUANT.out.orfquant_orf_gtf, RIBOTIE.out.ribotie_orf_gtf)
-            collect_orfcaller_gtf = PRICE.out.price_orf_gtf.mix(ORFQUANT.out.orfquant_orf_gtf, RIBOTIE.out.ribotie_orf_gtf).collect()
-            orfcaller_output = PRICE.out.price_orfs.mix(ORFQUANT.out.orfquant_orfs, RIBOTIE.out.ribotie_merged)
         }
         else {
             // Combine outputs of ORFcallers into one channel excluding RiboTIE output
             orfcaller_gtf = PRICE.out.price_orf_gtf.mix(ORFQUANT.out.orfquant_orf_gtf)
-            collect_orfcaller_gtf = PRICE.out.price_orf_gtf.mix(ORFQUANT.out.orfquant_orf_gtf).collect()
-            orfcaller_output = PRICE.out.price_orfs.mix(ORFQUANT.out.orfquant_orfs)
         }
-
+        
         // Calculate p0 sites in reference CDS and in ORFs
         PSITE(
             orfcaller_gtf,
             params.reference_gtf,
+            params.reference_protein_fa,
+            params.package_install_loc,
             params.outdir
         )
 
+        // Merged orfcaller p0 psites for expression
         orfcaller_psites = PSITE.out.orfcaller_psites
-        ref_psites = PSITE.out.ref_psites
+
+        // Annotation input
+        orf_gtf_bed = PSITE.out.orf_gtf_bed
+        ref_cds_rds = PSITE.out.ref_cds_rds
 
         // Converts ORFcaller outputs into annotated output table
         ANNOTATION(
-            orfcaller_output,
-            orfcaller_psites,
-            ref_psites,
             params.reference_gtf,
             params.package_install_loc,
-            params.orfquant_annot_package,
             params.run_ribotie,
-            collect_orfcaller_gtf,
+            orf_gtf_bed,
+            ref_cds_rds,
             params.outdir
         )
         multiqc_files = multiqc_files.mix(ANNOTATION.out.annotation_multiqc)
@@ -182,11 +180,10 @@ workflow RIBOSEQ {
             params.outdir
         )
         multiqc_files = multiqc_files.mix(EXPRESSION.out.multiqc_expression_plot_txt)
-
     }
 
-    multiqc_config = file("${projectDir}/${params.multiqc_config}")
     // Creation of MULTIQC report
+    multiqc_config = file("${projectDir}/${params.multiqc_config}")
     MULTIQC(
         multiqc_files.collect(),
         multiqc_config,

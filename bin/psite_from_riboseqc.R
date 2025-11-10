@@ -15,9 +15,6 @@ suppressPackageStartupMessages({
 fname <- gsub(pattern = "_for_ORFquant", x = basename(riboseqc_file), replacement = "")
 print(fname)
 
-# ORFquant files are R object files
-#load(riboseqc_file)
-
 # Load the file and capture the name of the loaded object
 loaded_obj_names <- load(riboseqc_file)
 print(loaded_obj_names)

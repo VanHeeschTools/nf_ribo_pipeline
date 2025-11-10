@@ -1,4 +1,4 @@
-include { create_template ; parse_genomic_features ; parse_samples ; ribotie_predict_samples ; merge_ribotie_output } from '../modules/ribotie.nf'
+include { create_template ; parse_genomic_features ; parse_samples ; ribotie_predict_samples ; merge_ribotie_output; ribotie_add_stop } from '../modules/ribotie.nf'
 
 workflow RIBOTIE {
     take:
@@ -64,8 +64,17 @@ workflow RIBOTIE {
     )
 
     // Define RIBOTIE subworkflow output 
-    ribotie_orf_gtf = merge_ribotie_output.out.ribotie_merge_gtf
+    ribotie_gtf_no_stop = merge_ribotie_output.out.ribotie_merged_gtf
     ribotie_merged = merge_ribotie_output.out.ribotie_merged_csv
+
+    // Add stop codon coords to predicted ORFs exon boundary aware
+    ribotie_add_stop(
+        ribotie_gtf_no_stop,
+        gtf,
+        outdir
+    )
+
+    ribotie_orf_gtf = ribotie_add_stop.out.ribotie_gtf
 
     emit:
     ribotie_merged

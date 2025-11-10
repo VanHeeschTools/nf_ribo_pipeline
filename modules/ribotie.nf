@@ -117,7 +117,7 @@ process ribotie_predict_samples {
 
 // Merge and filter the RiboTIE output files
 process merge_ribotie_output{
-    publishDir "${outdir}/merged_ribotie", mode: 'copy'
+    publishDir "${outdir}/merged_ribotie", mode: 'copy', pattern: "*.csv"
     label "ribotie"
 
     input:
@@ -128,7 +128,7 @@ process merge_ribotie_output{
 
     output:
     tuple val("RiboTIE"), path("RiboTIE_merged.csv"), emit: ribotie_merged_csv
-    path "RiboTIE_merged.gtf", emit: ribotie_merge_gtf
+    path "RiboTIE_merged.gtf", emit: ribotie_merged_gtf
     path "RiboTIE_duplicate_filtered_merged.csv"
     path "RiboTIE_unfiltered_merged.csv"
 
@@ -137,3 +137,22 @@ process merge_ribotie_output{
     merge_ribotie.py ${genomic_h5_db} "${csv_files.join(',')}" ${ribotie_min_samples}
     """
 }
+
+process ribotie_add_stop{
+    publishDir "${outdir}/merged_ribotie", mode: 'copy'
+    label "Ribo_Seq_R_scripts"
+
+    input:
+    path merged_ribotie
+    path gtf
+    val outdir
+
+    output:
+    path "RiboTIE.gtf", emit: ribotie_gtf
+
+    script:
+    """    
+    fix_ribotie_stop.R ${merged_ribotie} ${gtf}
+    """
+}
+

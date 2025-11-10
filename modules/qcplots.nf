@@ -27,7 +27,7 @@ process riboseqc_tables {
     val riboseqc_all
 
     output:
-    path "riboseqc_frame_29nt_mqc.txt", emit: riboseqc_inframe_29
+    path "inframe_percentages_mqc.txt", emit: riboseqc_inframe_percentages
     path "riboseqc_read_categories_counts_mqc.txt", emit: riboseqc_category_counts
 
     script:

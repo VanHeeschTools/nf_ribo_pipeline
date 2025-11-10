@@ -19,11 +19,11 @@ process prepare_orfquant {
     printf "%s\n" "${collected_paths.join('\n')}" > file_paths.txt
 
     merge_psites.R \
-    "file_paths.txt"
+        "file_paths.txt"
     """
 }
 
-// Run ORFquant
+// Run ORFquant on merged psites level
 process orfquant {
 
     label "orfquant"
@@ -41,10 +41,10 @@ process orfquant {
     script:
     """
     run_ORFquant.R \
-    ${psites_merged} \
-    ${rannot} \
-    $task.cpus \
-    ${package_install_loc} 
+        ${psites_merged} \
+        ${rannot} \
+        $task.cpus \
+        ${package_install_loc} 
     """
 }
 
@@ -56,18 +56,19 @@ process fix_orfquant {
     input:
     tuple val(orfcaller), path(orfquant_orfs)
     path rannot
+    path reference_gtf
     val package_install_loc
     val outdir
 
     output:
-    path "ORFquant_Detected_ORFs.gtf", emit: orfquant_gtf
-    path "ORFquant_Protein_sequences.fasta", emit: orfquant_fasta
+    path "ORFquant.gtf", emit: orfquant_gtf
 
     script:
     """
     fix_orfquant_output.R \
-    ${orfquant_orfs} \
-    ${rannot} \
-    ${package_install_loc}
+        ${orfquant_orfs} \
+        ${rannot} \
+        ${package_install_loc} \
+        ${reference_gtf}
     """
 }

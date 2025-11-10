@@ -7,7 +7,7 @@ suppressPackageStartupMessages({
   library(rmarkdown)
 })
 
-# Get variables from input ------------------------------------------------
+# Get variables from input
 args <- commandArgs(trailingOnly = TRUE)
 bam <- args[1]
 name <- args[2]
@@ -17,20 +17,19 @@ package_install_loc <- args[4]
 paths <- c(package_install_loc, .libPaths())
 .libPaths(paths)
 
-# Define functions --------------------------------------------------------
+# Define functions
 riboseqc_analysis <- function(bam, rannot, name) {
   tryCatch(
     expr = {
       RiboseQC_analysis(annotation_file = rannot,
-                        bam_files = bam,
-                        read_subset = FALSE,
-                        dest_names = name,
-                        rescue_all_rls = FALSE,
-                        fast_mode = FALSE,
-                        create_report = FALSE,
-                        sample_names = NA,
-                        report_file = name)
-
+        bam_files = bam,
+        read_subset = FALSE,
+        dest_names = name,
+        rescue_all_rls = FALSE,
+        fast_mode = FALSE,
+        create_report = FALSE,
+        sample_names = NA,
+        report_file = name)
       message("Successfully executed the call.")
     },
     error = function(e){
@@ -39,5 +38,5 @@ riboseqc_analysis <- function(bam, rannot, name) {
     }
   )
 }
-# Run script --------------------------------------------------------------
+# Run script
 riboseqc_analysis(bam, rannot, name)

@@ -12,9 +12,7 @@ args <- commandArgs(trailingOnly = TRUE)
 for_ORFquant_file <- args[1]
 rannot <- args[2]
 cpu <- args[3]
-pandoc_dir <- args[4]
-annotation_package <- args[5]
-package_install_loc <- args[6]
+package_install_loc <- args[4]
 
 pool_id = "output"
 paths <- c(package_install_loc, .libPaths())
@@ -23,8 +21,8 @@ paths <- c(package_install_loc, .libPaths())
 # Define variables --------------------------------------------------------
 ORFquant_output_file <- paste0(pool_id, "_final_ORFquant_results")
 ORFquant_plot_data <- paste0(ORFquant_output_file, "_plots/",
-                             pool_id, "_ORFquant_plots_RData")
-find_pandoc(dir = pandoc_dir)
+                            pool_id, "_ORFquant_plots_RData")
+#find_pandoc(dir = pandoc_dir)
 
 # Define functions --------------------------------------------------------
 ORFquant_analysis <- function(for_ORFquant_file,

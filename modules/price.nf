@@ -24,13 +24,11 @@ process price_index {
         -nostar \
         -nokallisto
     """
-
 }
 
 // Merge all end2end BAM files into a single BAM to be used by PRICE
 process merge_price_bams{
     label "samtools"
-    //publishDir "${outdir}/price", mode: 'copy'
 
     input:
     path bamlist
@@ -45,7 +43,6 @@ process merge_price_bams{
     samtools sort -@ $task.cpus -o star_end2end_merged_sorted.bam star_end2end_merged.bam
     samtools index star_end2end_merged_sorted.bam
     """
-
 }
 
 // Run PRICE on merged bam
@@ -74,7 +71,6 @@ process price {
         'load("'PRICE.orfs.cit'").ei().map(function(o) new BedEntry(o.data.getStartStop(o,true).toMutable().setData(new NameAnnotation(o.data.getGeneId()+"__"+o.data.getTranscript()+"__"+o.data.getType()+"__"+o.data.getOrfid()+"__"+o.data.getStartCodon())))).print()' \
         > "PRICE.orfs.cit.bed"
     """
-
 }
 
 // Convert PRICE output bed file to a semi gtf format only keeping the CDS rows
@@ -119,6 +115,5 @@ process price_to_gtf{
     ) %>%
     dplyr::select(seqnames, start, end, score, strand, type, source, gene_id, transcript_id, ORF_id, start_codon)
     export.gff(orf_ranges_df, con = "PRICE.gtf")
-
     """
 }

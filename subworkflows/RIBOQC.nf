@@ -36,16 +36,16 @@ workflow RIBOQC {
 
     // 03 - Create riboseqc tables for MultiQC
     riboseqc_tables(riboseqc.out.riboseqc_all.collect())
-    riboseqc_inframe_29 = riboseqc_tables.out.riboseqc_inframe_29
+    riboseqc_inframe_percentages = riboseqc_tables.out.riboseqc_inframe_percentages
     riboseqc_category_counts = riboseqc_tables.out.riboseqc_category_counts
 
     // 04 - Create periodicity plots
-    riboseqc_plots(riboseqc.out.riboseqc_all.collect(), outdir)
+    //riboseqc_plots(riboseqc.out.riboseqc_all.collect(), outdir)
 
     // Combine into one channel for MultiQC
-    multiqc_riboseq = riboseqc_inframe_29.mix(riboseqc_category_counts, 
-                    riboseqc_plots.out.metagene_plot,
-                    riboseqc_plots.out.periodicity_plot)
+    multiqc_riboseq = riboseqc_inframe_percentages.mix(riboseqc_category_counts).collect()
+                    //riboseqc_plots.out.metagene_plot,
+                    //riboseqc_plots.out.periodicity_plot)
 
     // Obtain ORFquant input files
     // Collect is done in the RIBOSEQ workflow

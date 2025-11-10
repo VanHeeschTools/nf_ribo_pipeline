@@ -20,7 +20,7 @@ thousandsSep_format: ','
 title: 'Nextflow Ribo_Seq pipeline report'
 subtitle: 'The following shows a summary of the output of the Ribo_Seq pipeline'
 intro_text: 'MultiQC reports summarise analysis results.'
-report_comment: 'The pipeline is still in development if you have ideas for interesting visualisations contact your local Nextflow expert.'
+report_comment: 'The pipeline is still in development, sections might change in newer versions.'
 
 report_section_order:
   cutadapt:
@@ -35,7 +35,7 @@ report_section_order:
       order: 100
   star:
       order: 90
-  inframe_reads:
+  inframe_reads_all:
       order: 80
   riboseq_counts:
       order: 70
@@ -52,12 +52,6 @@ report_section_order:
   canonical_expression:
       order: 10
 
-
-software_versions:
-  trimgalore: '0'
-  star: '0'
-  bowtie_2: '0'
-  RiboseQC: '0'
         
 custom_data:
   contaminant_counts:
@@ -89,22 +83,6 @@ custom_data:
       id: 'contaminant_bargraph'
       title: 'Contaminant Reads by Type'
       ylab: 'Read count'
-      bar_mode: 'grouped'
-
-  inframe_reads:
-    id: 'inframe_reads'
-    file_format: txt
-    section_name: 'RiboseQC in-frame reads'
-    description: 'Percentage of reads of 29nt that are in-frame according to RiboseQC.'
-    plot_type: 'bargraph'
-    categories:
-      FramePreference:
-        name: 'In-frame'
-        color: '#003C67'
-    pconfig:
-      id: 'inframe_29nt'
-      title: 'In-frame reads (29nt)'
-      ylab: 'Percentage'
       bar_mode: 'grouped'
 
   riboseq_counts:
@@ -145,13 +123,13 @@ custom_data:
     id: 'periodicity_plot'
     file_format: png
     section_name: 'RiboseQC periodicity'
-    description: 'Periodicity percentage of reads of 29 nt'
+    description: 'Periodicity percentage of reads of 29 nt, only including reads that map on the first 150 nt of CDS'
 
   metagene_plot:
     id: 'metagene_plot'
     file_format: png
     section_name: 'RiboseQC metagene'
-    description: 'Metagene profile plot of the first 150 nt of cds using reads of 29 nt'
+    description: 'Metagene profile plot of the first 150 nt of CDS using reads of 29 nt'
 
   orfcaller_categories:
     id: 'orfcaller_categories'
@@ -197,6 +175,18 @@ custom_data:
         title: 'Reads Removed'
         format: '{:,}'  
 
+  inframe_reads_all:
+    id: 'inframe_reads_all'
+    file_format: txt
+    section_name: 'RiboseQC in-frame reads percentages'
+    description: 'RiboseQC in-frame percentages for read lengths 28-31'
+    plot_type: 'table'
+    categories:
+    pconfig:
+      id: 'inframe_29nt'
+      title: 'In-frame reads percentages'
+      format: '{:,}'  
+
   size_distribution:
     id: 'size_distribution'
     section_name: 'Size Distribution'
@@ -219,7 +209,6 @@ custom_data:
       id: 'canonical_expression'
       title: 'Canonical vs Non-canonical ORF counts'
       bar_mode: 'grouped'
-
   
   total_reads:
     id: 'total_reads'
@@ -261,8 +250,8 @@ sp:
     fn: 'Periodicity_bar_combined_mqc.png'
   metagene_plot:
     fn: 'Metagene_profile_combined_mqc.png'
-  inframe_reads:
-    fn: 'riboseqc_frame_29nt_mqc.txt'
+  inframe_reads_all:
+    fn: 'inframe_percentages_mqc.txt'
   orfcaller_categories:
     fn: 'orfcaller_orf_categories_mqc.txt'
   merged_categories:
