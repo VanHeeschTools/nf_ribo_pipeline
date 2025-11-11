@@ -217,7 +217,7 @@ match_orfs_to_transcripts <- function(orf_file, gtf_file, txdb) {
                     mutate(subjectHits = row_number()), "subjectHits") %>%
         left_join(orf_list %>% dplyr::select(orf_id, chrm, orf_start, orf_end, orf_width,  
                                             strand), "orf_id") %>%
-        mutate(tx_orf_id = paste0(tx_id, "__", orf_id)) %>%
+        mutate(tx_orf_id = paste0(tx_id, "__", orf_id))
     
     # Determine width for each ORF-transcript match (to check for correct
     # transcript structure)

@@ -37,7 +37,8 @@ workflow PRICE {
   price(merge_price_bams.out.merged_end2end_bam,
     price_index_ch,
     gedi_exec_loc,
-    outdir)
+    outdir
+  )
   
   // Turn PRICE output into gtf format
   price_to_gtf(

@@ -34,7 +34,6 @@ process parse_genomic_features {
     publishDir "${outdir}/ribotie", mode: 'copy'
 
     input:
-    val ribotie_template
     path gtf
     path fasta
     val outdir
@@ -44,11 +43,13 @@ process parse_genomic_features {
 
     script:
     """
-    tis_transformer ${ribotie_template} \
-        --h5_path genomic_features_db.h5 \
-        --data  \
-        --no_backup \
-        --num_workers $task.cpus 
+    tis_transformer \
+    --gtf_path ${gtf} \
+    --fa_path ${fasta} \
+    --h5_path genomic_features_db.h5 \
+    --data  \
+    --no_backup \
+    --num_workers $task.cpus 
     """
 }
 

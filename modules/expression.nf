@@ -31,6 +31,7 @@ process intersect_psites {
     output:
     path "${sample_id}_intersect.bed", emit: sample_intersect
 
+    //TODO: test running without -f 1.00 as this could cause issues due to bed file merging of coords
     script:
     """
     bedtools intersect \

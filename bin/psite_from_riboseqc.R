@@ -34,5 +34,4 @@ if(nrow(p_sites) == 0) {
 bed <- data.frame(p_sites$seqnames, p_sites$start, p_sites$end, ".", p_sites$score, p_sites$strand)
 colnames(bed) <- c("chrom", "chromStart", "chromEnd", "name", "score", "strand")
 
-#data.table::fwrite(bed, paste0(fname, "_psites.bed"), quote = F, sep = "\t", col.names = F, row.names = F)
 write.table(bed, file = paste0(fname, "_psites.bed"), quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)
