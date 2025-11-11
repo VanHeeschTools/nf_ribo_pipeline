@@ -41,8 +41,7 @@ workflow ALIGNMENT {
         // Run STAR - index if any of the index files are missing
         star_index(genome, gtf, outdir)
         star_index_ch = star_index.out.star_index_path
-    }
-    else {
+    } else {
         star_index_ch = "${star_index_path}"
         log.info("Using existing STAR index: ${star_index_path}")
     }
@@ -60,8 +59,8 @@ workflow ALIGNMENT {
     bam_list = samtools.out.sorted_bam
     star_log_local = star_local.out.star_log_local
 
-    // Only run the PRICE and RiboTIE STAR run if the ORF calling will be run
-    // At the moment only the ORFquant BAM file is used for MultiQC output
+    // Only run the end2end STAR run if the ORF calling will be run
+    // This is because at the moment only the ORFquant BAM file is used for MultiQC output
     if (run_orf_prediction) {
         // Run STAR end2end mode
         star_end_to_end(
@@ -83,22 +82,22 @@ workflow ALIGNMENT {
             .flatten()
             .map { it -> it.toString() }
 
+        //TODO: Remove this part and use price_paths as input for the merge_price_bams step
         // Store BAM file paths to workdir
         price_filelist = price_paths.collectFile(
             name: 'bams.bamlist',
             newLine: true,
             sort: true,
         )
-    }
-    else {
+    } else {
         star_log_end_to_end = null
         bam_list_end2end_transcriptome = null
         price_filelist = null
     }
 
     emit:
-    star_log_local
-    star_log_end_to_end
+    star_log_local                 // star output log file for local run
+    star_log_end_to_end            // star output log file for end2end run
     bam_list                       // bam files for ORFquant
     bam_list_end2end_transcriptome // bam list for RiboTIE
     price_filelist                 // list for PRICE

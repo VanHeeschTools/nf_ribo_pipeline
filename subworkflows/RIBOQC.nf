@@ -4,11 +4,11 @@ include { riboseqc_tables; riboseqc_plots } from '../modules/qcplots.nf'
 workflow RIBOQC {
 
     take:
-    orfquant_annotation        // Path, ORFquant annotation file
-    package_install_loc        // Path, location where BSgenome package is installed
-    reference_fasta_fai
-    orfquant_bams              // List, output from ALIGNMENT subworkflow
-    outdir                     // Path, output directory
+    orfquant_annotation   // Path, ORFquant annotation file
+    package_install_loc   // Path, location where BSgenome package is installed
+    reference_fasta_fai   // Path, location of reference genome fasta fai file
+    orfquant_bams         // List, output from ALIGNMENT subworkflow
+    outdir                // Path, output directory
 
     main:
     // 01 - Create riboseqc files
@@ -17,6 +17,7 @@ workflow RIBOQC {
             orfquant_annotation,
             package_install_loc)
 
+    //TODO: Merge steps so it doesn't run 4 times for every sample
     // 02 - Create p-site tracks
     // Sort each bedgraph file
     riboseqc_bedgraphs = riboseqc.out.bedgraphs.collect().flatten()

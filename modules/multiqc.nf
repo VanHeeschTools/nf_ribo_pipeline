@@ -1,4 +1,4 @@
-// Create MultiQC output report
+// Create MultiQC output report, including custom sections
 process MULTIQC {
     label "multiqc"
     publishDir "${outdir}/multiqc/", mode: 'copy'

@@ -14,15 +14,38 @@ library(rtracklayer)
 # =============================================================================
 
 args <- commandArgs(trailingOnly = TRUE)
-orfquant_table <- args[1]
-price_table <- args [2]
+#orfquant_table <- args[1]
+#price_table <- args [2]
 # Gives NA value if RiboTIE input equals NULL
-ribotie_table <- ifelse(length(args) >= 3 && args[3] != "null", args[3], NA)
+#ribotie_table <- ifelse(length(args) >= 3 && args[3] != "null", args[3], NA)
+orfcaller_tables <- args
 
 # =============================================================================
 # 03 | FUNCTIONS ----
 #   * Define all functions
 # =============================================================================
+
+#' Read annotated ORF tables
+#'
+#' This function takes a vector of file paths pointing to ORF quantification
+#' tables (CSV files) reads each file as data.frame and puts it into the output list
+#'
+#' @param orfcaller_tables A character vector of file paths to ORF table files to be read.
+#'
+#' @return A list of loaded ORF table data frames
+read_orf_tables <- function(orfcaller_tables) {
+  
+  orf_tables <- lapply(orfcaller_tables, function(f) {
+    read.delim(
+      f,
+      sep = ",",
+      colClasses = c(chrm = "character"),
+      stringsAsFactors = FALSE
+    )
+  })
+  
+  return(orf_tables)
+}
 
 #' Filter identical ORFs preferring specific callers
 #'
@@ -204,15 +227,16 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
                 col.names = FALSE, row.names = FALSE)
 }
 
-
 #' Generate MultiQC table of ORF categories per ORFcaller
 #'
 #' @param orf_dfs Named list of data frames, each corresponding to an ORFcaller
 multiqc_orfcaller_table <- function(orf_dfs) {
-  all_orf_types <- unique(unlist(lapply(orf_dfs, \(df) unique(df$orf_biotype_single))))
+
+  all_orf_types <- unique(unlist(lapply(orf_dfs, function(df) df$orf_biotype_single)))
   
-  count_tables <- lapply(names(orf_dfs), function(caller_name) {
-    df <- orf_dfs[[caller_name]]
+  count_tables <- lapply(orf_dfs, function(df) {
+    caller_name <- unique(df$orfcaller)
+    
     counts <- df %>%
       count(orf_biotype_single) %>%
       complete(orf_biotype_single = all_orf_types, fill = list(n = 0)) %>%
@@ -220,13 +244,15 @@ multiqc_orfcaller_table <- function(orf_dfs) {
       dplyr::select(n) %>%
       t() %>%
       as.data.frame()
+    
     colnames(counts) <- all_orf_types
-    mutate(counts, ORFcaller = caller_name, .before = 1)
+    dplyr::mutate(counts, ORFcaller = caller_name, .before = 1)
   })
   
   multiqc_table <- bind_rows(count_tables)
-  sorted_cols <- names(sort(colMeans(multiqc_table[ , -1]), decreasing = TRUE))
-  multiqc_table <- multiqc_table %>% dplyr::select(ORFcaller, all_of(sorted_cols))
+  sorted_cols <- names(sort(colMeans(multiqc_table[, -1]), decreasing = TRUE))
+  multiqc_table %>%
+    dplyr::select(ORFcaller, dplyr::all_of(sorted_cols))
   
   write.table(multiqc_table, "orfcaller_orf_categories_mqc.txt", sep = "\t", row.names = FALSE, quote = FALSE)
 }
@@ -287,18 +313,22 @@ multiqc_caller_count <- function(sorted_df, outfile = "caller_count_mqc.txt") {
 
 # Step 1: Load and merge ORFS
 
-orfquant_orfs <- read.delim(orfquant_table, sep = ",", colClasses = c(chrm = "character"), stringsAsFactors = FALSE)
-price_orfs <- read.delim(price_table, sep = ",",, colClasses = c(chrm = "character"), stringsAsFactors = FALSE)
+#orfquant_orfs <- read.delim(orfquant_table, sep = ",", colClasses = c(chrm = "character"), stringsAsFactors = FALSE)
+#price_orfs <- read.delim(price_table, sep = ",",, colClasses = c(chrm = "character"), stringsAsFactors = FALSE)
 
-if (!is.na(ribotie_table)) {
-  ribotie_orfs <- read.delim(ribotie_table, sep = ",", colClasses = c(chrm = "character"), stringsAsFactors = FALSE)
+#if (!is.na(ribotie_table)) {
+#  ribotie_orfs <- read.delim(ribotie_table, sep = ",", colClasses = c(chrm = "character"), stringsAsFactors = FALSE)
 
   # Merge tables with RiboTIE results
-  orfs <- dplyr::bind_rows(orfquant_orfs, price_orfs, ribotie_orfs)
-} else {
+#  orfs <- dplyr::bind_rows(orfquant_orfs, price_orfs, ribotie_orfs)
+#} else {
   # Merge tables without RiboTIE results
-  orfs <- dplyr::bind_rows(orfquant_orfs, price_orfs)
-}
+#  orfs <- dplyr::bind_rows(orfquant_orfs, price_orfs)
+#}
+
+# Step 1: Load and merge ORFS
+loaded_orf_tables <- read_orf_tables(orfcaller_tables)
+orfs <- dplyr::bind_rows(loaded_orf_tables)
 
 # Step 2: Remove identical ORFs between ORFcallers
 filtered_table <- orf_filter(orfs)
@@ -339,12 +369,13 @@ if (!is.na(ribotie_table)) {
     PRICE    = price_orfs,
     RiboTIE  = ribotie_orfs
   )
-}else{
+} else {
   orf_dfs <- list(
     ORFquant = orfquant_orfs,
     PRICE    = price_orfs
   )
 }
-multiqc_orfcaller_table(orf_dfs)
+
+multiqc_orfcaller_table(loaded_orf_tables)
 multiqc_merged_table(sorted_df)
 multiqc_caller_count(sorted_df)

@@ -1,7 +1,6 @@
-include { trimgalore }                from "../modules/trimgalore.nf"
-include { fastqc; size_distribution } from "../modules/fastqc.nf"
-include { bowtie2; bowtie2_index }    from '../modules/bowtie.nf'
-include { contaminants_check }        from '../modules/samtools.nf'
+include { trimgalore }                                 from "../modules/trimgalore.nf"
+include { fastqc; size_distribution }                  from "../modules/fastqc.nf"
+include { bowtie2; bowtie2_index; contaminants_check } from '../modules/bowtie.nf'
 
 workflow SELECTION {
 
@@ -55,8 +54,8 @@ workflow SELECTION {
     fastqc_zip = fastqc.out.fastqc_zip
 
     // Create size distribution data
-    size_distribution(rpf_reads)
-    size_distribution = size_distribution.out.size_distribution
+    //size_distribution(rpf_reads)
+    //size_distribution_mqc = size_distribution.out.size_distribution
     
     // Create QC stats
     contaminants_check(bowtie2_contaminants,

@@ -1,7 +1,7 @@
 // Create index for STAR if a valid path is not given in parm file
 process star_index {
 
-    label "alingment"
+    label "alignment"
     publishDir "${outdir}/star_index/", mode: 'copy'
 
     input: 
@@ -65,7 +65,6 @@ process star_local{
     --alignSJoverhangMin 1000 \
     --outTmpKeep None
     """
-
 }
 
 // Aligns RPF reads to the reference genome to create PRICE input

@@ -12,8 +12,8 @@ workflow RIBOTIE {
     //Create sample template for use in RiboTIE
     create_template(
         ribotie_bams.collect(flat: false),
-        fasta,
         gtf,
+        fasta,
         outdir
     )
     ribotie_template = create_template.out.template

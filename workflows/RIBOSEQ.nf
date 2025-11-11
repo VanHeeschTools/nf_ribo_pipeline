@@ -65,7 +65,7 @@ workflow RIBOSEQ {
         meta.file_type == "fastq" && meta.sequence_type == "ribo"
     }
 
-    // Set multiqc file channel
+    // Declare empty multiqc file channel
     multiqc_files = Channel.empty()
 
     // Quality filtering and contamination removal
@@ -113,7 +113,7 @@ workflow RIBOSEQ {
             params.orfquant_annotation,
             params.reference_gtf,
             params.package_install_loc,
-            params.outdir,
+            params.outdir
         )
 
         // PRICE run on merged end2end bam files
@@ -123,11 +123,12 @@ workflow RIBOSEQ {
             params.reference_fasta,
             params.reference_gtf,
             params.gedi_exec_loc,
-            params.outdir,
+            params.outdir
         )
 
-        // Run RiboTIE if parameter is set to TRUE
+        // Run RiboTIE only if run_ribotie parameter is set to TRUE
         if (params.run_ribotie) {
+            // Run RiboTIE on transciptome end2end bam files
             RIBOTIE(
                 ribotie_bams,
                 params.reference_fasta,
@@ -153,25 +154,26 @@ workflow RIBOSEQ {
             params.outdir
         )
 
-        // Merged orfcaller p0 psites for expression
+        // Merged ORFcallers p0 psites, expression input
         orfcaller_psites = PSITE.out.orfcaller_psites
 
-        // Annotation input
+        // ORFcaller gtf file plus reference p-site overlap bed file, annotation input
         orf_gtf_bed = PSITE.out.orf_gtf_bed
+        
+        // Altered reference cds rds file, annotation input
         ref_cds_rds = PSITE.out.ref_cds_rds
 
-        // Converts ORFcaller outputs into annotated output table
+        // Annotate the ORFcaller output gtf files and harmonises them into a single table
         ANNOTATION(
             params.reference_gtf,
             params.package_install_loc,
-            params.run_ribotie,
             orf_gtf_bed,
             ref_cds_rds,
             params.outdir
         )
         multiqc_files = multiqc_files.mix(ANNOTATION.out.annotation_multiqc)
 
-        // Calculate PPM values for ORFs and add to final output table
+        // Calculate expression values for each ORF and add it to the harmonised ORF table
         EXPRESSION(
             RIBOQC.out.for_orfquant_files,
             ANNOTATION.out.harmonised_orf_table,

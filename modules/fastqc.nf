@@ -6,7 +6,7 @@ process fastqc {
     publishDir "${outdir}/fastqc", mode: 'copy'
 
     input:
-    tuple val(meta), path(reads) // Tuple, meata info plus trimmed FASTQ reads
+    tuple val(meta), path(reads) // Tuple, meta info plus trimmed FASTQ reads
     val outdir                   // Path, output directory
 
     output:
@@ -16,24 +16,29 @@ process fastqc {
     script:
     def sample_id = meta.sample_id
     """
+    # Create temp directory to run fastqc
     mkdir -p tmp
     mkdir -p ${sample_id}
+
+    # Run fastqc
     fastqc \
     ${reads} \
     --threads $task.cpus \
     -d "tmp" \
     --outdir "${sample_id}" 
+
+    # Remove fastqc temp direcory
     rm -r tmp
     """
 
 }
 
-// Generate size_distibution between 20-40 nucleotides 
+// Generate size_distibution multiqc report results between 20-40 nucleotides 
 process size_distribution {
     label "Ribo_Seq_R_scripts"
 
     input:
-    tuple val(meta), path(reads) // Tuple, meata info plus trimmed FASTQ reads
+    tuple val(meta), path(reads) // Tuple, meta info plus trimmed FASTQ reads
 
     output:
     path "${meta.sample_id}_size_distribution_mqc.txt", emit: size_distribution

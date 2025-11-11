@@ -5,8 +5,8 @@ process create_template {
 
     input:
     val ribotie_bams // list of tuples of sample id and bam path
-    path fasta
     path gtf
+    path fasta
     val outdir
 
     output:
@@ -97,7 +97,6 @@ process ribotie_predict_samples {
     output:
     path "genomic_features_db_${sample_id}.csv", emit: ribotie_orf_csv
     path "genomic_features_db_${sample_id}.gtf", emit: ribotie_orf_gtf
-    //path "multiqc_${sample_id}", emit: ribotie_multiqc
 
     script:
     """
@@ -119,7 +118,7 @@ process merge_ribotie_output{
     label "ribotie"
 
     input:
-    val csv_files
+    val ribotie_csv_files
     path genomic_h5_db
     val ribotie_min_samples
     val outdir
@@ -132,7 +131,7 @@ process merge_ribotie_output{
 
     script:
     """    
-    merge_ribotie.py ${genomic_h5_db} "${csv_files.join(',')}" ${ribotie_min_samples}
+    merge_ribotie.py ${genomic_h5_db} "${ribotie_csv_files.join(',')}" ${ribotie_min_samples}
     """
 }
 
