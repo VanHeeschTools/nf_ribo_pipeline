@@ -159,7 +159,7 @@ load_orfcaller_gtf <- function(gtf_file, orf_gtf_file, txdb, orfcaller){
             str_extract(transcript_id, "^[^_]+_[^_]+"),      # In case of a TCONS transcript keep everything untill second underscore
         orfcaller == "RiboTIE" ~ 
             str_replace(transcript_id, "_.*$", ""),          # Otherwise only keep untill the first underscore
-        TRUE ~ ranscript_id                                  # If not a RiboTIE ORF leave unchanged
+        TRUE ~ transcript_id                                  # If not a RiboTIE ORF leave unchanged
         )
     )
 

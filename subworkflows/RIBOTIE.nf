@@ -52,9 +52,6 @@ workflow RIBOTIE {
     // Define RiboTIE output
     ribotie_orf_csv = ribotie_predict_samples.out.ribotie_orf_csv
     
-    // Define RiboTIE generated MultiQC output FOR TESTING
-    //ribotie_multiqc = ribotie_predict_samples.out.ribotie_multiqc
-
     // Merge all RiboTIE output files
     merge_ribotie_output(
         ribotie_orf_csv.collect(),
@@ -65,7 +62,6 @@ workflow RIBOTIE {
 
     // Define RIBOTIE subworkflow output 
     ribotie_gtf_no_stop = merge_ribotie_output.out.ribotie_merged_gtf
-    ribotie_merged = merge_ribotie_output.out.ribotie_merged_csv
 
     // Add stop codon coords to predicted ORFs exon boundary aware
     ribotie_add_stop(
@@ -77,7 +73,5 @@ workflow RIBOTIE {
     ribotie_orf_gtf = ribotie_add_stop.out.ribotie_gtf
 
     emit:
-    ribotie_merged
     ribotie_orf_gtf
-    //ribotie_multiqc
 }

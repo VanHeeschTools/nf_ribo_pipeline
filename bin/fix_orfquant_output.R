@@ -186,4 +186,4 @@ orf_gtf_df <- as.data.frame(orf_gtf) %>%
   )
 
 # write proper GTF
-rtracklayer::export(orf_gtf_df, "ORFquant_Detected_ORFs.gtf", format = "gtf")
+rtracklayer::export(orf_gtf_df, "ORFquant.gtf", format = "gtf")

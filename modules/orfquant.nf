@@ -36,7 +36,7 @@ process orfquant {
     val outdir
 
     output:
-    tuple val("ORFquant"), path("output_final_ORFquant_results"), emit: orfquant_orfs
+    path "output_final_ORFquant_results", emit: orfquant_orfs
 
     script:
     """
@@ -54,7 +54,7 @@ process fix_orfquant {
     publishDir "${outdir}/orfquant", mode: 'copy'
 
     input:
-    tuple val(orfcaller), path(orfquant_orfs)
+    path(orfquant_orfs)
     path rannot
     path reference_gtf
     val package_install_loc

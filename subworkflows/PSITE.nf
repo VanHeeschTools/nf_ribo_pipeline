@@ -35,7 +35,7 @@ workflow PSITE {
         outdir
     )
 
-    // Obtain intersect of ORF p0 locations and reference p0 locations
+    // Obtain intersect of ORF p sites and reference p sites
     orf_ref_p0_intersect(
         orfcaller_psites.out.orf_psite_bed_caller,
         reference_psites.out.reference_psite_bed,
@@ -46,7 +46,6 @@ workflow PSITE {
     orfcaller_psites = merge_orfcaller_psites.out.combined_psites
     ref_cds_rds = reference_psites.out.reference_cds_rds
     orf_gtf_bed = orf_ref_p0_intersect.out.orf_ref_intersect
-
 
     emit:
     orfcaller_psites

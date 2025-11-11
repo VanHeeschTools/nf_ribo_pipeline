@@ -58,7 +58,7 @@ process price {
     val outdir        // Output directory
 
     output:
-    tuple val("PRICE"), path("PRICE.orfs.cit.bed"), emit: price_orfs
+    path "PRICE.orfs.cit.bed", emit: price_orfs
 
     script:
     """
@@ -79,11 +79,13 @@ process price_to_gtf{
     publishDir "${outdir}/price", mode: 'copy'
 
     input:
-    tuple val(orfcaller), val(price_bed_file)
+    val price_bed_file
     val outdir
 
     output:
     path "PRICE.gtf", emit: price_gtf
+
+    //TODO: Create one big R script with small functions like this one
 
     script:
     """

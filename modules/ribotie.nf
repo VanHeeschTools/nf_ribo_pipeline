@@ -95,8 +95,6 @@ process ribotie_predict_samples {
     val outdir
 
     output:
-    //path "${sample_id}.npy", emit: predicted_path
-    //path "*" // Output all for testing
     path "genomic_features_db_${sample_id}.csv", emit: ribotie_orf_csv
     path "genomic_features_db_${sample_id}.gtf", emit: ribotie_orf_gtf
     //path "multiqc_${sample_id}", emit: ribotie_multiqc
@@ -127,8 +125,8 @@ process merge_ribotie_output{
     val outdir
 
     output:
-    tuple val("RiboTIE"), path("RiboTIE_merged.csv"), emit: ribotie_merged_csv
     path "RiboTIE_merged.gtf", emit: ribotie_merged_gtf
+    path "RiboTIE_merged.csv"
     path "RiboTIE_duplicate_filtered_merged.csv"
     path "RiboTIE_unfiltered_merged.csv"
 
