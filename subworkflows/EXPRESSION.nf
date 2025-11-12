@@ -49,7 +49,6 @@ workflow EXPRESSION {
         ppm_matrix,
         outdir
     )
-
     
     multiqc_expression_plot(
         harmonised_orf_table,
@@ -59,7 +58,6 @@ workflow EXPRESSION {
 
     multiqc_expression_plot_txt = multiqc_expression_plot.out
     
-
     emit:
     ppm_matrix
     multiqc_expression_plot_txt

@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
 # =============================================================================
-# 01 | LOAD LIBRARIES ----
+# 01 | LOAD LIBRARIES
 # =============================================================================
 suppressPackageStartupMessages({
 library(dplyr)
@@ -10,18 +10,14 @@ library(rtracklayer)
 })
 
 # =============================================================================
-# 02 | LOAD DATA ----
+# 02 | LOAD DATA
 # =============================================================================
 
 args <- commandArgs(trailingOnly = TRUE)
-#orfquant_table <- args[1]
-#price_table <- args [2]
-# Gives NA value if RiboTIE input equals NULL
-#ribotie_table <- ifelse(length(args) >= 3 && args[3] != "null", args[3], NA)
 orfcaller_tables <- args
 
 # =============================================================================
-# 03 | FUNCTIONS ----
+# 03 | FUNCTIONS
 #   * Define all functions
 # =============================================================================
 
@@ -103,7 +99,7 @@ write_results <- function(sorted_df, output_file){
 }
 
 # =============================================================================
-# 04 | EXTRA OUTPUT FUNCTIONS ----
+# 04 | EXTRA OUTPUT FUNCTIONS 
 # =============================================================================
 
 #' Write a protein FASTA file from a dataframe
@@ -308,23 +304,8 @@ multiqc_caller_count <- function(sorted_df, outfile = "caller_count_mqc.txt") {
 }
 
 # =============================================================================
-# 05 | RUN HARMONISATION ----
+# 05 | RUN HARMONISATION
 # =============================================================================
-
-# Step 1: Load and merge ORFS
-
-#orfquant_orfs <- read.delim(orfquant_table, sep = ",", colClasses = c(chrm = "character"), stringsAsFactors = FALSE)
-#price_orfs <- read.delim(price_table, sep = ",",, colClasses = c(chrm = "character"), stringsAsFactors = FALSE)
-
-#if (!is.na(ribotie_table)) {
-#  ribotie_orfs <- read.delim(ribotie_table, sep = ",", colClasses = c(chrm = "character"), stringsAsFactors = FALSE)
-
-  # Merge tables with RiboTIE results
-#  orfs <- dplyr::bind_rows(orfquant_orfs, price_orfs, ribotie_orfs)
-#} else {
-  # Merge tables without RiboTIE results
-#  orfs <- dplyr::bind_rows(orfquant_orfs, price_orfs)
-#}
 
 # Step 1: Load and merge ORFS
 loaded_orf_tables <- read_orf_tables(orfcaller_tables)
@@ -360,21 +341,8 @@ sorted_unfiltered_df <- sort_orfs(orfs) %>%
 write_results(sorted_unfiltered_df, "unfiltered_harmonised_orf_table.csv")
 
 # =============================================================================
-# 06 | CREATE MULTIQC TABLES ----
+# 06 | CREATE MULTIQC TABLES 
 # =============================================================================
-
-if (!is.na(ribotie_table)) {
-  orf_dfs <- list(
-    ORFquant = orfquant_orfs,
-    PRICE    = price_orfs,
-    RiboTIE  = ribotie_orfs
-  )
-} else {
-  orf_dfs <- list(
-    ORFquant = orfquant_orfs,
-    PRICE    = price_orfs
-  )
-}
 
 multiqc_orfcaller_table(loaded_orf_tables)
 multiqc_merged_table(sorted_df)

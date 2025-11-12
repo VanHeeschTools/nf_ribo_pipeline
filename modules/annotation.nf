@@ -35,15 +35,14 @@ process harmonise_orfs {
     publishDir "${outdir}/final_orf_table", mode: 'copy', pattern: 'orf_harmonised.gtf'
 
     input:
-    //tuple path(orfquant_table), path(price_table), val(ribotie_table) // Tuple, path of ORFcaller annotation tables
     val orfcaller_tables
     val outdir                                                        // Path, output directory
 
     output:
     path "harmonised_orf_table.csv", emit: harmonised_orf_table
+    path "removed_orf_ids.txt", emit: removed_orf_ids
     path "orf_protein_sequences.fa.gz"
     path "orf_dna_sequences.fa.gz"
-    path "removed_orf_ids.txt", emit: removed_orf_ids
     path "harmonised_orf_table.gtf"
 
     path "unfiltered_harmonised_orf_table.csv"

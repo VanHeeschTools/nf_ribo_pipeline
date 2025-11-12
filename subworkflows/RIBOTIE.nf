@@ -21,7 +21,6 @@ workflow RIBOTIE {
     //TODO: see if this step can be run without the template so the process can start earlier
     // Create h5 database based on genomic features from the gtf 
     parse_genomic_features(
-        ribotie_template,
         gtf,
         fasta,
         outdir

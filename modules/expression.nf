@@ -4,6 +4,7 @@ process filter_removed_orf_ids{
     label "filter_removed_orf_ids"
 
     input:
+    //TODO: make sure the removed_orf_ids are all removed from the orf_table
     path removed_orf_ids
     path orfcaller_psites
 
