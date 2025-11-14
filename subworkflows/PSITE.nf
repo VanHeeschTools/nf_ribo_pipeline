@@ -37,7 +37,7 @@ workflow PSITE {
 
     // Obtain intersect of ORF p sites and reference p sites
     orf_ref_p0_intersect(
-        orfcaller_psites.out.orf_psite_bed_caller,
+        orfcaller_psites.out.orfcaller_psite_bed,
         reference_psites.out.reference_psite_bed,
         outdir
     )

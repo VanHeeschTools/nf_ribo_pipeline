@@ -35,7 +35,7 @@ read_orf_tables <- function(orfcaller_tables) {
     read.delim(
       f,
       sep = ",",
-      colClasses = c(chrm = "character"),
+      colClasses = c(sequence = "character"),
       stringsAsFactors = FALSE
     )
   })
@@ -51,6 +51,7 @@ orf_filter <- function(orfs){
   caller_order <- c("ORFquant", "PRICE", "RiboTIE")
   
   filtered_table <- orfs %>%
+    # Group on the list of transcripts_ids it has a match with, the protein seq, and the ORF starts and ends
     group_by(tx_id, protein_seq, starts, ends) %>%
     mutate(
       caller_count = n_distinct(orfcaller),  # Amount of callers ORF occurs in
@@ -70,7 +71,7 @@ orf_filter <- function(orfs){
 sort_orfs <- function(filtered_table){
   filtered_table_sorted <- filtered_table %>%
     # Arrange by chromosome order, then start and end
-    dplyr::arrange(chrm, orf_start, orf_end) %>%
+    dplyr::arrange(sequence, orf_start, orf_end) %>%
 
   return(filtered_table_sorted)
 }
@@ -176,9 +177,9 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
                           '"; ORFcaller "', orfcaller, '";')
     ) %>%
     # Orf_id will be used to join with cds rows, and is removed afterwards
-    dplyr::select(chrm, orfcaller, feature, start, end, 
+    dplyr::select(sequence, orfcaller, feature, start, end, 
                   score, strand, frame, attributes, orf_id) %>%
-    arrange(chrm, start) # Sort based on genomic location
+    arrange(sequence, start) # Sort based on genomic location
   
   cds <- sorted_df %>%
     mutate(
@@ -200,7 +201,7 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
                           '"; orf_biotype "', orf_biotype_single, 
                           '"; orfcaller "', orfcaller, '";')
     ) %>%
-    dplyr::select(chrm, orfcaller, feature, start, end, 
+    dplyr::select(sequence, orfcaller, feature, start, end, 
                   score, strand, frame, attributes, orf_id)
   
   
@@ -217,7 +218,7 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
   # Combine all transcript+CDS groups into a single tibble
   gtf_out <- do.call(rbind, gtf_list) %>%
     dplyr::select(-orf_id) %>% # remove helper column used for grouping
-    mutate(chrm = as.character(chrm)) %>%  # convert factor back to character
+    mutate(sequence = as.character(sequence)) %>%  # convert factor back to character
     # Write output gtf file
     write.table(gtf_output_file, sep = "\t", quote = FALSE, 
                 col.names = FALSE, row.names = FALSE)

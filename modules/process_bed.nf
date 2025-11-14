@@ -58,7 +58,7 @@ process orfcaller_psites {
   val outdir
 
   output:
-  tuple path(orfcaller_gtf), path("${orfcaller_gtf.baseName}_p0_orf_sorted.bed"), emit: orf_psite_bed_caller
+  tuple path(orfcaller_gtf), path("${orfcaller_gtf.baseName}_p0_orf_sorted.bed"), emit: orfcaller_psite_bed
   path "${orfcaller_gtf.baseName}_p0_orf_sorted.bed", emit: orf_psite_bed
 
 
@@ -81,11 +81,11 @@ process merge_orfcaller_psites {
   val outdir
 
   output:
-  path "combined_psites.bed", emit: combined_psites
+  path "combined_psites_unfiltered.bed", emit: combined_psites
 
   script:
   """
-  cat ${orfcaller_psites.join(' ')} | sort -T \$PWD --parallel=$task.cpus -k1,1 -k2,2n > combined_psites.bed
+  cat ${orfcaller_psites.join(' ')} | sort -T \$PWD --parallel=$task.cpus -k1,1 -k2,2n > combined_psites_unfiltered.bed
   """
 }
 

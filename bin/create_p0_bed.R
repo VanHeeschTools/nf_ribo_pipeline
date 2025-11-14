@@ -36,13 +36,13 @@ load_orfcaller_gtf <- function(gtf_file_path){
     
     # Summarize CDS entries per ORF
     orf_list <- gtf %>%
-        dplyr::filter(type == "CDS") %>%             # Keep only CDS features
-        dplyr::group_by(ORF_id) %>%                  # Group by ORF identifier
+        dplyr::filter(type == "CDS") %>%                 # Keep only CDS features
+        dplyr::group_by(ORF_id) %>%                      # Group by ORF identifier
         dplyr::summarise(
-        chrm   = unique(as.character(seqnames))[1],  # Extract chromosome
-        strand = unique(as.character(strand))[1],    # Extract strand
-        starts = paste(sort(start), collapse = ","), # Combine sorted starts
-        ends   = paste(sort(end), collapse = ",")    # Combine sorted ends
+        sequence   = unique(as.character(seqnames))[1],  # Extract chromosome
+        strand = unique(as.character(strand))[1],        # Extract strand
+        starts = paste(sort(start), collapse = ","),     # Combine sorted starts
+        ends   = paste(sort(end), collapse = ",")        # Combine sorted ends
         ) %>%
         dplyr::ungroup() %>%
         as.data.frame()
@@ -64,7 +64,7 @@ obtain_orfcaller_p0 <- function(gtf){
     # Create bed file filtered for p0 sites
     orf_list_bed <- gtf %>%
         # Select only relevant columns
-        dplyr::select(ORF_id, chrm, strand, starts, ends) %>%
+        dplyr::select(ORF_id, sequence, strand, starts, ends) %>%
         
         # Split comma-separated coordinates into separate rows
         tidyr::separate_rows(starts, ends, sep = ",") %>%
@@ -102,12 +102,14 @@ obtain_orfcaller_p0 <- function(gtf){
         
         # Keep only nucleotides in frame 0 (first base of each codon)
         #dplyr::filter(frame == "p0") %>%
+        # Subtract 1 from pos to create proper bed file format
+        mutate(pos = pos - 1) %>% 
         
         # Final output
-        dplyr::select(chrm, pos, pos_2, ORF_id, frame, strand, nt_position)
+        dplyr::select(sequence, pos, pos_2, ORF_id, frame, strand, nt_position)
 
     return(orf_list_bed)
-    }
+}
 
 #' Find and load BSgenome library
 #'
@@ -135,7 +137,6 @@ load_bsgenome_library <- function(bsgenome_path){
     # Load the genome object
     genome <- load_bsgenome(bsgenome_name)
     return(genome)
-    
 }
 
     #' Translate nucleotides into amino acid
@@ -209,9 +210,9 @@ obtain_cds_info <- function(genome, cds_list){
             list(as.character(frame0), as.character(frame1), 
                 as.character(frame2))]
     
-    # Merge translated sequences with protein sequences from Gencode, decide frame
-    # based on string distance ≤10%. Not for all CDS sequences in V47 the protein
-    # sequence is provided, for those the frame cannot be determined.
+    # Merge translated sequences with protein sequences, decide frame
+    # based on string distance ≤10%. If the protein sequence is not provided 
+    # the frame cannot be determined.
     cds_seq_dt_incorrect_merged <-
         protein_seq[cds_seq_dt_incorrect, on = "tx_id"
         ][, c("dist0", "dist1", "dist2") := 
@@ -256,8 +257,8 @@ determine_correct_cds_coords <- function(cds_list, cds_frame) {
 
     cds_id_gene <- as.data.frame(cds_list) %>%
         # Clean chromosome names and select relevant columns
-        mutate(chrm = str_remove(seqnames, "^chr")) %>%
-        dplyr::select(tx_id = group_name, chrm, strand, start, end, width) %>%
+        mutate(sequence = str_remove(seqnames, "^chr")) %>%
+        dplyr::select(tx_id = group_name, sequence, strand, start, end, width) %>%
         inner_join(cds_frame, by = "tx_id") %>% # Join with CDS frame info
         group_by(tx_id) %>%
         
@@ -294,11 +295,11 @@ determine_correct_cds_coords <- function(cds_list, cds_frame) {
         width = end - start + 1,
         cds_id = sprintf(
             "P1_%s:%d_%d:%s:%d:%d",
-            chrm, min(start), max(end), strand, n(), sum(width)
+            sequence, min(start), max(end), strand, n(), sum(width)
         )
         ) %>%
         # Only keep relevant rows
-        dplyr::select(tx_id, chrm, strand, start, end, width)
+        dplyr::select(tx_id, sequence, strand, start, end, width)
         
     return(cds_id_gene)
 }
@@ -318,15 +319,17 @@ create_reference_bed_file <- function(cds_ids_gene){
         arrange(start_to_end) %>% 
         group_by(tx_id) %>% 
         mutate(frame = case_when(
-        strand == "+" ~ (row_number() - 1) %% 3,
-        strand == "-" ~ (max(row_number()) - row_number()) %% 3),
-        frame = paste0("p", frame),
-        start_to_end2 = start_to_end,
-        nt_position = ifelse(strand == "+", row_number(), 
+            strand == "+" ~ (row_number() - 1) %% 3,
+            strand == "-" ~ (max(row_number()) - row_number()) %% 3),
+            frame = paste0("p", frame),
+            start_to_end2 = start_to_end,
+            nt_position = ifelse(strand == "+", row_number(), 
                             max(row_number()) - row_number() + 1)) %>% 
         ungroup() %>% 
         #filter(frame == "p0") %>% 
-        dplyr::select(chrm, start_to_end, start_to_end2, tx_id, frame, strand,
+        # Subtract 1 from start_to_end to create proper bed format
+        mutate(start_to_end = start_to_end - 1) %>% 
+        dplyr::select(sequence, start_to_end, start_to_end2, tx_id, frame, strand,
                     nt_position) 
 }
 

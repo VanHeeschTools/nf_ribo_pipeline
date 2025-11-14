@@ -2,11 +2,13 @@
 process filter_removed_orf_ids{
 
     label "filter_removed_orf_ids"
+    publishDir "${outdir}/annotation", mode: 'copy'
 
     input:
     //TODO: make sure the removed_orf_ids are all removed from the orf_table
     path removed_orf_ids
     path orfcaller_psites
+    val outdir
 
     output:
     path "combined_psites_filtered.bed", emit: orfcaller_psites_filtered
@@ -17,7 +19,7 @@ process filter_removed_orf_ids{
     """
 }
 
-// Intersect a reference BED with p-site positions with p-sites from a sample
+// Intersect the combined ORFcaller BED with p-site positions with p-sites from the samples
 process intersect_psites {
 
     tag "${sample_id}"
@@ -41,7 +43,6 @@ process intersect_psites {
     -wa \
     -wb \
     -header \
-    -f 1.00 \
     -s \
     -sorted > "${sample_id}_intersect.bed"
     """

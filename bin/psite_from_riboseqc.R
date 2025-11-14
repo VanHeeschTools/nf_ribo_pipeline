@@ -23,7 +23,6 @@ print(loaded_obj_names)
 my_obj <- get(loaded_obj_names[1])
 
 # Extract p-sites from list of objects
-# TODO: test with P_sites_all
 p_sites <- data.frame(my_obj$P_sites_uniq)
 
 if(nrow(p_sites) == 0) {
@@ -31,7 +30,14 @@ if(nrow(p_sites) == 0) {
 }
 
 # Extract columns to create BED file
-bed <- data.frame(p_sites$seqnames, p_sites$start, p_sites$end, ".", p_sites$score, p_sites$strand)
-colnames(bed) <- c("chrom", "chromStart", "chromEnd", "name", "score", "strand")
+bed <- data.frame(
+    chrom = p_sites$seqnames,
+    chromStart = as.integer(p_sites$start - 1), # Minus 1 is used to create proper bed file 
+    chromEnd = as.integer(p_sites$end),
+    name = ".",
+    score = p_sites$score,
+    strand = p_sites$strand
+)
+
 
 write.table(bed, file = paste0(fname, "_psites.bed"), quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)

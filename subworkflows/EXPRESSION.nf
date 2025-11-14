@@ -13,7 +13,8 @@ workflow EXPRESSION {
     // Remove filtered out ORF ids from the merged ORFcaller p0 site bed file
     filter_removed_orf_ids(
         removed_orf_ids,
-        orfcaller_psites
+        orfcaller_psites,
+        outdir
     )
     orfcaller_psites_filtered = filter_removed_orf_ids.out.orfcaller_psites_filtered
 

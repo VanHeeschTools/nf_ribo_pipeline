@@ -139,8 +139,7 @@ workflow RIBOSEQ {
 
             // Combine outputs of ORFcallers into one channel including RiboTIE output
             orfcaller_gtf = PRICE.out.price_orf_gtf.mix(ORFQUANT.out.orfquant_orf_gtf, RIBOTIE.out.ribotie_orf_gtf)
-        }
-        else {
+        } else {
             // Combine outputs of ORFcallers into one channel excluding RiboTIE output
             orfcaller_gtf = PRICE.out.price_orf_gtf.mix(ORFQUANT.out.orfquant_orf_gtf)
         }

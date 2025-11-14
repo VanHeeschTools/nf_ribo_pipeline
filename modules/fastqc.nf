@@ -32,20 +32,3 @@ process fastqc {
     """
 
 }
-
-// Generate size_distibution multiqc report results between 20-40 nucleotides 
-process size_distribution {
-    label "Ribo_Seq_R_scripts"
-
-    input:
-    tuple val(meta), path(reads) // Tuple, meta info plus trimmed FASTQ reads
-
-    output:
-    path "${meta.sample_id}_size_distribution_mqc.txt", emit: size_distribution
-
-    script:
-    """
-    size_distribution.R ${meta.sample_id} ${reads}
-    """
-
-}
