@@ -152,16 +152,16 @@ load_orfcaller_gtf <- function(gtf_file, orf_gtf_file, txdb, orfcaller){
 
     # Load gene_meta_data to add gene_id, gene_name and gene_biotype
     reference_gtf_df <- rtracklayer::import(gtf_file) %>%
-    as.data.frame() %>%
-    mutate(
-        transcript_id = case_when(
-        orfcaller == "RiboTIE" & str_starts(transcript_id, "TCONS_") ~ 
-            str_extract(transcript_id, "^[^_]+_[^_]+"),      # In case of a TCONS transcript keep everything untill second underscore
-        orfcaller == "RiboTIE" ~ 
-            str_replace(transcript_id, "_.*$", ""),          # Otherwise only keep untill the first underscore
-        TRUE ~ transcript_id                                 # If not a RiboTIE ORF leave unchanged
-        )
-    )
+    as.data.frame() #%>%
+    #mutate(
+    #    transcript_id = case_when(
+    #    orfcaller == "RiboTIE" & str_starts(transcript_id, "TCONS_") ~ 
+    #        str_extract(transcript_id, "^[^_]+_[^_]+"),      # In case of a TCONS transcript keep everything untill second underscore
+    #    orfcaller == "RiboTIE" ~ 
+    #        str_replace(transcript_id, "_.*$", ""),          # Otherwise only keep untill the first underscore
+    #    TRUE ~ transcript_id                                 # If not a RiboTIE ORF leave unchanged
+    #    )
+    #)
 
     gene_meta <- reference_gtf_df %>%
         as.data.frame() %>%

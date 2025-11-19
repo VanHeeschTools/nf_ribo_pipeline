@@ -1,3 +1,4 @@
+include { validate_price_index }                               from "../modules/helperFunctions.nf"
 include { price; price_index; price_to_gtf; merge_price_bams } from '../modules/price.nf'
 
 // Merge end2end BAM files and run PRICE
@@ -5,28 +6,28 @@ workflow PRICE {
 
   take:
   bamlist           // List, PRICE input BAM files
-  price_index_path  // Path, PRICE index file
+  price_index       // Path, PRICE index file
   fasta             // Path, reference FASTA file
   gtf               // Path, input GTF file
   gedi_exec_loc     // Path, location of local GEDI installation
   outdir            // Path, output directory
 
   main:
-  // Check if PRICE index exists
-  def price_index_exists = file("${price_index_path}/PRICE_index.oml").exists()
-  log.info "PRICE index exists: ${price_index_exists}"
+
+  // Validate price index file
+  price_index_check = validate_price_index(price_index)
 
   // Create PRICE index if it is not found
-  if (!price_index_exists) {
+  if (price_index_check) {
+      price_index_ch = Channel.value(file("${price_index}/PRICE_index.oml"))
+      log.info "Using existing PRICE index: ${price_index_ch}"
+  } else {
       // Create PRICE annotation
       log.warn "PRICE index file missing. Running PRICE indexing."
       price_index(fasta,
                   gtf,
                   gedi_exec_loc)
       price_index_ch = price_index.out.price_index
-  } else {
-      price_index_ch = Channel.value(file("${price_index_path}/PRICE_index.oml"))
-      log.info "Using existing PRICE index: ${price_index_ch}"
   }
   
   // Merge bam files before running PRICE

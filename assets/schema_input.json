@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/jvandinter/nf_ribo_pipeline/master/assets/schema_input.json",
+    "$id": "https://raw.githubusercontent.com/VanHeeschTools/nf_ribo_pipeline/master/assets/schema_input.json",
     "title": "nf_ribo_pipeline - params.input schema",
     "description": "Schema for the file provided with params.input",
     "type": "array",
@@ -20,22 +20,7 @@
                 "pattern": "^\\S+$",
                 "errorMessage": "Sample name must be provided and cannot contain spaces",
                 "meta": [
-                    "id"
-                ]
-            },
-            "group_id": {
-                "errorMessage": "Group name cannot contain spaces.",
-                "type": "string",
-                "anyOf": [
-                    {
-                        "pattern": "^\\S+$"
-                    },
-                    {
-                        "maxLength": 0
-                    }
-                ],
-                "meta": [
-                    "cohort"
+                    "sample_id"
                 ]
             },
             "sample_type": {
@@ -51,8 +36,9 @@
             },
             "sequence_type": {
                 "type": "string",
-                "errorMessage": "Sequence type must be one of 'dna' or 'rna'",
+                "errorMessage": "Sequence type must be one of 'ribo' 'dna' or 'rna'",
                 "enum": [
+                    "ribo",
                     "dna",
                     "rna"
                 ],
@@ -82,20 +68,6 @@
                 "exists": true,
                 "pattern": "^\\S+$",
                 "errorMessage": "filename_1 must be provided, cannot contain spaces and must have a valid extension matching the filetype."
-            },
-            "filename_2": {
-                "errorMessage": "filename_2 cannot contain spaces and must have a valid extension matching the filetype.",
-                "type": "string",
-                "format": "file-path",
-                "exists": true,
-                "anyOf": [
-                    {
-                        "pattern": "^\\S+$"
-                    },
-                    {
-                        "maxLength": 0
-                    }
-                ]
             }
         },
         "required": [
@@ -106,11 +78,6 @@
             "file_type",
             "filename_1"
         ],
-        "dependentRequired": {
-            "filename_2": [
-                "filename_1"
-            ]
-        },
         "uniqueEntries": [
             "filename_1"
         ]

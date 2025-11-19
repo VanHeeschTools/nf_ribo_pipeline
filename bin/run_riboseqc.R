@@ -7,7 +7,7 @@ suppressPackageStartupMessages({
   library(rmarkdown)
 })
 
-# Get variables from input
+# Obtain input arguments
 args <- commandArgs(trailingOnly = TRUE)
 bam <- args[1]
 name <- args[2]

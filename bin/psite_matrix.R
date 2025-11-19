@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 
-# Load libraries ----------------------------------------------------------
+# Load libraries 
 suppressPackageStartupMessages({
   library(magrittr)
   library(dplyr)
@@ -8,14 +8,13 @@ suppressPackageStartupMessages({
   library(rtracklayer)
 })
 
-# Input args --------------------------------------------------------------
+# Obtain input arguments
 args = commandArgs(trailingOnly = TRUE)
-
 ref_bed <- args[1]
 bedfile_loc <- args[2]
 analysis_name <- "orf_table"
 
-# Get lengths of reference ORFs -------------------------------------------
+# Get lengths of reference ORFs 
 ref_bed <- data.table::fread(ref_bed,
     col.names = c("chrom", "start", "end", "ref_id", "frame", "strand", "nt_position")) 
 

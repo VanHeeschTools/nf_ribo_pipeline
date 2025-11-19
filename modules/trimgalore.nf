@@ -9,7 +9,7 @@ process trimgalore{
     val outdir                    // Path, output directory
 
     output:
-    tuple val(meta), path("${meta.sample_id}/${meta.sample_id}_trimmed.fq.gz"), emit: reads
+    tuple val(meta.sample_id), path("${meta.sample_id}/${meta.sample_id}_trimmed.fq.gz"), emit: reads
     path "${meta.sample_id}/${meta.sample_id}_trimming_report.txt", emit: trimgalore_trimming_report
     path "total_reads_${meta.sample_id}_mqc.txt", emit: total_reads
     path "removed_reads_${meta.sample_id}_mqc.txt", emit: removed_reads

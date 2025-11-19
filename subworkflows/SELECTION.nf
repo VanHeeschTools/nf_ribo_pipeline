@@ -1,3 +1,4 @@
+include { validate_bowtie2_index }                     from "../modules/helperFunctions.nf"
 include { trimgalore }                                 from "../modules/trimgalore.nf"
 include { fastqc }                                     from "../modules/fastqc.nf"
 include { bowtie2; bowtie2_index; contaminants_check } from '../modules/bowtie.nf'
@@ -24,24 +25,19 @@ workflow SELECTION {
     total_reads = trimgalore.out.total_reads.collect()
     removed_reads = trimgalore.out.removed_reads.collect()
 
-    // Define the Bowtie2 index file extensions
-    def bowtie2_extensions = ['.1.bt2', '.2.bt2', '.3.bt2', '.4.bt2', '.rev.1.bt2', '.rev.2.bt2']
+    // Validate all bowtie2 index files
+    bowtie2_index_check = validate_bowtie2_index(bowtie2_index)
 
-    // Check if any of the Bowtie2 index files exist
-    def index_files_exist = bowtie2_extensions.every { ext -> file(bowtie2_index + ext).exists() }
-    log.info "All bowtie2 index files exist: ${index_files_exist}"
-
-    if (!index_files_exist) {
+    if (bowtie2_index_check) {
+        // If index files already exist, use the provided index prefix
+        bowtie2_index_ch = bowtie2_index
+        log.info "Using existing Bowtie2 index: ${bowtie2_index_ch}"
+    } else {
         log.warn "Some bowtie2 index files are missing. Running bowtie2 indexing."
         // Run bowtie2 - index if none of the index files exist
         bowtie2_index(contaminants_fasta, outdir)
         bowtie2_index_ch = bowtie2_index.out.bowtie2_index_prefix
-        
         log.info "Using created Bowtie2 index: ${bowtie2_index_ch}"
-    } else {
-        // If index files already exist, use the provided index prefix
-        bowtie2_index_ch = bowtie2_index
-        log.info "Using existing Bowtie2 index: ${bowtie2_index_ch}"
     }
 
     // Run bowtie2 to filter out contaminants

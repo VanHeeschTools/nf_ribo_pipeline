@@ -51,6 +51,7 @@ workflow EXPRESSION {
         outdir
     )
     
+    // Create MultiQC plot to show amount of expressed canonical and non-canonical ORFs
     multiqc_expression_plot(
         harmonised_orf_table,
         ppm_matrix,

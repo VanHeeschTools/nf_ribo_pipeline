@@ -1,25 +1,17 @@
 #!/usr/bin/env Rscript
 
-# =============================================================================
-# 01 | LOAD LIBRARIES
-# =============================================================================
+# Load libraries
 suppressPackageStartupMessages({
 library(dplyr)
 library(tidyr)
 library(rtracklayer)
 })
 
-# =============================================================================
-# 02 | LOAD DATA
-# =============================================================================
-
+# Load input data
 args <- commandArgs(trailingOnly = TRUE)
 orfcaller_tables <- args
 
-# =============================================================================
-# 03 | FUNCTIONS
-#   * Define all functions
-# =============================================================================
+# Define functions
 
 #' Read annotated ORF tables
 #'
@@ -98,10 +90,6 @@ write_results <- function(sorted_df, output_file){
               quote = F,
               row.names = F)
 }
-
-# =============================================================================
-# 04 | EXTRA OUTPUT FUNCTIONS 
-# =============================================================================
 
 #' Write a protein FASTA file from a dataframe
 #'
@@ -304,9 +292,7 @@ multiqc_caller_count <- function(sorted_df, outfile = "caller_count_mqc.txt") {
   write.table(out_df, "merged_orf_caller_count_mqc.txt", sep = "\t", row.names = FALSE, quote = FALSE)
 }
 
-# =============================================================================
-# 05 | RUN HARMONISATION
-# =============================================================================
+# Run functions
 
 # Step 1: Load and merge ORFS
 loaded_orf_tables <- read_orf_tables(orfcaller_tables)
@@ -341,10 +327,7 @@ sorted_unfiltered_df <- sort_orfs(orfs) %>%
 
 write_results(sorted_unfiltered_df, "unfiltered_harmonised_orf_table.csv")
 
-# =============================================================================
-# 06 | CREATE MULTIQC TABLES 
-# =============================================================================
-
+# Create MultiQC tables
 multiqc_orfcaller_table(loaded_orf_tables)
 multiqc_merged_table(sorted_df)
 multiqc_caller_count(sorted_df)

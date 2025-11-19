@@ -1,4 +1,6 @@
 #!/usr/bin/env Rscript
+
+# Load libraries
 suppressPackageStartupMessages({
   library(stringr)
   library(ggplot2)
@@ -8,25 +10,19 @@ suppressPackageStartupMessages({
   library(scales)
 })
 
-# ------------------------------------------------------------------------------
 # Load RiboseQC output files and initialize color palette
-# ------------------------------------------------------------------------------
 input_files <- commandArgs(trailingOnly = TRUE)
 
 if (length(input_files) == 0) stop("No input files provided.")
 
-# ------------------------------------------------------------------------------
 # Initialize empty data frames for collecting statistics from each sample
-# ------------------------------------------------------------------------------
 summary_P_sites_df <- data.frame()
 summary_reads_df <- data.frame()
 inframe_df <- data.frame()
 read_cats_df <- data.frame()
 cds_reads_df <- data.frame()
 
-# ------------------------------------------------------------------------------
 # Process each RiboseQC results file
-# ------------------------------------------------------------------------------
 for (fname in input_files) {
   parts <- str_split(basename(fname), "_")[[1]]
   sample_id <- paste(parts[1:(length(parts) - 3)], collapse = "_")
@@ -58,10 +54,7 @@ for (fname in input_files) {
   cds_reads_df <- rbind(cds_reads_df, cds_reads_sample)
 }
 
-# ------------------------------------------------------------------------------
 # Frame Preference Table
-# Output: MultiQC-compatible table
-# ------------------------------------------------------------------------------
 summary_P_sites_df_s <- summary_P_sites_df  
 
 # Frame preference
@@ -92,11 +85,7 @@ write.table(
 )
 
 
-# ------------------------------------------------------------------------------
-# Read Category Counts Table
-# Output: MultiQC-compatible table
-# ------------------------------------------------------------------------------
-# Prepare final table for MultiQC output
+# Read Category Counts MultiQC Table
 read_cats_raw <- read_cats_df
 read_cats_raw$Sample <- rownames(read_cats_raw)
 read_cats_raw <- read_cats_raw[, c(ncol(read_cats_raw), 1:(ncol(read_cats_raw) - 1))]

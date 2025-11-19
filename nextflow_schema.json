@@ -1,0 +1,194 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/VanHeeschTools/nf_ribo_pipeline/master/nextflow_schema.json",
+    "title": "nf-ribo-pipeline parameters",
+    "description": "Ribo-seq pipeline analysis, including filtering, mapping, ORF-calling, harmonisation and expression from RIBO-seq data.",
+    "type": "object",
+    "defs": {
+        "path_specifications": {
+            "title": "Path specifications",
+            "type": "object",
+            "description": "Input and output path defs",
+            "default": "",
+            "properties": {
+                "input": {
+                    "type": "string",
+                    "schema": "assets/schema_input.json",
+                    "format": "file-path",
+                    "pattern": "^\\S+\\.csv$",
+                    "description": "Path to comma-separated file containing information about the samples in the experiment."
+                },
+                "project_folder": {
+                    "type": "string",
+                    "description": "path to folder where outputs and logs will be stored"
+                },
+                "outdir": {
+                    "type": "string",
+                    "default": "\"${params.project_folder}/output\"",
+                    "description": "name of the output folder"
+                }
+            },
+            "required": [
+                "input"
+            ]
+        },
+        "reference_files": {
+            "title": "Reference files",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "reference_gtf": {
+                    "type": "string",
+                    "description": "Reference annotation GTF"
+                },
+                "reference_fasta": {
+                    "type": "string",
+                    "description": "Reference genome fasta file"
+                },
+                "reference_fasta_fai": {
+                    "type": "string",
+                    "description": "Reference genome fasta fai file"
+                },
+                "reference_protein_fa": {
+                    "type": "string",
+                    "description": "Reference protein fasta file"
+                },
+                "reference_twobit": {
+                    "type": "string",
+                    "description": "Reference genome twobit file"
+                },
+                "package_install_loc": {
+                    "type": "string",
+                    "description": "Path to bsgenome library directory"
+                },
+                "orfquant_annotation": {
+                    "type": "string",
+                    "description": "Path to Rannot file required for ORFquant"
+                },
+                "orfquant_annot_package": {
+                    "type": "string",
+                    "description": "Path to bsgenome library itself"
+                }, 
+                "contaminants_fasta": {
+                    "type": "string",
+                    "description": "Path to contaminants fasta file for Bowtie2 filtering"
+                },
+                "star_index_path": {
+                    "type": "string",
+                    "description": "Path to STAR index directory"
+                },     
+                "bowtie2_index_path": {
+                    "type": "string",
+                    "description": "Path to Bowtie2 index directory"
+                },     
+                "price_index_path": {
+                    "type": "string",
+                    "description": "Path to PRICE index directory"
+                },
+                "container_folder": {
+                    "type": "string",
+                    "description": "Path to container location"
+                },
+                "multiqc_config": {
+                    "type": "string",
+                    "description": "Path to multiqc yaml config file for custom plots",
+                    "default": "assets/multiqc.yaml"
+                },
+                "resource_folder": {
+                    "type": "string",
+                    "description": "path to annotation folder"
+                }
+            },
+            "required": [
+                "reference_gtf",
+                "reference_fasta",
+                "reference_fasta_fai",
+                "reference_protein_fa",
+                "reference_twobit",
+                "package_install_loc",
+                "orfquant_annotation",
+                "orfquant_annot_package"
+            ]
+        },
+
+        "modules": {
+            "title": "Modules",
+            "type": "object",
+            "description": "Toggles for the different pipeline modules",
+            "default": "",
+            "properties": {
+                "run_orf_prediction": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Toggle for ORF prediction modules"
+                },
+                "run_ribotie": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Toggle for RiboTIE module"
+                }
+            }
+        },
+        "extended_pipeline_options": {
+            "title": "Extended pipeline options",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "validate_gtf_attributes": {
+                    "type": "boolean",
+                    "description": "Whether check the first 10k rows of the gtf for the correct format and attributes",
+                    "default": true
+                },
+                "keep_bam": {
+                    "type": "boolean",
+                    "description": "Whether to copy the Alignment BAM files to the output direcotyr or not",
+                    "default": true
+                },
+                "ribotie_min_samples": {
+                    "type": "integer",
+                    "description": "Minimum amount of samples a RiboTIE ORF needs to occur in to be kept",
+                    "default": 2
+                }
+            }
+        },
+        "specs": {
+            "title": "Maximum specifications for computational resources",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "max_memory": {
+                    "type": "string",
+                    "description": "max memory for each process"
+                },
+                "max_cpus": {
+                    "type": "integer",
+                    "description": "max cpus for each process"
+                },
+                "max_time": {
+                    "type": "string",
+                    "description": "max time for each process"
+                }
+            }
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "#/defs/reference_files"
+        },
+        {
+            "$ref": "#/defs/extended_pipeline_options"
+        },
+        {
+            "$ref": "#/defs/modules"
+        },
+        {
+            "$ref": "#/defs/path_specifications"
+        },
+        {
+            "$ref": "#/defs/specs"
+        }
+    ]
+}

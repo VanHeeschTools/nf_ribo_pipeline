@@ -31,7 +31,7 @@ process merge_price_bams{
     label "samtools"
 
     input:
-    path bamlist
+    path bam_files
     val outdir
 
     output:
@@ -39,7 +39,7 @@ process merge_price_bams{
 
     script:
     """
-    samtools merge -@ $task.cpus -b ${bamlist} star_end2end_merged.bam 
+    samtools merge -@ $task.cpus star_end2end_merged.bam ${bam_files.join(' ')}
     samtools sort -@ $task.cpus -o star_end2end_merged_sorted.bam star_end2end_merged.bam
     samtools index star_end2end_merged_sorted.bam
     """

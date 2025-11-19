@@ -1,6 +1,4 @@
 include { prepare_orfquant ; orfquant ; fix_orfquant } from '../modules/orfquant.nf'
-include { write_collected_paths } from '../modules/helperFunctions.nf'
-
 // Run ORFquant using merged riboseqc output file
 workflow ORFQUANT {
     take:

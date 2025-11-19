@@ -28,23 +28,21 @@ process star_index {
 // Aligns RPF reads to the reference genome to create input for RiboseQC
 process star_local{
 
-    tag "${meta.sample_id}"
+    tag "${sample_id}"
     label "alignment"
 
     input: 
-    tuple val(meta), path(reads)   // Trimmed RPF reads
+    tuple val(sample_id), path(reads)   // Trimmed RPF reads
     val outdir                     // Output directory
     val gtf                        // Transcriptome GTF file
     val star_index_path            // STAR index
 
     output:
-    path("${meta.sample_id}/${meta.sample_id}.*")
-    tuple val(meta.sample_id), path("${meta.sample_id}/${meta.sample_id}.local.Aligned.out.bam"), optional: true, emit: bams
-    path "${meta.sample_id}/${meta.sample_id}.local.Log.final.out", emit: star_log_local
+    path("${sample_id}/${sample_id}.*")
+    tuple val(sample_id), path("${sample_id}/${sample_id}.local.Aligned.out.bam"), optional: true, emit: bams
+    path "${sample_id}/${sample_id}.local.Log.final.out", emit: star_log_local
 
     script:
-    def sample_id = meta.sample_id
-
     """
     # ORFquant BAM
     STAR \
@@ -70,23 +68,23 @@ process star_local{
 // Aligns RPF reads to the reference genome to create PRICE input
 process star_end_to_end {
 
-    tag "${meta.sample_id}"
+    tag "${sample_id}"
     label "alignment"
+    publishDir "${outdir}/star/", mode: 'copy' , pattern: "${sample_id}/${sample_id}.end2end.Aligned.toTranscriptome.out.bam"
+
 
     input: 
-    tuple val(meta), path(reads) // Trimmed RPF reads
-    val outdir                   // Output directory
-    val gtf                      // Transcriptome GTF file
-    val star_index_path          // STAR index
+    tuple val(sample_id), path(reads) // Trimmed RPF reads
+    val outdir                        // Output directory
+    val gtf                           // Transcriptome GTF file
+    val star_index_path               // STAR index
 
     output:
-    tuple val(meta.sample_id), path("${meta.sample_id}/${meta.sample_id}.end2end.Aligned.out.bam"), optional: true, emit: bams_end2end
-    tuple val(meta.sample_id), path("${meta.sample_id}/${meta.sample_id}.end2end.Aligned.toTranscriptome.out.bam"), optional: true, emit: bams_end2end_transcriptome
-    path "${meta.sample_id}/${meta.sample_id}.end2end.Log.final.out", emit: star_log_end_to_end
+    tuple val(sample_id), path("${sample_id}/${sample_id}.end2end.Aligned.out.bam"), optional: true, emit: bams_end2end
+    tuple val(sample_id), path("${sample_id}/${sample_id}.end2end.Aligned.toTranscriptome.out.bam"), optional: true, emit: bams_end2end_transcriptome
+    path "${sample_id}/${sample_id}.end2end.Log.final.out", emit: star_log_end_to_end
 
     script:
-    def sample_id = meta.sample_id
-
     """
     STAR \
     --genomeDir ${star_index_path} \

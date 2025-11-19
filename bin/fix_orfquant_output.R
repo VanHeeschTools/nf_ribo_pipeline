@@ -4,6 +4,7 @@
 # It has some incorrect ID values for the ORFs
 # It also add 3 bp to the last coords to take the stop codon into account
 
+# Load libraries
 suppressPackageStartupMessages({
   library(tidyverse)
   library(ORFquant)
@@ -14,6 +15,7 @@ suppressPackageStartupMessages({
   library(rtracklayer)
 })
 
+# Obtain input data from arguments
 args <- commandArgs(trailingOnly = TRUE)
 orfquant_results <- args[1]
 rannot <- args[2]
@@ -146,7 +148,7 @@ genomic_coord <- pmapFromTranscripts(tx_coord, ref_exons[orf_transcripts]) %>%
 genomic_coord_expanded <- genomic_coord %>% 
   separate_rows(starts, ends, sep = ",") %>% 
   mutate(starts = as.numeric(starts),
-         ends = as.numeric(ends)) %>%
+    ends = as.numeric(ends)) %>%
   dplyr::rename(ORF_id = orf_id) %>%
   ungroup() %>%
   dplyr::select(ORF_id, starts, ends) 

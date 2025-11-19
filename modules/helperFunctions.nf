@@ -16,7 +16,7 @@ def printHeader () {
 //TODO: make this work for the riboseq pipeline
 def check_files(name, path, type) {
     if(!path) {
-        error "When running merge without assembly you must provide `${name}`."
+        error " File${name} of type ${type} not found at ${path}."
     } else {
         def file_to_check = null
         if (type == "dir") {
@@ -46,8 +46,6 @@ def check_files(name, path, type) {
 }
 
 def checkInputFiles() {
-    //Check inputs
-
     // Locate bams
     def default_bams = "${params.outdir}/star/**/*.Aligned.sortedByCoord.out.bam"
     def bam_avail = true
@@ -61,35 +59,67 @@ def checkInputFiles() {
         }
     }
 
-    // Check reference_gtf
+    // Check if container folder exists
+    check_files("container_folder", params.container_folder, "file")
+
+    // Check reference files
     check_files("reference_gtf", params.reference_gtf, "file")
+    check_files("reference_fasta", params.reference_fasta, "file")
+    check_files("reference_fasta_fai", params.reference_fasta_fai, "file")
+    check_files("reference_protein_fa", params.reference_protein_fa, "file")
+    check_files("twobit", params.twobit, "file")
 
-    // Check contaminants fasta
+    // Check if bowtie2 contaminants exist
+    check_files("contaminants_fasta", params.contaminants_fasta, "file")
 
-    // Check bowtie2 index
-    if (params.qc){
-        check_files("kallisto_index", params.kallisto_index, "file")
-    }
-
-    // Check references for build_annotaiton
-    if (params.build_annotation) {
-        check_files("twobit", "${params.twobit}*", "file")
-    }
+    // Check if ORFquant input files and directories exist
+    check_files("package_install_loc", params.package_install_loc, "dir")
+    check_files("orfquant_annotation", params.orfquant_annotation, "file")
+    check_files("orfquant_annot_package", params.orfquant_annot_package, "dir")
 
     log.info "\n==========================\n"
 }
 
-process write_collected_paths {
-    input:
-    val collected_paths
 
-    output:
-    path "file_paths.txt", emit: collected_file_channel
+// Check if all bowtie2 index paths exist and return its path if TRUE otherwise return null
+def validate_bowtie2_index (String bowtie2_index){
+    // Define the Bowtie2 index file extensions
+    def bowtie2_extensions = ['.1.bt2', '.2.bt2', '.3.bt2', '.4.bt2', '.rev.1.bt2', '.rev.2.bt2']
 
-    script:
-    """
-    printf "%s\n" "${collected_paths.join('\n')}" > file_paths.txt
-    """
+    return bowtie2_extensions.every { ext ->
+        file("${bowtie2_index}${ext}").exists()
+    }
+}
+
+// Check if all STAR index paths exist and return its path if TRUE otherwise return null
+def validate_star_index(String star_index_path){
+    def star_index_files = [
+        'chrLength.txt',
+        'chrStart.txt',
+        'geneInfo.tab',
+        'SA',
+        'sjdbList.fromGTF.out.tab',
+        'chrNameLength.txt',
+        'exonGeTrInfo.tab',
+        'Genome',
+        'SAindex',
+        'sjdbList.out.tab',
+        'chrName.txt',
+        'exonInfo.tab',
+        'genomeParameters.txt',
+        'sjdbInfo.txt',
+        'transcriptInfo.tab',
+    ]
+
+    // Check existence of all STAR index files
+    return star_index_files.every { filename ->
+            file("${star_index_path}/${filename}").exists()
+    }
+}
+
+// Check if the PRICE index exists 
+def validate_price_index(String price_index_path){
+    return file("${price_index_path}/PRICE_index.oml").exists()
 }
 
 def validateGTF(String gtfPath) {
@@ -177,4 +207,60 @@ def validateGTF(String gtfPath) {
     }
     println "Exons ordered correctly in first 10,000 transcripts."
     println "GTF validation passed for ${exonByTranscript.size()} transcripts."
+}
+
+// Copy an input samplesheet to outdir/samplesheet/
+def copy_samplesheet(String input, String outdir) {
+    // Check if input samplesheet and output directory paths are given
+    if (!input || !outdir)
+        return false
+
+    // Check if input samplesheet file exists
+    def inputFile = file(input)
+    if (!inputFile.exists())
+        return false
+
+    // Creates the directory if needed
+    def destDir = file("${outdir}/samplesheet")
+    destDir.mkdirs()
+
+    // Copy the samplesheet to output directory
+    inputFile.copyTo(destDir.resolve(inputFile.name))
+
+    return true
+}
+
+// Search output dir to collect ouput data from previous runs
+def collect_output_previous_run(
+    pattern,                    
+    mode = 'sample_id',         
+    emptyInsteadOfNull = false, 
+    step = null                 
+    ) {
+
+    // Pattern: String, given path pattern to search for output files
+    // Mode: String, either sample_id or path, should the output be a tuple of sample_id and ouput path or just the output path alone
+    // emptyInsteadOfNull: Bool, should the output be an empty channel or null
+    // step: String, log information about the step to write.
+
+    // Check if given pattern gives any output files
+    if ( file(pattern).isEmpty() ) {
+        if (emptyInsteadOfNull){
+            log.info "WARNING: No output found for ${step}, the output of this step will not be included in the rest of the pipeline."
+        } else {
+            log.info "ERROR: No matching output files found for step: ${step}, please make sure to provide them correctly or re-run the step."
+        }
+        // Return empty channel or null
+        return emptyInsteadOfNull ? Channel.empty() : null
+    }
+
+    // If sample_id is required just create tuple channel of sample_ids and found files
+    if (mode == 'sample_id') {
+        return Channel.fromFilePairs(pattern, size: 1, checkIfExists: true)
+    // If sample_id is not required create channel of found files
+    } else if (mode == "path") {
+        return Channel.fromPath(pattern)
+    } else{
+        return null 
+    }
 }

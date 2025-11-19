@@ -1,15 +1,13 @@
 #!/usr/bin/env Rscript
 
-args = commandArgs(trailingOnly=TRUE)
-
-riboseqc_file <- args[1]
-
-# Set location of installed packages for this R version
-
+# Load libraries
 suppressPackageStartupMessages({
     library(RiboseQC)
-    #library(data.table)
 })
+
+# Obtain input arguments
+args = commandArgs(trailingOnly=TRUE)
+riboseqc_file <- args[1]
 
 # Get basename of the file
 fname <- gsub(pattern = "_for_ORFquant", x = basename(riboseqc_file), replacement = "")
@@ -38,6 +36,5 @@ bed <- data.frame(
     score = p_sites$score,
     strand = p_sites$strand
 )
-
 
 write.table(bed, file = paste0(fname, "_psites.bed"), quote = FALSE, sep = "\t", col.names = FALSE, row.names = FALSE)

@@ -31,22 +31,21 @@ process bowtie2 {
     // as rRNA, tRNA, snRNA, snoRNA, mtDNA and keep true
     // ribosome-protected fragments for mapping and ORF calling
 
-    tag "${meta.sample_id}"
+    tag "${sample_id}"
     label "bowtie2"
-    publishDir "${outdir}/bowtie2", mode: 'copy', pattern: "${meta.sample_id}/${meta.sample_id}_filtered.fastq.gz"
+    publishDir "${outdir}/bowtie2", mode: 'copy', pattern: "${sample_id}/${sample_id}_filtered.fastq.gz"
 
 
     input:
     val bowtie2_index_prefix      // Bowtie2 reference index
-    tuple val(meta), path(reads)  // Trimmed reads
+    tuple val(sample_id), path(reads)  // Trimmed reads
     val outdir                    // Output directory
 
     output:
-    tuple val(meta), path(reads), path("${meta.sample_id}/${meta.sample_id}_filtered.fastq.gz"), path("${meta.sample_id}/${meta.sample_id}_contaminants.bam"), emit: bowtie_output_files
-    tuple val(meta), path("${meta.sample_id}/${meta.sample_id}_filtered.fastq.gz"), emit: filtered_reads
+    tuple val(sample_id), path(reads), path("${sample_id}/${sample_id}_filtered.fastq.gz"), path("${sample_id}/${sample_id}_contaminants.bam"), emit: bowtie_output_files
+    tuple val(sample_id), path("${sample_id}/${sample_id}_filtered.fastq.gz"), emit: filtered_reads
 
     script:
-    def sample_id = meta.sample_id
     """
     mkdir -p "${sample_id}"
     bowtie2 \
@@ -68,17 +67,17 @@ process contaminants_check {
     publishDir "${outdir}/bowtie2/mqc_files", mode: 'copy'
 
     input:
-    tuple val(meta), path(reads), path(filtered_reads), val(bam_file)
+    tuple val(sample_id), path(reads), path(filtered_reads), val(bam_file)
     val keep_bam
     val outdir
 
     output:
-    path "contaminant_counts_${meta.sample_id}_mqc.txt", emit: contaminant_samples
-    path "passed_contaminant_counts_${meta.sample_id}_mqc.txt", emit: contaminant_samples_passed
+    path "contaminant_counts_${sample_id}_mqc.txt", emit: contaminant_samples
+    path "passed_contaminant_counts_${sample_id}_mqc.txt", emit: contaminant_samples_passed
 
     script:
     """
-    sample_id="${meta.sample_id}"
+    sample_id="${sample_id}"
     outfile="contaminant_counts_\${sample_id}_mqc.txt"
     outfile_passed="passed_contaminant_counts_\${sample_id}_mqc.txt"
 

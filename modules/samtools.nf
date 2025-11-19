@@ -3,7 +3,7 @@ process samtools {
 
     tag "${sample_id}"
     label "samtools"
-    publishDir "${outdir}/star/${sample_id}", mode: 'copy'
+    publishDir "${outdir}/star/", mode: 'copy'
 
     input: 
     tuple val(sample_id), path(bam) // Aligned BAMs
