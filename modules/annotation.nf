@@ -36,8 +36,8 @@ process harmonise_orfs {
 
     input:
     val orfcaller_tables
-    val outdir                                                        // Path, output directory
-
+    val outdir                                                        
+    
     output:
     path "harmonised_orf_table.csv", emit: harmonised_orf_table
     path "removed_orf_ids.txt", emit: removed_orf_ids
@@ -45,7 +45,6 @@ process harmonise_orfs {
     path "orf_dna_sequences.fa.gz"
     path "harmonised_orf_table.gtf"
 
-    path "unfiltered_harmonised_orf_table.csv"
     path "orfcaller_orf_categories_mqc.txt", emit: orfcaller_multiq
     path "merged_orf_categories_mqc.txt", emit: merged_multiqc
     path "merged_orf_caller_count_mqc.txt", emit: caller_count_multiqc

@@ -20,23 +20,23 @@ workflow RIBOQC {
     //TODO: Merge steps so it doesn't run 4 times for every sample
     // 02 - Create p-site tracks
     // Sort each bedgraph file
-    riboseqc_bedgraphs = riboseqc.out.bedgraphs.collect().flatten()
+    riboseqc_bedgraphs = riboseqc.out.bedgraphs.flatten()
     sort_bedgraphs(riboseqc_bedgraphs)
     sorted_ch = sort_bedgraphs.out.sorted_bedgraph.collect()
 
     // Merge bedgraphs into groups
     merge_bedgraphs(sorted_ch)
-    merged_bedgraphs = merge_bedgraphs.out
+    merged_bedgraphs = merge_bedgraphs.out.flatten()
 
     // Mix in unmerged files to create seperate bigwig files
-    list_of_bedgraphs = merged_bedgraphs.mix(sorted_ch).collect().flatten()
+    list_of_bedgraphs = merged_bedgraphs.mix(sorted_ch).flatten()
     // Convert bedgraph to bigwig
     convert_to_bigwig(list_of_bedgraphs,
                     reference_fasta_fai,
                     outdir)
 
     // 03 - Create riboseqc tables for MultiQC
-    riboseqc_tables(riboseqc.out.riboseqc_all.collect())
+    riboseqc_tables(riboseqc.out.riboseqc_all.collect(), outdir)
     riboseqc_inframe_percentages = riboseqc_tables.out.riboseqc_inframe_percentages
     riboseqc_category_counts = riboseqc_tables.out.riboseqc_category_counts
 

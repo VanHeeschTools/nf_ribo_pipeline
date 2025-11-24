@@ -27,7 +27,7 @@ read_orf_tables <- function(orfcaller_tables) {
     read.delim(
       f,
       sep = ",",
-      colClasses = c(sequence = "character"),
+      colClasses = c(chr = "character"),
       stringsAsFactors = FALSE
     )
   })
@@ -63,7 +63,7 @@ orf_filter <- function(orfs){
 sort_orfs <- function(filtered_table){
   filtered_table_sorted <- filtered_table %>%
     # Arrange by chromosome order, then start and end
-    dplyr::arrange(sequence, orf_start, orf_end) %>%
+    dplyr::arrange(chr, orf_start, orf_end) %>%
 
   return(filtered_table_sorted)
 }
@@ -165,9 +165,9 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
                           '"; ORFcaller "', orfcaller, '";')
     ) %>%
     # Orf_id will be used to join with cds rows, and is removed afterwards
-    dplyr::select(sequence, orfcaller, feature, start, end, 
+    dplyr::select(chr, orfcaller, feature, start, end, 
                   score, strand, frame, attributes, orf_id) %>%
-    arrange(sequence, start) # Sort based on genomic location
+    arrange(chr, start) # Sort based on genomic location
   
   cds <- sorted_df %>%
     mutate(
@@ -189,7 +189,7 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
                           '"; orf_biotype "', orf_biotype_single, 
                           '"; orfcaller "', orfcaller, '";')
     ) %>%
-    dplyr::select(sequence, orfcaller, feature, start, end, 
+    dplyr::select(chr, orfcaller, feature, start, end, 
                   score, strand, frame, attributes, orf_id)
   
   
@@ -206,7 +206,7 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
   # Combine all transcript+CDS groups into a single tibble
   gtf_out <- do.call(rbind, gtf_list) %>%
     dplyr::select(-orf_id) %>% # remove helper column used for grouping
-    mutate(sequence = as.character(sequence)) %>%  # convert factor back to character
+    mutate(chr = as.character(chr)) %>%  # convert factor back to character
     # Write output gtf file
     write.table(gtf_output_file, sep = "\t", quote = FALSE, 
                 col.names = FALSE, row.names = FALSE)
@@ -294,20 +294,26 @@ multiqc_caller_count <- function(sorted_df, outfile = "caller_count_mqc.txt") {
 
 # Run functions
 
-# Step 1: Load and merge ORFS
+# Load  ORF tables
 loaded_orf_tables <- read_orf_tables(orfcaller_tables)
-orfs <- dplyr::bind_rows(loaded_orf_tables)
 
-# Step 2: Remove identical ORFs between ORFcallers
-filtered_table <- orf_filter(orfs)
+# If more than one ORF table is found merge them and remove identical ORFs
+if (length(orfcaller_tables) > 1) {
+  # Merge ORF tables
+  orfs <- dplyr::bind_rows(loaded_orf_tables)
+  # Remove identical ORFs between ORFcallers
+  filtered_table <- orf_filter(orfs)
+  # Obtain removed duplicates ORF ids and write IDs to txt file
+  obtain_removed_orf_ids(orfs, filtered_table)
+} else {
+  filtered_table <- loaded_orf_tables[[1]]
+  # Obtain removed duplicates ORF ids and write IDs to txt file
+  obtain_removed_orf_ids(filtered_table, filtered_table)
+}
 
-# Step 3: Sorted ORF table
 sorted_df <- sort_orfs(filtered_table)
 
-# Step 4: Obtain removed duplicates ORF ids and write IDs to txt file
-removed_orfs <- obtain_removed_orf_ids(orfs, filtered_table)
-
-# Step 5: Write ORF protein and DNA sequences to fasta files
+# Write ORF protein and DNA sequences to fasta files
 write_orf_protein_fasta(sorted_df, "orf_protein_sequences.fa.gz")
 write_orf_dna_fasta(sorted_df, "orf_dna_sequences.fa.gz")
 
@@ -315,19 +321,15 @@ write_orf_dna_fasta(sorted_df, "orf_dna_sequences.fa.gz")
 sorted_df <- sorted_df %>%
   dplyr::select(-dna_seq)
 
-# Step 6: Write harmonised ORF table to csv file
+# Write harmonised ORF table to csv file
 write_results(sorted_df, "harmonised_orf_table.csv")
 
-# Step 7: Convert harmonised ORF table to gtf file
+# Convert harmonised ORF table to gtf file
 convert_to_gtf(sorted_df, "harmonised_orf_table.gtf")
-
-# For testing purposes sort and write unfiltered harmonised orf table
-sorted_unfiltered_df <- sort_orfs(orfs) %>%
-  dplyr::select(-dna_seq)
-
-write_results(sorted_unfiltered_df, "unfiltered_harmonised_orf_table.csv")
 
 # Create MultiQC tables
 multiqc_orfcaller_table(loaded_orf_tables)
 multiqc_merged_table(sorted_df)
-multiqc_caller_count(sorted_df)
+if (length(orfcaller_tables) > 1) {
+  multiqc_caller_count(sorted_df)
+}

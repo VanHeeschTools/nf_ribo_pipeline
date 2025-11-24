@@ -108,7 +108,7 @@ orf_gtf <- all[all$type == "CDS"]
 
 # Clean ORF_ids to keep transcript_id
 mcols(orf_gtf)$transcript_id <- sapply(mcols(orf_gtf)$transcript_id, function(id) {
-  if (grepl("^TCONS_", id)) {
+  if (grepl("^TCONS_", id) || grepl("^TM_", id)) {
     # keep everything before the second underscore
     parts <- unlist(strsplit(id, "_"))
     paste(parts[1:2], collapse = "_")

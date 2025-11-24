@@ -12,7 +12,6 @@ process create_template {
     output:
     path "ribotie_template.yml", emit: template
 
-    //TODO: fix starting from this point
     script:
     def echo_lines = ribotie_bams.collect { pair ->
         def sample = pair[0]

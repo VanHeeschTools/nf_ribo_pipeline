@@ -113,7 +113,6 @@ workflow RIBOSEQ {
                 ribotie_bams = ribotie_bams_search.map { sample_id, file_list ->
                     [ sample_id, file_list[0] ]
                 }
-                ribotie_bams.view()
             }
         }
 
@@ -135,6 +134,25 @@ workflow RIBOSEQ {
                 for_orfquant_files = collect_output_previous_run(riboseqc_output_files, "sample_id", false, "RiboseQC")
             }
         }
+    } else{
+        if (params.run_orfquant || params.run_expression){
+            // Check if BAM files required for RiboseQC can be found otherwise set to null
+            riboseqc_output_files = "${params.outdir}/riboseqc/*/*_for_ORFquant"
+            for_orfquant_files = collect_output_previous_run(riboseqc_output_files, "sample_id", false, "RiboseQC")
+        }
+        if (params.run_price){
+            // Check if BAM files required for PRICE can be found otherwise set to null
+            price_bam_files = "${params.outdir}/star/*/*.end2end.Aligned.sortedByCoord.out.bam"
+            price_bams = collect_output_previous_run(price_bam_files, "path", false, "STAR end2end alignment").collect()
+        }
+        if (params.run_ribotie){
+            // Check if BAM files required for RiboTIE can be found otherwise set to null
+            ribotie_bam_files ="${params.outdir}/star/*/*.end2end.Aligned.toTranscriptome.out.bam"
+            ribotie_bams_search = collect_output_previous_run(ribotie_bam_files, "sample_id", false, "STAR transcriptome end2end alignment")
+            ribotie_bams = ribotie_bams_search.map { sample_id, file_list ->
+                [ sample_id, file_list[0] ]
+            }
+        }
     }
 
     // ORF prediction steps
@@ -149,7 +167,6 @@ workflow RIBOSEQ {
                 params.package_install_loc,
                 params.outdir
             )
-
             orfquant_gtf = ORFQUANT.out.orfquant_orf_gtf
         } else{
             orfquant_output_gtf = "${params.outdir}/orfquant/ORFquant.gtf"
@@ -182,13 +199,12 @@ workflow RIBOSEQ {
                 params.outdir
             )
             ribotie_gtf = RIBOTIE.out.ribotie_orf_gtf
-        } else{
+        } else {
             ribotie_output_gtf = "${params.outdir}/merged_ribotie/RiboTIE.gtf"
             ribotie_gtf = collect_output_previous_run(ribotie_output_gtf, "path", true, "RIBOTIE.gtf")
         }
 
         // Combine outputs of ORFcallers into one channel including RiboTIE output
-        // TODO: pipeline will probably get stuck here if all three are set to false and no output is found.
         orfcaller_gtf = price_gtf.mix(orfquant_gtf, ribotie_gtf)
 
         // Calculate p0 sites in reference CDS and in ORFs
@@ -235,7 +251,6 @@ workflow RIBOSEQ {
                 search_orfcaller_psites = "${params.outdir}/annotation/combined_psites.bed"
                 orf_gtf_bed = collect_output_previous_run(search_orfcaller_psites, "path", true, "PSITE: combined orfcaller psites bed")
             }
-            
         }
 
         // Annotate the ORFcaller output gtf files and harmonises them into a single table

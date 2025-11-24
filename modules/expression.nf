@@ -136,8 +136,7 @@ process multiqc_expression_plot{
 
     script:
     """
-    canonical_plot.R \
-    "${harmonised_orf_table}" \
-    "${ppm_matrix}"
+    function_to_run="canonical_count"
+    multiqc_tables.R \${function_to_run} "${harmonised_orf_table}" "${ppm_matrix}"
     """
 }

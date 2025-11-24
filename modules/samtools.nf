@@ -30,7 +30,6 @@ process samtools {
     rm -r tmp/
 
     # Create mapping statistics with samtools
-    # TODO: will this work for both local and end2end or will it overwrite itself? Probably overwrite
     samtools stats -@ $task.cpus "${sample_id}/${new_bam}" > "${sample_id}/${new_bam}_stats.txt"
 
     # Index the bam with samtools

@@ -33,9 +33,9 @@ process star_local{
 
     input: 
     tuple val(sample_id), path(reads)   // Trimmed RPF reads
-    val outdir                     // Output directory
-    val gtf                        // Transcriptome GTF file
-    val star_index_path            // STAR index
+    val outdir                          // Output directory
+    val gtf                             // Transcriptome GTF file
+    val star_index_path                 // STAR index
 
     output:
     path("${sample_id}/${sample_id}.*")

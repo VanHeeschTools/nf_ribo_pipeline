@@ -127,7 +127,7 @@ load_orfcaller_gtf <- function(gtf_file, orf_gtf_file, txdb, orfcaller){
         dplyr::filter(type == "CDS") %>%                 # Keep only CDS features
         dplyr::group_by(ORF_id) %>%                      # Group by ORF identifier
         dplyr::summarise(
-        sequence   = unique(as.character(seqnames))[1],  # Extract chromosome
+        chr   = unique(as.character(seqnames))[1],  # Extract chromosome
         strand = unique(as.character(strand))[1],        # Extract strand
         starts = paste(sort(start), collapse = ","),     # Combine sorted starts
         ends   = paste(sort(end), collapse = ","),       # Combine sorted ends
@@ -139,7 +139,7 @@ load_orfcaller_gtf <- function(gtf_file, orf_gtf_file, txdb, orfcaller){
             orf_id = ORF_id,
             orf_start = str_extract(starts, "^[^,]+") %>% as.numeric(),
             orf_end  = str_extract(ends, "[^,]+$") %>% as.numeric(),
-            summary_id = paste0(orfcaller, "_", sequence, ":", orf_start, "-", orf_end, "_", strand), 
+            summary_id = paste0(orfcaller, "_", chr, ":", orf_start, "-", orf_end, "_", strand), 
             orfcaller = orfcaller
         )%>%
         rowwise() %>%
@@ -193,14 +193,14 @@ match_orfs_to_transcripts <- function(orf_file, gtf_file, txdb) {
     transcript_list <- exonsBy(txdb, by = "tx", use.names = TRUE)
     
     orf_list_expanded <- orf_list %>%
-        dplyr::select(orf_id, sequence, strand, starts, ends) %>%
+        dplyr::select(orf_id, chr, strand, starts, ends) %>%
         separate_rows(starts, ends) %>%
         mutate(starts = as.numeric(starts),
             ends = as.numeric(ends))
     
     # Convert ORFs to GRanges
     orf_grl <- GRanges(
-        seqnames = orf_list_expanded$sequence,
+        seqnames = orf_list_expanded$chr,
         ranges   = IRanges(start = orf_list_expanded$starts,
                         end = orf_list_expanded$ends),
         strand   = orf_list_expanded$strand) %>%
@@ -214,14 +214,14 @@ match_orfs_to_transcripts <- function(orf_file, gtf_file, txdb) {
                     mutate(queryHits = row_number()), "queryHits") %>%
         left_join(data.frame(tx_id = names(transcript_list)) %>%
                     mutate(subjectHits = row_number()), "subjectHits") %>%
-        left_join(orf_list %>% dplyr::select(orf_id, sequence, orf_start, orf_end, orf_width,  
+        left_join(orf_list %>% dplyr::select(orf_id, chr, orf_start, orf_end, orf_width,  
                                             strand), "orf_id") %>%
         mutate(tx_orf_id = paste0(tx_id, "__", orf_id))
     
     # Determine width for each ORF-transcript match (to check for correct
     # transcript structure)
     hits_with_range <- GRanges(
-        seqnames = hits$sequence,
+        seqnames = hits$chr,
         ranges   = IRanges(start = hits$orf_start,
                         end = hits$orf_end),
         orf_id = hits$orf_id)%>%
@@ -410,7 +410,7 @@ classify_orfs <- function(orf_list, hits_with_range, cds_overlap_orfs, cds_overl
     # Summarise orf_table to get one row per ORF 
     orf_list_sum <- orf_list_cat %>%
         arrange(orf_id, orf_cat) %>%
-        group_by(orf_id, summary_id, sequence,orf_start, orf_end, strand, starts, ends, 
+        group_by(orf_id, summary_id, chr,orf_start, orf_end, strand, starts, ends, 
             has_p0_cds_overlap,orfcaller, gene_id, gene_name, gene_biotype ) %>%
         summarise(tx_id = paste0(tx_id, collapse = "__"),
                 transcript_biotype_all = paste0(biotype, collapse = "__"),
@@ -475,7 +475,7 @@ generate_orf_sequences <- function(orf_table, genome) {
     # Build GRanges object from ORF exon coordinates
     orf_gr <- makeGRangesFromDataFrame(
         orf_long,
-        seqnames.field = "sequence",
+        seqnames.field = "chr",
         start.field    = "start",
         end.field      = "end",
         strand.field   = "strand",
@@ -521,13 +521,13 @@ generate_orf_sequences <- function(orf_table, genome) {
         dplyr::mutate(protein_length = nchar(protein_seq)) %>%
         dplyr::select(orf_id, summary_id, gene_id, gene_name, gene_biotype, 
                     protein_seq, protein_length, dna_seq, start_codon, stop_codon, 
-                    sequence, orf_start, orf_end, strand, starts, ends, 
+                    chr, orf_start, orf_end, strand, starts, ends, 
                     has_p0_cds_overlap, cds_isoform_transcripts, orfcaller,
                     tx_id, transcript_biotype_all, orf_biotypes_all, 
                     orf_biotype_single) %>%
         dplyr::mutate(starts = gsub(",", "_", starts)) %>%
         dplyr::mutate(ends = gsub(",", "_", ends)) %>%
-        dplyr::arrange(sequence, orf_start, orf_end) # Sort on genomic coordinates
+        dplyr::arrange(chr, orf_start, orf_end) # Sort on genomic coordinates
     
     return(orf_final)
     

@@ -1,13 +1,29 @@
-multiqc_canoncial_count_table <- function(orf_table_csv, orf_expression) {
-    # Load libraries
-    suppressPackageStartupMessages({
-        library(dplyr)
-        library(ggplot2)
-        library(tidyr)
-        library(stringr)
-        library(RColorBrewer)
-    })
+#!/usr/bin/env Rscript
 
+### Load libraries
+suppressPackageStartupMessages({
+    library(stringr)
+    library(ggplot2)
+    library(ggsci)
+    library(dplyr)
+    library(tidyr)
+    library(scales)
+    library(RColorBrewer)
+    library(RiboseQC)
+})
+
+### Catch arguments
+arguments <- commandArgs(trailingOnly = TRUE)
+
+# Get first argument to decide correct function to run
+function_to_run <- arguments[1] 
+
+### Load functions
+multiqc_canoncial_count_table <- function(arguments) {
+
+    orf_table_csv = arguments[2]
+    orf_expression_csv = arguments[3]
+    
     # Load intput csv
     orf_table <- read.csv(orf_table_csv)
     orf_expression <- read.csv(orf_expression_csv)
@@ -37,7 +53,7 @@ multiqc_canoncial_count_table <- function(orf_table_csv, orf_expression) {
         values_to = "value"
         ) %>%
         filter(value) %>%
-        count(variable, orf_category_group, name = "count") %>%
+        dplyr::count(variable, orf_category_group, name = "count") %>%
         pivot_wider(
         names_from = orf_category_group,
         values_from = count,
@@ -54,24 +70,12 @@ multiqc_canoncial_count_table <- function(orf_table_csv, orf_expression) {
     )
 }
 
-
-multiqc_riboseqc_tables <- function(input_files){
-    # Load libraries
-    suppressPackageStartupMessages({
-        library(stringr)
-        library(ggplot2)
-        library(ggsci)
-        library(dplyr)
-        library(tidyr)
-        library(scales)
-    })
-
-
+multiqc_riboseqc_tables <- function(arguments){
     # Load RiboseQC output files and initialize color palette
-    input_files <- commandArgs(trailingOnly = TRUE)
-    
+    input_files <- arguments[-1]
+
     if (length(input_files) == 0) stop("No input files provided.")
-    
+
     # Initialize empty data frames for collecting statistics from each sample
     summary_P_sites_df <- data.frame()
     summary_reads_df <- data.frame()
@@ -110,14 +114,14 @@ multiqc_riboseqc_tables <- function(input_files){
         read_cats_df <- rbind(read_cats_df, read_cats_sample)
         cds_reads_df <- rbind(cds_reads_df, cds_reads_sample)
     }
-    
+        
     # Frame Preference Table
     summary_P_sites_df_s <- summary_P_sites_df  
     
     # Frame preference
     df_wide <- summary_P_sites_df_s %>%
-        filter(read_length %in% 28:31, comp == "nucl") %>%
-        select(sample_id, read_length, frame_preference) %>%
+        dplyr::filter(read_length %in% 28:31, comp == "nucl") %>%
+        dplyr::select(sample_id, read_length, frame_preference) %>%
         pivot_wider(
         id_cols = sample_id,
         names_from = read_length,
@@ -131,7 +135,7 @@ multiqc_riboseqc_tables <- function(input_files){
     
     # Reorder and show result
     df_wide <- df_wide %>%
-        select(sample_id, all_of(cols_sorted))
+        dplyr::select(sample_id, all_of(cols_sorted))
     
     write.table(
         df_wide,
@@ -154,5 +158,173 @@ multiqc_riboseqc_tables <- function(input_files){
         lines
     ), con = "riboseqc_read_categories_counts_mqc.txt")
 }
+
+
+
+# Periodicity plots load input data
+load_psite_data <- function(riboseqc_files, read_length = "29") {
+    # Define CDS region (based on your metagene plot positions)
+    cds_start <- 51  # position of start codon
+    cds_stop <- 150  # position of stop codon
+    
+    combined_signal <- numeric(199)
+    sample_frames <- list()
+    
+    for(filepath in riboseqc_files) {
+        temp_env <- new.env()
+        load(filepath, envir = temp_env)
+        
+        psite_data <- temp_env$res_all[["profiles_P_sites"]][["P_sites_subcodon"]][["nucl"]][[read_length]]
+        signal <- colSums(as.matrix(psite_data))
+        
+        # Add to combined signal for metagene
+        combined_signal <- combined_signal + signal
+        
+        # Calculate frame percentages only for CDS region
+        cds_signal <- signal[cds_start:cds_stop]
+        frame_counts <- sapply(1:3, function(i) {
+        frame_indices <- which(rep(c(2,3,1), length.out = length(cds_signal)) == i)
+        sum(cds_signal[frame_indices])
+        })
+        sample_frames[[basename(filepath)]] <- frame_counts / sum(frame_counts) * 100
+        
+        rm(temp_env)
+        gc()
+    }
+    
+    return(list(
+        metagene = combined_signal,
+        periodicity = do.call(rbind, sample_frames)
+    ))
+}
+
+# Plotting function for metagene
+plot_psite_metagene <- function(signal_data, title = "Combined P-site metagene profile (29nt reads)") {
+    plot_df <- data.frame(
+        pos = seq_along(signal_data),
+        value = signal_data,
+        frame = factor(paste("Frame", rep(c(2,3,1), length.out = length(signal_data))),
+                levels = paste("Frame", 1:3))
+    )
+    metagene_plot <- ggplot(plot_df, aes(x = pos, y = value, fill = frame, color = frame)) +
+        geom_bar(stat = "identity", width = 0.5, position = "identity") +  # width=1 makes bars touch
+        scale_fill_manual(values = c("#985143", "#32936F", "#1B365D")) +
+        scale_color_manual(values = c("#985143", "#32936F", "#1B365D")) +
+        scale_x_continuous(
+            breaks = c(1, 26, 51, 84, 117, 150, 176, 200),
+            labels = c("TSS", "", "start\ncodon", "", "", "stop\ncodon", "", "TES"),
+            expand = c(0, 0)  # removes spacing at edges
+        ) +
+        scale_y_continuous(expand = c(0, 0)) +  # removes spacing at bottom
+        labs(
+            x = "Position (nucleotide resolution)",
+            y = "P-site count",
+            title = title
+        ) +
+        theme_minimal() +
+        theme(
+            legend.position = "bottom",
+            legend.title = element_blank(),
+            legend.text = element_text(size = 14),
+            axis.text = element_text(size = 14),
+            axis.title = element_text(size = 16),
+            plot.title = element_text(size = 16, face = "bold"),
+            panel.grid.minor = element_blank(),
+            panel.grid.major = element_blank()
+        )
+    ggsave(filename = "Metagene_profile_combined_mqc.png",
+        plot = metagene_plot,
+        width = 7,
+        height = 5,
+        dpi = 150)
+    metagene_plot
+
+}
+
+# Plotting function for periodicity
+plot_periodicity <- function(periodicity_data) {
+    # Convert to long format for plotting
+    colnames(periodicity_data) <- c("Frame 3", "Frame 1", "Frame 2")
+    plot_df <- as.data.frame(periodicity_data) %>%
+        tibble::rownames_to_column("sample") %>%
+        tidyr::pivot_longer(-sample, 
+                            names_to = "frame", 
+                            values_to = "percentage") %>%
+        mutate(frame = factor(frame))
+    
+    # Calculate summary statistics
+    summary_stats <- plot_df %>%
+        group_by(frame) %>%
+        summarise(
+        mean_pct = mean(percentage),
+        sd_pct = sd(percentage)
+        )
+    
+    periodicity_plot <- ggplot() +
+        geom_jitter(data = plot_df, 
+                    aes(x = frame, y = percentage, color = frame),
+                    width = 0.2, 
+                    alpha = 1,
+                    size = 2) +
+        geom_bar(data = summary_stats,
+                aes(x = frame, y = mean_pct, fill = frame),
+                stat = "identity",
+                alpha = 0.5,
+                width = 0.9) +
+        geom_errorbar(data = summary_stats,
+                    aes(x = frame, 
+                        ymin = mean_pct - sd_pct,
+                        ymax = mean_pct + sd_pct),
+                    width = 0.2) +
+        scale_y_continuous(
+        limits = c(0, max(summary_stats$mean_pct + summary_stats$sd_pct) * 1.1),
+        expand = expansion(mult = c(0, 0)),
+        breaks = seq(0, 100, by = 10)  # for every 10%
+        ) +
+        scale_fill_manual(values = c("#985143", "#32936F", "#1B365D")) +
+        scale_color_manual(values = c("#985143", "#32936F", "#1B365D")) +
+        labs(
+        x = "Reading frame",
+        y = "Ribosome P-sites (%)"
+        ) +
+        theme_classic() +
+        theme(
+        legend.position = "none",
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 14),
+        plot.title = element_text(size = 16, face = "bold"),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank()
+        )
+    
+    ggsave(filename = "Periodicity_bar_combined_mqc.png",
+            plot = periodicity_plot,
+            width = 7,
+            height = 5,
+            dpi = 110)
+    periodicity_plot
+}
+
+
+# Run specific function by looking at first args value
+if (function_to_run == "riboseqc_tables"){
+    multiqc_riboseqc_tables(arguments)
+
+} else if(function_to_run == "canonical_count"){
+    multiqc_canoncial_count_table(arguments)
+
+} else if(function_to_run == "periodicity_plot"){
+
+    riboseqc_files <- as.character(arguments[-1])
+    # Load riboseqc data  
+    psite_data <- load_psite_data(riboseqc_files)
+    # Create plots as needed
+    metagene_plot <- plot_psite_metagene(psite_data$metagene)
+    periodicity_plot <- plot_periodicity(psite_data$periodicity)
+
+} else {
+    print(paste0("No function found that matches: ", function_to_run))
+}
+
 
 

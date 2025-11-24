@@ -14,7 +14,8 @@ process riboseqc_plots {
 
     script:
     """
-    periodicity_plot.R ${riboseqc_all.join(' ')}
+    function_to_run="periodicity_plot"
+    multiqc_tables.R \${function_to_run} ${riboseqc_all.join(' ')}
     """
 }
 
@@ -22,17 +23,19 @@ process riboseqc_plots {
 process riboseqc_tables {
 
     label "Ribo_Seq_R_scripts"
+    publishDir "${outdir}/qc", mode: 'copy'
 
     input:
     val riboseqc_all
+    val outdir
 
     output:
     path "inframe_percentages_mqc.txt", emit: riboseqc_inframe_percentages
     path "riboseqc_read_categories_counts_mqc.txt", emit: riboseqc_category_counts
 
     script:
-
     """
-    riboseqc_tables.R ${riboseqc_all.join(' ')}
+    function_to_run="riboseqc_tables"
+    multiqc_tables.R \${function_to_run} ${riboseqc_all.join(' ')}
     """
 }
