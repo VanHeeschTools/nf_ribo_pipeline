@@ -13,12 +13,13 @@ def printHeader () {
         log.info logMessage.stripIndent()
 }
 
-//TODO: make this work for the riboseq pipeline
+// Check if given file paths exist
 def check_files(name, path, type) {
     if(!path) {
         error " File${name} of type ${type} not found at ${path}."
     } else {
         def file_to_check = null
+        // Check format of file to check, either dir, file, or null
         if (type == "dir") {
             file_to_check = file(path, type: "dir")
         } else {
@@ -45,6 +46,7 @@ def check_files(name, path, type) {
     }
 }
 
+// Check wether given input files exist or not
 def checkInputFiles() {
     // Locate bams
     def default_bams = "${params.outdir}/star/**/*.Aligned.sortedByCoord.out.bam"
@@ -122,6 +124,7 @@ def validate_price_index(String price_index_path){
     return file("${price_index_path}/PRICE_index.oml").exists()
 }
 
+// Check the first 10k rows of the input gtf for the correct attributes and exon order
 def validateGTF(String gtfPath) {
     def requiredAttrs = [
         gene      : ["gene_id", "gene_biotype", "gene_name"],
