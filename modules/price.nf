@@ -14,7 +14,7 @@ process price_index {
         path "${fasta.baseName}.*"
 
     script:
-    """
+        """
         ${gedi_exec_loc}/gedi -e IndexGenome \
             -s "${fasta}" \
             -a "${gtf}" \
@@ -23,7 +23,7 @@ process price_index {
             -nobowtie \
             -nostar \
             -nokallisto
-    """
+        """
 }
 
 // Merge all end2end BAM files into a single BAM to be used by PRICE

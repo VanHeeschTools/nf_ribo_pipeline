@@ -161,7 +161,7 @@ Note: You can start the pipeline in a later step by setting these parameters. It
 
 | Parameter                  | Description                                                | Default |
 | :------------------------- | ---------------------------------------------------------- | --------- |
-| --help                     | Show pipeline options ( currently not working)             | false   |
+| --help                     | Show pipeline run command                                  | false   |
 | --validate_gtf_attributes  | Check first 10k gtf rows for correct format and attributes | false   |
 | --keep_bam                 | Run RiboseQC on STAR output                                | true    |
 

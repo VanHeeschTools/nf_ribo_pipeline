@@ -66,10 +66,6 @@
                     "type": "string",
                     "description": "Path to Rannot file required for ORFquant"
                 },
-                "orfquant_annot_package": {
-                    "type": "string",
-                    "description": "Path to bsgenome library itself"
-                }, 
                 "contaminants_fasta": {
                     "type": "string",
                     "description": "Path to contaminants fasta file for Bowtie2 filtering"
@@ -107,8 +103,7 @@
                 "reference_protein_fa",
                 "reference_twobit",
                 "package_install_loc",
-                "orfquant_annotation",
-                "orfquant_annot_package"
+                "orfquant_annotation"
             ]
         },
 
