@@ -62,11 +62,11 @@ nextflow run nf_riboseq_pipeline/main.nf \
 
     Configure the parameters located in `params.config` ( which can be found in documentation) to suit your analysis.
 
-    - **Inputs**: Adjust settings to toggle pipeline components on and off.
+    - Inputs: Adjust settings to toggle pipeline components on and off.
 
-    - **References and other files**: Define (file) paths to reference files, packages and other settings used in the pipeline.
+    - References and other files**: Define (file) paths to reference files, packages and other settings used in the pipeline.
 
-    - **Containers**: Currently, we have loose containers for the entire pipeline that are described in `config/base.config`.
+    - Containers : Currently, we have loose containers for the entire pipeline that are described in `config/base.config`.
 
 
 ## Inputs
@@ -201,6 +201,8 @@ The pipeline generates output files including trimmed reads, filtered reads, ali
 
 Additionally it produces Nextflow execution reports in `{project_folder}/log`
 
+### Harmonised ORF table
+
 The final_orf_table directory in the output directory holds the harmonised ORF table output, the following is a table explaining the columns:
 
 |Column_name | Description|
@@ -241,7 +243,7 @@ The orf_biotype_single is decided by comparing the orf_biotypes_all to the facto
 "undefined"
 ```
 
-The ORF biotypes and their explanation:
+### The ORF biotypes and their explanation:
 
 |ORF biotype | Explanation|
 | :--------- | ---------- |

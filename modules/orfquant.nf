@@ -5,22 +5,21 @@ process prepare_orfquant {
     publishDir "${outdir}/orfquant", mode: 'copy'
 
     input:
-    val collected_paths
-    val outdir
+        val collected_paths
+        val outdir
 
     output:
-    path "Merged_for_ORFquant", emit: psites_merged
-    path "file_paths.txt"
+        path "Merged_for_ORFquant", emit: psites_merged
+        path "file_paths.txt",      emit: for_orfquant_file_paths_txt
 
     script:
+        """
+        #Collect all RiboseQC output paths in one file
+        printf "%s\n" "${collected_paths.join('\n')}" > file_paths.txt
 
-    """
-    #Collect all RiboseQC output paths in one file
-    printf "%s\n" "${collected_paths.join('\n')}" > file_paths.txt
-
-    merge_psites.R \
-        "file_paths.txt"
-    """
+        merge_psites.R \
+            "file_paths.txt"
+        """
 }
 
 // Run ORFquant on merged psites level
@@ -30,22 +29,22 @@ process orfquant {
     publishDir "${outdir}/orfquant", mode: 'copy'
 
     input:
-    val psites_merged
-    val rannot
-    val package_install_loc
-    val outdir
+        val psites_merged
+        val rannot
+        val package_install_loc
+        val outdir
 
     output:
-    path "output_final_ORFquant_results", emit: orfquant_orfs
+        path "output_final_ORFquant_results", emit: orfquant_orfs
 
     script:
-    """
-    run_ORFquant.R \
-        ${psites_merged} \
-        ${rannot} \
-        $task.cpus \
-        ${package_install_loc} 
-    """
+        """
+        run_ORFquant.R \
+            ${psites_merged} \
+            ${rannot} \
+            $task.cpus \
+            ${package_install_loc} 
+        """
 }
 
 // Fixes ORFquant GTF which has incorrect names and doesn't include the stop codon in the coords
@@ -54,21 +53,21 @@ process fix_orfquant {
     publishDir "${outdir}/orfquant", mode: 'copy'
 
     input:
-    path(orfquant_orfs)
-    path rannot
-    path reference_gtf
-    val package_install_loc
-    val outdir
+        path(orfquant_orfs)
+        path rannot
+        path reference_gtf
+        val package_install_loc
+        val outdir
 
     output:
-    path "ORFquant.gtf", emit: orfquant_gtf
+        path "ORFquant.gtf", emit: orfquant_gtf
 
     script:
-    """
-    fix_orfquant_output.R \
-        ${orfquant_orfs} \
-        ${rannot} \
-        ${package_install_loc} \
-        ${reference_gtf}
-    """
+        """
+        fix_orfquant_output.R \
+            ${orfquant_orfs} \
+            ${rannot} \
+            ${package_install_loc} \
+            ${reference_gtf}
+        """
 }

@@ -32,37 +32,37 @@ process star_local{
     label "alignment"
 
     input: 
-    tuple val(sample_id), path(reads)   // Trimmed RPF reads
-    val outdir                          // Output directory
-    val gtf                             // Transcriptome GTF file
-    val star_index_path                 // STAR index
+        tuple val(sample_id), path(reads)   // Trimmed RPF reads
+        val outdir                          // Output directory
+        val gtf                             // Transcriptome GTF file
+        val star_index_path                 // STAR index
 
     output:
-    path("${sample_id}/${sample_id}.*")
-    tuple val(sample_id), path("${sample_id}/${sample_id}.local.Aligned.out.bam"), optional: true, emit: bams
-    path "${sample_id}/${sample_id}.local.Log.final.out", emit: star_log_local
+        path("${sample_id}/${sample_id}.*")
+        tuple val(sample_id), path("${sample_id}/${sample_id}.local.Aligned.out.bam"), optional: true, emit: bams
+        path "${sample_id}/${sample_id}.local.Log.final.out", emit: star_log_local
 
     script:
-    """
-    # ORFquant BAM
-    STAR \
-    --genomeDir ${star_index_path} \
-    --sjdbGTFfile ${gtf} \
-    --readFilesIn ${reads} \
-    --outSAMattrRGline ID:${sample_id} LB:${sample_id} PL:IllUMINA SM:${sample_id} \
-    --outFileNamePrefix "${sample_id}/${sample_id}.local." \
-    --runThreadN $task.cpus \
-    --readFilesCommand zcat \
-    --outSAMtype BAM Unsorted \
-    --runDirPerm All_RWX \
-    --twopassMode Basic \
-    --outFilterMismatchNmax 2 \
-    --outFilterMultimapNmax 20 \
-    --outSAMattributes All \
-    --outFilterType BySJout \
-    --alignSJoverhangMin 1000 \
-    --outTmpKeep None
-    """
+        """
+        # ORFquant BAM
+        STAR \
+        --genomeDir ${star_index_path} \
+        --sjdbGTFfile ${gtf} \
+        --readFilesIn ${reads} \
+        --outSAMattrRGline ID:${sample_id} LB:${sample_id} PL:IllUMINA SM:${sample_id} \
+        --outFileNamePrefix "${sample_id}/${sample_id}.local." \
+        --runThreadN $task.cpus \
+        --readFilesCommand zcat \
+        --outSAMtype BAM Unsorted \
+        --runDirPerm All_RWX \
+        --twopassMode Basic \
+        --outFilterMismatchNmax 2 \
+        --outFilterMultimapNmax 20 \
+        --outSAMattributes All \
+        --outFilterType BySJout \
+        --alignSJoverhangMin 1000 \
+        --outTmpKeep None
+        """
 }
 
 // Aligns RPF reads to the reference genome to create PRICE input
@@ -74,36 +74,36 @@ process star_end_to_end {
 
 
     input: 
-    tuple val(sample_id), path(reads) // Trimmed RPF reads
-    val outdir                        // Output directory
-    val gtf                           // Transcriptome GTF file
-    val star_index_path               // STAR index
+        tuple val(sample_id), path(reads) // Trimmed RPF reads
+        val outdir                        // Output directory
+        val gtf                           // Transcriptome GTF file
+        val star_index_path               // STAR index
 
     output:
-    tuple val(sample_id), path("${sample_id}/${sample_id}.end2end.Aligned.out.bam"), optional: true, emit: bams_end2end
-    tuple val(sample_id), path("${sample_id}/${sample_id}.end2end.Aligned.toTranscriptome.out.bam"), optional: true, emit: bams_end2end_transcriptome
-    path "${sample_id}/${sample_id}.end2end.Log.final.out", emit: star_log_end_to_end
+        tuple val(sample_id), path("${sample_id}/${sample_id}.end2end.Aligned.out.bam"), optional: true, emit: bams_end2end
+        tuple val(sample_id), path("${sample_id}/${sample_id}.end2end.Aligned.toTranscriptome.out.bam"), optional: true, emit: bams_end2end_transcriptome
+        path "${sample_id}/${sample_id}.end2end.Log.final.out", emit: star_log_end_to_end
 
     script:
-    """
-    STAR \
-    --genomeDir ${star_index_path} \
-    --sjdbGTFfile ${gtf} \
-    --readFilesIn ${reads} \
-    --outSAMattrRGline ID:${sample_id} LB:${sample_id} PL:IllUMINA SM:${sample_id} \
-    --outFileNamePrefix "${sample_id}/${sample_id}.end2end." \
-    --runThreadN $task.cpus \
-    --quantMode TranscriptomeSAM \
-    --readFilesCommand zcat \
-    --outSAMtype BAM Unsorted \
-    --runDirPerm All_RWX \
-    --twopassMode Basic \
-    --outFilterMismatchNmax 2 \
-    --outFilterMultimapNmax 20 \
-    --outSAMattributes MD NH \
-    --outFilterType BySJout \
-    --alignSJoverhangMin 1000 \
-    --alignEndsType EndToEnd \
-    --outTmpKeep None
-    """
+        """
+        STAR \
+        --genomeDir ${star_index_path} \
+        --sjdbGTFfile ${gtf} \
+        --readFilesIn ${reads} \
+        --outSAMattrRGline ID:${sample_id} LB:${sample_id} PL:IllUMINA SM:${sample_id} \
+        --outFileNamePrefix "${sample_id}/${sample_id}.end2end." \
+        --runThreadN $task.cpus \
+        --quantMode TranscriptomeSAM \
+        --readFilesCommand zcat \
+        --outSAMtype BAM Unsorted \
+        --runDirPerm All_RWX \
+        --twopassMode Basic \
+        --outFilterMismatchNmax 2 \
+        --outFilterMultimapNmax 20 \
+        --outSAMattributes MD NH \
+        --outFilterType BySJout \
+        --alignSJoverhangMin 1000 \
+        --alignEndsType EndToEnd \
+        --outTmpKeep None
+        """
 }
