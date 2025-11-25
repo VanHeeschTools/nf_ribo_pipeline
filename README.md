@@ -100,6 +100,9 @@ Notes:
 - Only samples that have ribo as sample_type, and fastq as file_type will be used in this pipeline.
 
 ### Parameter specification
+
+**The template of the params.config file can be found in example_input_config**
+
 ### Input/output files
 
 | Parameter      | Description                                                                                     |
