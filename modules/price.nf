@@ -31,7 +31,7 @@ process merge_price_bams{
     label "samtools"
 
     input:
-        path bam_files
+        path bam_files // File that lists all BAM files
         val outdir
 
     output:
@@ -52,7 +52,7 @@ process price {
     publishDir "${outdir}/price", mode: 'copy'
 
     input:
-        path bamlist      // File that lists all BAM files
+        path merged_bam   // Merged BAM file
         path price_index  // Index for PRICE
         val gedi_exec_loc // Location of gedi installation, until containerisation works
         val outdir        // Output directory
@@ -63,7 +63,7 @@ process price {
     script:
         """
         ${gedi_exec_loc}/gedi -e Price \
-            -reads ${bamlist} \
+            -reads ${merged_bam} \
             -genomic ${price_index} \
             -prefix "PRICE"
         
