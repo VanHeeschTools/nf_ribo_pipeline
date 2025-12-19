@@ -46,30 +46,74 @@ def main():
 
 def load_and_concat_csvs(csv_files: List[str]) -> pl.DataFrame:
     """
-    Loads multiple CSV files and concatenates them into a single Polars DataFrame.
-
-    Parameters:
-    csv_files : List[str]
-        List of paths to CSV files.
-
-    Returns:
-    pl.DataFrame
-        A concatenated DataFrame containing rows from all CSV files.
+    Load multiple CSV files, keep only required columns,
+    add missing ones, and force all required columns to correct dtype.
     """
-    schema = {
-        "orf_id": pl.Utf8,
-        "seqname": pl.Utf8,       
+
+    # All columns used anywhere in the full pipeline
+    required_schema = {
+        # Identifiers
+        "ORF_id": pl.Utf8,
+        "transcript_id": pl.Utf8,
+        "gene_id": pl.Utf8,
+        "gene_name": pl.Utf8,
+        "transcript_biotype": pl.Utf8,
+
+        # Basic coordinates
+        "seqname": pl.Utf8,
         "start": pl.Int64,
         "end": pl.Int64,
         "strand": pl.Utf8,
-        "score": pl.Float64,      
-        "CDS_coords": pl.Utf8     
+
+        # ORF coordinates
+        "TIS_coord": pl.Int64,
+        "LTS_coord": pl.Int64,
+        "TTS_coord": pl.Int64,
+
+        # Scoring
+        "score": pl.Float64,
+        "ribotie_score": pl.Float64,
+        "tis_transformer_score": pl.Float64,
+
+        # CDS variant fields
+        "has_CDS_clones": pl.Boolean,
+        "shared_in_frame_CDS_frac": pl.Float64,
+
+        # Classification
+        "ORF_type": pl.Utf8,
+
+        # Sequence
+        "protein_seq": pl.Utf8,
+
+        # Provided later
+        "CDS_coords": pl.Utf8,
+
+        # Sample metadata
+        "sample_id": pl.Utf8,
     }
 
-    return pl.concat([
-        pl.read_csv(f, schema_overrides=schema, infer_schema_length=1000, null_values=["."])
-        for f in csv_files
-    ])
+    dfs = []
+
+    for path in csv_files:
+        df = pl.read_csv(path, infer_schema_length=1000, null_values=["."])
+
+        # Add any missing required columns as Null
+        for col, dtype in required_schema.items():
+            if col not in df.columns:
+                df = df.with_columns(pl.lit(None, dtype=dtype).alias(col))
+
+        # Keep only required columns
+        df = df.select(list(required_schema.keys()))
+
+        # Force cast to correct dtype (safe=True prevents errors)
+        df = df.with_columns([
+            pl.col(c).cast(required_schema[c], strict=False)
+            for c in required_schema
+        ])
+
+        dfs.append(df)
+
+    return pl.concat(dfs)
 
 def get_top_orf_scores(df: pl.DataFrame, min_samples: int = 1) -> pl.DataFrame:
     """
