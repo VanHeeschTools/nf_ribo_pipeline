@@ -5,7 +5,7 @@ process riboseqc_plots {
     publishDir "${outdir}/qc", mode: 'copy'
 
     input:
-        path riboseqc_all
+        val riboseqc_all
         val outdir
 
     output:

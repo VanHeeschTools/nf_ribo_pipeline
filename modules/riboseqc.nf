@@ -104,3 +104,26 @@ process convert_to_bigwig{
         bedGraphToBigWig "${summed_bedgraph}" "genome.sizes" "${summed_bedgraph.simpleName}.bw" 
         """   
 }
+
+// Create RiboseQC html report
+process create_riboseqc_report{
+
+    label "orfquant"
+    publishDir "${outdir}/riboseqc", mode: 'copy'
+
+    input:
+        val riboseqc_all
+        val html_template
+        val outdir
+
+    output:
+        path "RiboseQC_report.html"
+
+    script:
+    """
+    riboseqc_html.R \
+    ${riboseqc_all.join(' ')} \
+    ${html_template}
+    """
+
+}

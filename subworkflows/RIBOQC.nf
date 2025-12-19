@@ -1,4 +1,4 @@
-include { riboseqc; sort_bedgraphs; merge_bedgraphs; convert_to_bigwig } from '../modules/riboseqc.nf'
+include { riboseqc; sort_bedgraphs; merge_bedgraphs; convert_to_bigwig; create_riboseqc_report } from '../modules/riboseqc.nf'
 include { riboseqc_tables; riboseqc_plots } from '../modules/qcplots.nf'
 
 workflow RIBOQC {
@@ -8,6 +8,7 @@ workflow RIBOQC {
     package_install_loc   // Path, location where BSgenome package is installed
     reference_fasta_fai   // Path, location of reference genome fasta fai file
     orfquant_bams         // List, output from ALIGNMENT subworkflow
+    html_template
     outdir                // Path, output directory
 
     main:
@@ -17,7 +18,6 @@ workflow RIBOQC {
             orfquant_annotation,
             package_install_loc)
 
-    //TODO: Merge steps so it doesn't run 4 times for every sample
     // 02 - Create p-site tracks
     // Sort each bedgraph file
     riboseqc_bedgraphs = riboseqc.out.bedgraphs.flatten()
@@ -42,6 +42,13 @@ workflow RIBOQC {
 
     // 04 - Create periodicity plots
     //riboseqc_plots(riboseqc.out.riboseqc_all.collect(), outdir)
+
+
+    create_riboseqc_report(
+        riboseqc.out.riboseqc_all.collect(),
+        html_template,
+        outdir
+    )
 
     // Combine into one channel for MultiQC
     multiqc_riboseq = riboseqc_inframe_percentages.mix(riboseqc_category_counts).collect()

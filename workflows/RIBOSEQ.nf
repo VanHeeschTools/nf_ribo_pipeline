@@ -118,11 +118,13 @@ workflow RIBOSEQ {
 
         // RiboseQC run on all local aligned BAM files
         if (params.run_riboseqc){
+            html_template = file("${projectDir}/${params.html_template}")
             RIBOQC(
                 params.orfquant_annotation,
                 params.package_install_loc,
                 params.reference_fasta_fai,
                 orfquant_bams,
+                html_template,
                 params.outdir
             )
             for_orfquant_files = RIBOQC.out.for_orfquant_files
