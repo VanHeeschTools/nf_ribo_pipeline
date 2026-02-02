@@ -10,6 +10,7 @@ process riboseqc {
         val outdir
         val orfquant_annotation
         val package_install_loc
+        val readlength_choice_method
 
     output:
         tuple val(sample_id), path("${sample_id}/${sample_id}_for_ORFquant"), emit: orfquant_psites
@@ -26,7 +27,8 @@ process riboseqc {
             ${bam} \
             ${sample_id}/${sample_id} \
             ${orfquant_annotation} \
-            ${package_install_loc}
+            ${package_install_loc} \
+            ${readlength_choice_method}
         """
 }
 
@@ -117,7 +119,7 @@ process create_riboseqc_report{
         val outdir
 
     output:
-        path "RiboseQC_report.html"
+        path "RiboseQC_report.html", emit: riboseqc_html_report
 
     script:
     """

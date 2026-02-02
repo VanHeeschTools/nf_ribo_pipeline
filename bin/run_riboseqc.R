@@ -13,9 +13,16 @@ bam <- args[1]
 name <- args[2]
 rannot <- args[3]
 package_install_loc <- args[4]
+readlength_choice_method <- args[5]
 
+
+message("Running RiboseQC")
+message(paste("Chosen readlength_choice_method: ", readlength_choice_method ))
 paths <- c(package_install_loc, .libPaths())
 .libPaths(paths)
+
+# Find Pandoc in container
+rmarkdown::find_pandoc(dir = "/usr/src/pandoc/bin")
 
 # Define functions
 riboseqc_analysis <- function(bam, rannot, name) {
@@ -29,8 +36,9 @@ riboseqc_analysis <- function(bam, rannot, name) {
         fast_mode = FALSE,
         create_report = FALSE,
         sample_names = NA,
+        readlength_choice_method = readlength_choice_method,
         report_file = name)
-      message("Successfully executed the call.")
+      message("Successfully executed RiboseQC")
     },
     error = function(e){
       message('Caught an error!')

@@ -106,7 +106,6 @@
                 "orfquant_annotation"
             ]
         },
-
         "modules": {
             "title": "Modules",
             "type": "object",
@@ -138,13 +137,20 @@
                 },
                 "keep_bam": {
                     "type": "boolean",
-                    "description": "Whether to copy the Alignment BAM files to the output direcotyr or not",
+                    "description": "Whether to copy the Alignment BAM files to the output directory or not",
                     "default": true
                 },
                 "ribotie_min_samples": {
                     "type": "integer",
                     "description": "Minimum amount of samples a RiboTIE ORF needs to occur in to be kept",
                     "default": 2
+                },
+                "readlength_choice_method": {
+                    "type": "string",
+                    "description": "The readlength filter choice for RiboseQC defaults to max_coverage, needs to be one of: 'max_coverage','max_inframe','all'.",
+                    "enum": ["max_coverage","max_inframe","all"],
+                    "default": "max_coverage",
+                    "errorMessage": "Needs to be one of: 'max_coverage','max_inframe','all'"
                 }
             }
         },

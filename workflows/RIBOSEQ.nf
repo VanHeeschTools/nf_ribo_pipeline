@@ -122,6 +122,7 @@ workflow RIBOSEQ {
             RIBOQC(
                 params.orfquant_annotation,
                 params.package_install_loc,
+                params.readlength_choice_method,
                 params.reference_fasta_fai,
                 orfquant_bams,
                 html_template,

@@ -11,7 +11,7 @@ args <- commandArgs(trailingOnly = TRUE)
 input_files <- args[-length(args)]
 rmd_path <- args[length(args)]
 
-input_sample_names <- gsub("_results_RiboseQC_all", "", basename(input_files))
+input_sample_names <- gsub("_results_RiboseQC", "", basename(input_files))
 
 # Find Pandoc in container
 rmarkdown::find_pandoc(dir = "/usr/src/pandoc/bin")
@@ -35,7 +35,7 @@ knitr::knit_meta(class = NULL, clean = TRUE)
 
 suppressWarnings(
     render(
-        rmd_path,
+        paste(rmd_path,"riboseqc_template.Rmd", sep="/"),
         params = list(
             input_files = input_files,
             input_sample_names = input_sample_names,

@@ -4,19 +4,21 @@ include { riboseqc_tables; riboseqc_plots } from '../modules/qcplots.nf'
 workflow RIBOQC {
 
     take:
-    orfquant_annotation   // Path, ORFquant annotation file
-    package_install_loc   // Path, location where BSgenome package is installed
-    reference_fasta_fai   // Path, location of reference genome fasta fai file
-    orfquant_bams         // List, output from ALIGNMENT subworkflow
-    html_template
-    outdir                // Path, output directory
+    orfquant_annotation      // Path, ORFquant annotation file
+    package_install_loc      // Path, location where BSgenome package is installed
+    readlength_choice_method // Val, filter choice of RiboseQC should be "max_coverage" or "all"
+    reference_fasta_fai      // Path, location of reference genome fasta fai file
+    orfquant_bams            // List, output from ALIGNMENT subworkflow
+    html_template            // Path, location of RiboseQC html report template
+    outdir                   // Path, output directory
 
     main:
     // 01 - Create riboseqc files
     riboseqc(orfquant_bams,
             outdir,
             orfquant_annotation,
-            package_install_loc)
+            package_install_loc,
+            readlength_choice_method)
 
     // 02 - Create p-site tracks
     // Sort each bedgraph file
@@ -52,8 +54,7 @@ workflow RIBOQC {
 
     // Combine into one channel for MultiQC
     multiqc_riboseq = riboseqc_inframe_percentages.mix(riboseqc_category_counts).collect()
-                    //riboseqc_plots.out.metagene_plot,
-                    //riboseqc_plots.out.periodicity_plot)
+
 
     // Obtain ORFquant input files
     // Collect is done in the RIBOSEQ workflow
