@@ -14,6 +14,9 @@ process trimgalore{
         path "total_reads_${meta.sample_id}_mqc.txt", emit: total_reads
         path "removed_reads_${meta.sample_id}_mqc.txt", emit: removed_reads
 
+    when:
+        task.ext.when == null || task.ext.when
+
     script:
         """
         mkdir "${meta.sample_id}"

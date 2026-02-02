@@ -13,6 +13,9 @@ process price_index {
         path "${gtf.baseName}.*"
         path "${fasta.baseName}.*"
 
+    when:
+        task.ext.when == null || task.ext.when
+
     script:
         """
         ${gedi_exec_loc}/gedi -e IndexGenome \
@@ -37,6 +40,9 @@ process merge_price_bams{
     output:
         path "star_end2end_merged_sorted.bam", emit: merged_end2end_bam
 
+    when:
+        task.ext.when == null || task.ext.when
+
     script:
         """
         samtools merge -@ $task.cpus star_end2end_merged.bam ${bam_files.join(' ')}
@@ -59,6 +65,9 @@ process price {
 
     output:
         path "PRICE.orfs.cit.bed", emit: price_orfs
+
+    when:
+        task.ext.when == null || task.ext.when
 
     script:
         """
@@ -84,6 +93,9 @@ process price_to_gtf{
 
     output:
         path "PRICE.gtf", emit: price_gtf
+
+    when:
+        task.ext.when == null || task.ext.when
 
     script:
         """

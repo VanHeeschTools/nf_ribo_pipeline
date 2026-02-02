@@ -14,6 +14,9 @@ process samtools {
         path "${sample_id}/${sample_id}*.Aligned.sortedByCoord.out.bam", emit:bam_files
         path "${sample_id}/${sample_id}*" // Output all files to publishDir
 
+    when:
+        task.ext.when == null || task.ext.when
+
     script:
         def new_bam = "${bam.name.replaceFirst('.Aligned.out.bam', '.Aligned.sortedByCoord.out.bam')}"
         """

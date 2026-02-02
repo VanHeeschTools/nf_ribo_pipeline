@@ -5,13 +5,15 @@ process filter_removed_orf_ids{
     publishDir "${outdir}/annotation", mode: 'copy'
 
     input:
-    //TODO: make sure the removed_orf_ids are all removed from the orf_table
         path removed_orf_ids
         path orfcaller_psites
         val outdir
 
     output:
         path "combined_psites_filtered.bed", emit: orfcaller_psites_filtered
+
+    when:
+        task.ext.when == null || task.ext.when
 
     script:
         """
@@ -33,6 +35,9 @@ process intersect_psites {
 
     output:
         path "${sample_id}_intersect.bed", emit: sample_intersect
+
+    when:
+        task.ext.when == null || task.ext.when
 
     script:
         """
@@ -63,6 +68,9 @@ process ppm_matrix {
         path "orf_table_psites_permillion.csv", emit: ppm_matrix
         path "orf_table_psites.csv", emit: psite_matrix
 
+    when:
+        task.ext.when == null || task.ext.when
+
     script:
     """
         psite_matrix.R \
@@ -84,6 +92,9 @@ process expression_table{
 
     output:
         path("final_orf_table.csv"), emit: final_orf_table
+
+    when:
+        task.ext.when == null || task.ext.when
 
     script:
         """
@@ -130,6 +141,9 @@ process multiqc_expression_plot{
 
     output:
         path "canonical_orf_counts_mqc.txt", emit: canonical_orf_counts
+
+    when:
+        task.ext.when == null || task.ext.when
 
     script:
         """

@@ -12,6 +12,9 @@ process create_template {
     output:
         path "ribotie_template.yml", emit: template
 
+    when:
+        task.ext.when == null || task.ext.when
+
     script:
         def echo_lines = ribotie_bams.collect { pair ->
             def sample = pair[0]
@@ -41,6 +44,9 @@ process parse_genomic_features {
     output:
         path "genomic_features_db.h5", emit: h5_path
 
+    when:
+        task.ext.when == null || task.ext.when
+
     script:
         """
         tis_transformer \
@@ -68,6 +74,9 @@ process parse_samples {
 
     output:
         tuple val(sample_id), path("genomic_features_db_${sample_id}.h5"), emit: h5_path
+
+    when:
+        task.ext.when == null || task.ext.when
 
     script:
         """
@@ -98,6 +107,9 @@ process ribotie_predict_samples {
     output:
         path "genomic_features_db_${sample_id}.csv", emit: ribotie_orf_csv
         path "genomic_features_db_${sample_id}.gtf", emit: ribotie_orf_gtf
+
+    when:
+        task.ext.when == null || task.ext.when
 
     script:
         """
@@ -130,6 +142,9 @@ process merge_ribotie_output{
         path "RiboTIE_duplicate_filtered_merged.csv"
         path "RiboTIE_unfiltered_merged.csv"
 
+    when:
+        task.ext.when == null || task.ext.when
+
     script:
         """    
         merge_ribotie.py ${genomic_h5_db} "${ribotie_csv_files.join(',')}" ${ribotie_min_samples}
@@ -147,6 +162,9 @@ process ribotie_add_stop{
 
     output:
         path "RiboTIE.gtf", emit: ribotie_gtf
+
+    when:
+        task.ext.when == null || task.ext.when
 
     script:
         """    

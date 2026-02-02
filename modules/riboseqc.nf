@@ -21,6 +21,9 @@ process riboseqc {
             path("${sample_id}/${sample_id}_P_sites_uniq_plus.bedgraph"), emit: bedgraphs
         path "${sample_id}/${sample_id}*"
 
+    when:
+        task.ext.when == null || task.ext.when
+
     script:
         """
         run_riboseqc.R \
@@ -57,6 +60,9 @@ process merge_bedgraphs{
 
     output:
         path "merged*.bedgraph", emit: merged_bedgraphs
+
+    when:
+        task.ext.when == null || task.ext.when
 
     script:
         """
@@ -99,6 +105,9 @@ process convert_to_bigwig{
     output:
         path "${summed_bedgraph.simpleName}.bw", emit: bigwig_p_site_tracks
 
+    when:
+        task.ext.when == null || task.ext.when
+
     script:
         """
         # Create genome sizes file required for conversion to BigWig format
@@ -120,6 +129,9 @@ process create_riboseqc_report{
 
     output:
         path "RiboseQC_report.html", emit: riboseqc_html_report
+
+    when:
+        task.ext.when == null || task.ext.when
 
     script:
     """

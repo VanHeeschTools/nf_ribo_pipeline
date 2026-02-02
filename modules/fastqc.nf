@@ -13,6 +13,9 @@ process fastqc {
         path "${sample_id}/${sample_id}_filtered_fastqc.html", emit: fastqc_html // Output QC summary 
         path "${sample_id}/${sample_id}_filtered_fastqc.zip",  emit: fastqc_zip  // QC files
 
+    when:
+        task.ext.when == null || task.ext.when
+
     script:
         """
         # Create temp directory to run fastqc

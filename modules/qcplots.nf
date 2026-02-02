@@ -12,6 +12,9 @@ process riboseqc_plots {
         path "Metagene_profile_combined_mqc.png", emit: metagene_plot
         path "Periodicity_bar_combined_mqc.png", emit: periodicity_plot
 
+    when:
+        task.ext.when == null || task.ext.when
+
     script:
         """
         function_to_run="periodicity_plot"
@@ -32,6 +35,9 @@ process riboseqc_tables {
     output:
         path "inframe_percentages_mqc.txt", emit: riboseqc_inframe_percentages
         path "riboseqc_read_categories_counts_mqc.txt", emit: riboseqc_category_counts
+
+    when:
+        task.ext.when == null || task.ext.when
 
     script:
         """

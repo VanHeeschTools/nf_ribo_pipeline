@@ -14,6 +14,9 @@ process get_orf_category{
     output:
         path "${orfcaller_gtf.baseName}_orfs.csv", emit: basic_orf_table
 
+    when:
+        task.ext.when == null || task.ext.when
+
     script:
         """
         get_orf_categories.R \
@@ -47,6 +50,9 @@ process harmonise_orfs {
         path "orfcaller_orf_categories_mqc.txt", emit: orfcaller_multiq
         path "merged_orf_categories_mqc.txt",    emit: merged_multiqc
         path "merged_orf_caller_count_mqc.txt",  emit: caller_count_multiqc
+
+    when:
+        task.ext.when == null || task.ext.when
 
     script:
         """

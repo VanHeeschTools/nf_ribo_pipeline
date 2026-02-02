@@ -13,6 +13,9 @@ process bowtie2_index {
         path "bowtie2_index", emit: bowtie2_index_prefix
         path "bowtie2_index/bowtie2_index*.bt2"
 
+    when:
+        task.ext.when == null || task.ext.when
+
     script:
         """
         mkdir -p "bowtie2_index"
@@ -45,6 +48,9 @@ process bowtie2 {
         tuple val(sample_id), path(reads), path("${sample_id}/${sample_id}_filtered.fastq.gz"), path("${sample_id}/${sample_id}_contaminants.bam"), emit: bowtie_output_files
         tuple val(sample_id), path("${sample_id}/${sample_id}_filtered.fastq.gz"), emit: filtered_reads
 
+    when:
+        task.ext.when == null || task.ext.when
+
     script:
         """
         mkdir -p "${sample_id}"
@@ -74,6 +80,9 @@ process contaminants_check {
     output:
         path "contaminant_counts_${sample_id}_mqc.txt", emit: contaminant_samples
         path "passed_contaminant_counts_${sample_id}_mqc.txt", emit: contaminant_samples_passed
+
+    when:
+        task.ext.when == null || task.ext.when
 
     script:
         """

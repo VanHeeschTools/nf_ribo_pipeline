@@ -12,6 +12,9 @@ process prepare_orfquant {
         path "Merged_for_ORFquant", emit: psites_merged
         path "file_paths.txt",      emit: for_orfquant_file_paths_txt
 
+    when:
+        task.ext.when == null || task.ext.when
+
     script:
         """
         #Collect all RiboseQC output paths in one file
@@ -37,6 +40,9 @@ process orfquant {
     output:
         path "output_final_ORFquant_results", emit: orfquant_orfs
 
+    when:
+        task.ext.when == null || task.ext.when
+
     script:
         """
         run_ORFquant.R \
@@ -61,6 +67,9 @@ process fix_orfquant {
 
     output:
         path "ORFquant.gtf", emit: orfquant_gtf
+
+    when:
+        task.ext.when == null || task.ext.when
 
     script:
         """

@@ -5,24 +5,27 @@ process star_index {
     publishDir "${outdir}/star_index/", mode: 'copy'
 
     input: 
-    val genome // Reference genome fasta file
-    val gtf    // Transcriptome GTF file
-    val outdir // Output directory
+        val genome // Reference genome fasta file
+        val gtf    // Transcriptome GTF file
+        val outdir // Output directory
 
     output:
-    path "star_index", emit: star_index_path
-    path "star_index/*"
+        path "star_index", emit: star_index_path
+        path "star_index/*"
+
+    when:
+        task.ext.when == null || task.ext.when
 
     script:
-    """
-    STAR \
-    --runMode genomeGenerate \
-    --runThreadN $task.cpus \
-    --sjdbGTFfile ${gtf} \
-    --sjdbOverhang 29 \
-    --genomeDir "star_index" \
-    --genomeFastaFiles ${genome}
-    """
+        """
+        STAR \
+        --runMode genomeGenerate \
+        --runThreadN $task.cpus \
+        --sjdbGTFfile ${gtf} \
+        --sjdbOverhang 29 \
+        --genomeDir "star_index" \
+        --genomeFastaFiles ${genome}
+        """
 }
 
 // Aligns RPF reads to the reference genome to create input for RiboseQC
@@ -41,6 +44,9 @@ process star_local{
         path("${sample_id}/${sample_id}.*")
         tuple val(sample_id), path("${sample_id}/${sample_id}.local.Aligned.out.bam"), optional: true, emit: bams
         path "${sample_id}/${sample_id}.local.Log.final.out", emit: star_log_local
+
+    when:
+        task.ext.when == null || task.ext.when
 
     script:
         """
@@ -83,6 +89,9 @@ process star_end_to_end {
         tuple val(sample_id), path("${sample_id}/${sample_id}.end2end.Aligned.out.bam"), optional: true, emit: bams_end2end
         tuple val(sample_id), path("${sample_id}/${sample_id}.end2end.Aligned.toTranscriptome.out.bam"), optional: true, emit: bams_end2end_transcriptome
         path "${sample_id}/${sample_id}.end2end.Log.final.out", emit: star_log_end_to_end
+
+    when:
+        task.ext.when == null || task.ext.when
 
     script:
         """
