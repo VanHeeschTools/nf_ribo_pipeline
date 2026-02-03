@@ -7,28 +7,24 @@ workflow EXPRESSION {
     harmonised_orf_table // Path, harmonised orf table csv file
     removed_orf_ids      // Path, txt file of filtered out ORF ids
     orfcaller_psites     // Path, merged p0 sites of all used ORFcallers
-    outdir               // Path, output directory
 
     main:
     // Remove filtered out ORF ids from the merged ORFcaller p0 site bed file
     filter_removed_orf_ids(
         removed_orf_ids,
         orfcaller_psites,
-        outdir
     )
     orfcaller_psites_filtered = filter_removed_orf_ids.out.orfcaller_psites_filtered
 
     // Create sample P-site files
     sample_psites(
         for_orfquant_files,
-        outdir
     )
 
     // Create intersect between P-sites and ORF locations
     intersect_psites(
         sample_psites.out.sample_psite_bed,
         orfcaller_psites_filtered,
-        outdir
     )
 
     // Obtain all intersect files before continuing with next step
@@ -38,7 +34,6 @@ workflow EXPRESSION {
     ppm_matrix(
         orfcaller_psites_filtered,
         intersect_paths,
-        outdir
     )
 
     // Define output ppm_matrix
@@ -48,14 +43,12 @@ workflow EXPRESSION {
     expression_table(
         harmonised_orf_table,
         ppm_matrix,
-        outdir
     )
     
     // Create MultiQC plot to show amount of expressed canonical and non-canonical ORFs
     multiqc_expression_plot(
         harmonised_orf_table,
         ppm_matrix,
-        outdir
     )
 
     multiqc_expression_plot_txt = multiqc_expression_plot.out

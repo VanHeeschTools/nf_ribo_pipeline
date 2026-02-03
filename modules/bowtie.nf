@@ -1,13 +1,10 @@
+// Create index for bowtie2 alignment
 process bowtie2_index {
 
-    // Create index for bowtie2 alignment
-
     label "bowtie2"
-    publishDir "${outdir}/bowtie2_index", mode: 'copy'
 
     input:
         path contaminants_fasta // FASTA with unwanted sequences
-        val outdir              // Output directory
 
     output:
         path "bowtie2_index", emit: bowtie2_index_prefix
@@ -35,18 +32,15 @@ process bowtie2 {
     // ribosome-protected fragments for mapping and ORF calling
 
     tag "${sample_id}"
-        label "bowtie2"
-        publishDir "${outdir}/bowtie2", mode: 'copy', pattern: "${sample_id}/${sample_id}_filtered.fastq.gz"
-
+    label "bowtie2"
 
     input:
         val bowtie2_index_prefix      // Bowtie2 reference index
         tuple val(sample_id), path(reads)  // Trimmed reads
-        val outdir                    // Output directory
 
     output:
-        tuple val(sample_id), path(reads), path("${sample_id}/${sample_id}_filtered.fastq.gz"), path("${sample_id}/${sample_id}_contaminants.bam"), emit: bowtie_output_files
-        tuple val(sample_id), path("${sample_id}/${sample_id}_filtered.fastq.gz"), emit: filtered_reads
+        tuple val(sample_id), path(reads), path("${sample_id}_filtered.fastq.gz"), path("${sample_id}_contaminants.bam"), emit: bowtie_output_files
+        tuple val(sample_id), path("${sample_id}_filtered.fastq.gz"), emit: filtered_reads
 
     when:
         task.ext.when == null || task.ext.when
@@ -58,9 +52,9 @@ process bowtie2 {
         --seedlen=25 \
         --threads $task.cpus \
         --time \
-        --un-gz "${sample_id}/${sample_id}_filtered.fastq.gz" \
+        --un-gz "${sample_id}_filtered.fastq.gz" \
         -x ${bowtie2_index_prefix} \
-        -U ${reads} |samtools view -@ $task.cpus -bS - > "${sample_id}/${sample_id}_contaminants.bam"
+        -U ${reads} |samtools view -@ $task.cpus -bS - > "${sample_id}_contaminants.bam"
         """
 }
 
@@ -70,12 +64,10 @@ process contaminants_check {
 
     tag "multi-sample-contaminants"
     label "samtools"
-    publishDir "${outdir}/bowtie2/mqc_files", mode: 'copy'
 
     input:
         tuple val(sample_id), path(reads), path(filtered_reads), val(bam_file)
         val keep_bam
-        val outdir
 
     output:
         path "contaminant_counts_${sample_id}_mqc.txt", emit: contaminant_samples

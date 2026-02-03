@@ -1,5 +1,5 @@
 include { riboseqc; sort_bedgraphs; merge_bedgraphs; convert_to_bigwig; create_riboseqc_report } from '../modules/riboseqc.nf'
-include { riboseqc_tables; riboseqc_plots } from '../modules/qcplots.nf'
+include { riboseqc_tables } from '../modules/qcplots.nf'
 
 workflow RIBOQC {
 
@@ -10,12 +10,10 @@ workflow RIBOQC {
     reference_fasta_fai      // Path, location of reference genome fasta fai file
     orfquant_bams            // List, output from ALIGNMENT subworkflow
     html_template            // Path, location of RiboseQC html report template
-    outdir                   // Path, output directory
 
     main:
     // 01 - Create riboseqc files
     riboseqc(orfquant_bams,
-            outdir,
             orfquant_annotation,
             package_install_loc,
             readlength_choice_method)
@@ -34,22 +32,16 @@ workflow RIBOQC {
     list_of_bedgraphs = merged_bedgraphs.mix(sorted_ch).flatten()
     // Convert bedgraph to bigwig
     convert_to_bigwig(list_of_bedgraphs,
-                    reference_fasta_fai,
-                    outdir)
+                    reference_fasta_fai)
 
     // 03 - Create riboseqc tables for MultiQC
-    riboseqc_tables(riboseqc.out.riboseqc_all.collect(), outdir)
+    riboseqc_tables(riboseqc.out.riboseqc_all.collect())
     riboseqc_inframe_percentages = riboseqc_tables.out.riboseqc_inframe_percentages
     riboseqc_category_counts = riboseqc_tables.out.riboseqc_category_counts
 
-    // 04 - Create periodicity plots
-    //riboseqc_plots(riboseqc.out.riboseqc_all.collect(), outdir)
-
-
     create_riboseqc_report(
         riboseqc.out.riboseqc_all.collect(),
-        html_template,
-        outdir
+        html_template
     )
 
     // Combine into one channel for MultiQC

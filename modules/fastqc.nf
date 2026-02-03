@@ -3,15 +3,13 @@ process fastqc {
 
     tag "${sample_id}"
     label "fastqc"
-    publishDir "${outdir}/fastqc", mode: 'copy'
 
     input:
         tuple val(sample_id), path(reads) // Tuple, meta info plus trimmed FASTQ reads
-        val outdir                        // Path, output directory
 
     output:
-        path "${sample_id}/${sample_id}_filtered_fastqc.html", emit: fastqc_html // Output QC summary 
-        path "${sample_id}/${sample_id}_filtered_fastqc.zip",  emit: fastqc_zip  // QC files
+        path "${sample_id}_filtered_fastqc.html", emit: fastqc_html // Output QC summary 
+        path "${sample_id}_filtered_fastqc.zip",  emit: fastqc_zip  // QC files
 
     when:
         task.ext.when == null || task.ext.when
@@ -27,7 +25,7 @@ process fastqc {
         ${reads} \
         --threads $task.cpus \
         -d "tmp" \
-        --outdir "${sample_id}" 
+        --outdir "." 
 
         # Remove fastqc temp direcory
         rm -r tmp

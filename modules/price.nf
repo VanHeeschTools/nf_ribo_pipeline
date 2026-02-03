@@ -10,8 +10,8 @@ process price_index {
 
     output:
         path "PRICE_index.oml", emit: price_index
-        path "${gtf.baseName}.*"
-        path "${fasta.baseName}.*"
+        //path "${gtf.baseName}.*"
+        //path "${fasta.baseName}.*"
 
     when:
         task.ext.when == null || task.ext.when
@@ -35,7 +35,6 @@ process merge_price_bams{
 
     input:
         path bam_files // File that lists all BAM files
-        val outdir
 
     output:
         path "star_end2end_merged_sorted.bam", emit: merged_end2end_bam
@@ -55,13 +54,11 @@ process merge_price_bams{
 process price {
 
     label "price"
-    publishDir "${outdir}/price", mode: 'copy'
 
     input:
         path merged_bam   // Merged BAM file
         path price_index  // Index for PRICE
         val gedi_exec_loc // Location of gedi installation, until containerisation works
-        val outdir        // Output directory
 
     output:
         path "PRICE.orfs.cit.bed", emit: price_orfs
@@ -85,11 +82,9 @@ process price {
 // Convert PRICE output bed file to a semi gtf format only keeping the CDS rows
 process price_to_gtf{
     label "Ribo_Seq_R_scripts"
-    publishDir "${outdir}/price", mode: 'copy'
 
     input:
         val price_bed_file
-        val outdir
 
     output:
         path "PRICE.gtf", emit: price_gtf

@@ -6,7 +6,6 @@ process trimgalore{
 
     input:
         tuple val(meta),val(reads)    // Tuple, val: meta data and path: input FASTQ reads
-        val outdir                    // Path, output directory
 
     output:
         tuple val(meta.sample_id), path("${meta.sample_id}/${meta.sample_id}_trimmed.fq.gz"), emit: reads

@@ -3,11 +3,9 @@ process sample_psites {
 
     tag "${sample_id}"
     label "Ribo_Seq_R_scripts"
-    publishDir "${outdir}/bedfiles", mode: 'copy'
 
     input:
       tuple val(sample_id), path(riboseqc_results)
-      val outdir
 
     output:
       tuple val("${sample_id}"), path("${sample_id}_psites.sorted.bed"), emit: sample_psite_bed
@@ -26,14 +24,12 @@ process sample_psites {
 process reference_psites {
 
     label "Ribo_Seq_R_scripts"
-    publishDir "${outdir}/annotation", mode: 'copy'
 
     input:
       path orfcaller_gtf
       val type
       path reference_protein_fa
       path package_install_loc
-      val outdir
 
     output:
       path "${orfcaller_gtf.baseName}_p0_reference_sorted.bed", emit: reference_psite_bed
@@ -54,14 +50,12 @@ process reference_psites {
 process orfcaller_psites {
 
     label "Ribo_Seq_R_scripts"
-    publishDir "${outdir}/annotation", mode: 'copy'
 
     input:
       path orfcaller_gtf 
       val type
       path reference_protein_fa
       path package_install_loc
-      val outdir
 
     output:
       tuple path(orfcaller_gtf), path("${orfcaller_gtf.baseName}_p0_orf_sorted.bed"), emit: orfcaller_psite_bed
@@ -83,11 +77,9 @@ process orfcaller_psites {
 process merge_orfcaller_psites {
 
     label "merge_psites"
-    publishDir "${outdir}/annotation", mode: 'copy'
 
     input:
       path orfcaller_psites
-      val outdir
 
     output:
       path "combined_psites_unfiltered.bed", emit: combined_psites
@@ -104,12 +96,10 @@ process merge_orfcaller_psites {
 process orf_ref_p0_intersect {
 
     label "intersect_psites"
-    publishDir "${outdir}/annotation", mode: 'copy'
 
     input:
       tuple path(orfcaller_gtf), path(orf_psite_bed)
       path ref_psite_bed
-      val outdir
 
     output:
       tuple path(orfcaller_gtf), path("${orfcaller_gtf.baseName}_ref_intersect.bed"), emit: orf_ref_intersect

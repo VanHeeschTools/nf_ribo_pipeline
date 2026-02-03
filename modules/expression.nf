@@ -2,12 +2,10 @@
 process filter_removed_orf_ids{
 
     label "filter_removed_orf_ids"
-    publishDir "${outdir}/annotation", mode: 'copy'
 
     input:
         path removed_orf_ids
         path orfcaller_psites
-        val outdir
 
     output:
         path "combined_psites_filtered.bed", emit: orfcaller_psites_filtered
@@ -26,12 +24,10 @@ process intersect_psites {
 
     tag "${sample_id}"
     label "intersect_psites"
-    publishDir "${outdir}/bedfiles", mode: 'copy'
 
     input:
         tuple val(sample_id), path(sample_psite_bed)
         path ref_psite_bed
-        val outdir
 
     output:
         path "${sample_id}_intersect.bed", emit: sample_intersect
@@ -57,12 +53,10 @@ process intersect_psites {
 process ppm_matrix {
 
     label "Ribo_Seq_R_scripts"
-    publishDir "${outdir}/orf_expression", mode: 'copy'
 
     input:
         path ref_psite_bed
         path sample_intersect_bed
-        val outdir
 
     output:
         path "orf_table_psites_permillion.csv", emit: ppm_matrix
@@ -83,12 +77,10 @@ process ppm_matrix {
 process expression_table{
 
     label "Ribo_Seq_R_scripts"
-    publishDir "${outdir}/final_orf_table", mode: 'copy'
 
     input:
         val harmonised_orf_table
         val ppm_matrix
-        val outdir
 
     output:
         path("final_orf_table.csv"), emit: final_orf_table
@@ -137,7 +129,6 @@ process multiqc_expression_plot{
     input:
         path harmonised_orf_table
         path ppm_matrix
-        val outdir
 
     output:
         path "canonical_orf_counts_mqc.txt", emit: canonical_orf_counts

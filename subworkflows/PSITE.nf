@@ -8,7 +8,6 @@ workflow PSITE {
     reference_gtf        // Path, input reference gtf
     reference_protein_fa // Path, input reference protein fasta
     package_install_loc  // Path, location where BSgenome package is installed
-    outdir               // Path, output directory
 
     main:
     // Create reference in-frame bed file for the ORF caller
@@ -17,13 +16,11 @@ workflow PSITE {
         "ORF_id",
         reference_protein_fa,
         package_install_loc,
-        outdir
     )
 
     // Merge the bed files of all ORFcallers
     merge_orfcaller_psites(
         orfcaller_psites.out.orf_psite_bed.collect(),
-        outdir
     )
 
     // Create reference in-frame bed file for the reference gtf
@@ -32,14 +29,12 @@ workflow PSITE {
         "transcript_id",
         reference_protein_fa,
         package_install_loc,
-        outdir
     )
 
     // Obtain intersect of ORF p sites and reference p sites
     orf_ref_p0_intersect(
         orfcaller_psites.out.orfcaller_psite_bed,
         reference_psites.out.reference_psite_bed,
-        outdir
     )
 
     // Define PSITE subworkflow output

@@ -2,12 +2,10 @@
 process star_index {
 
     label "alignment"
-    publishDir "${outdir}/star_index/", mode: 'copy'
 
     input: 
         val genome // Reference genome fasta file
         val gtf    // Transcriptome GTF file
-        val outdir // Output directory
 
     output:
         path "star_index", emit: star_index_path
@@ -36,7 +34,6 @@ process star_local{
 
     input: 
         tuple val(sample_id), path(reads)   // Trimmed RPF reads
-        val outdir                          // Output directory
         val gtf                             // Transcriptome GTF file
         val star_index_path                 // STAR index
 
@@ -76,12 +73,9 @@ process star_end_to_end {
 
     tag "${sample_id}"
     label "alignment"
-    publishDir "${outdir}/star/", mode: 'copy' , pattern: "${sample_id}/${sample_id}.end2end.Aligned.toTranscriptome.out.bam"
-
 
     input: 
         tuple val(sample_id), path(reads) // Trimmed RPF reads
-        val outdir                        // Output directory
         val gtf                           // Transcriptome GTF file
         val star_index_path               // STAR index
 

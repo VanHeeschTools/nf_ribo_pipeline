@@ -3,11 +3,9 @@ process riboseqc {
 
     tag "${sample_id}"
     label "Ribo_Seq_R_scripts"
-    publishDir "${outdir}/riboseqc", mode: 'copy'
 
     input:
         tuple val(sample_id), path(bam)
-        val outdir
         val orfquant_annotation
         val package_install_loc
         val readlength_choice_method
@@ -91,16 +89,10 @@ process merge_bedgraphs{
 
 // Convert the bedgraph files to bigwig files
 process convert_to_bigwig{
-    // Publish to correct group ouput dir
-    publishDir "${outdir}/igv_files/psite_tracks/minus", mode: 'copy', pattern: "*P_sites_minus*.bw"
-    publishDir "${outdir}/igv_files/psite_tracks/plus", mode: 'copy', pattern: "*P_sites_plus*.bw"
-    publishDir "${outdir}/igv_files/psite_tracks/uniq_minus", mode: 'copy', pattern: "*P_sites_uniq_minus*.bw"
-    publishDir "${outdir}/igv_files/psite_tracks/uniq_plus", mode: 'copy', pattern: "*P_sites_uniq_plus*.bw"
 
     input:
         path summed_bedgraph
         val genome_fai
-        val outdir
 
     output:
         path "${summed_bedgraph.simpleName}.bw", emit: bigwig_p_site_tracks
@@ -120,12 +112,10 @@ process convert_to_bigwig{
 process create_riboseqc_report{
 
     label "orfquant"
-    publishDir "${outdir}/riboseqc", mode: 'copy'
 
     input:
         val riboseqc_all
         val html_template
-        val outdir
 
     output:
         path "RiboseQC_report.html", emit: riboseqc_html_report

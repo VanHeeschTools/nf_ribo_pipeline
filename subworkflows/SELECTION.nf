@@ -13,11 +13,10 @@ workflow SELECTION {
     bowtie2_index       // Path, precomputed contaminants index for bowtie2
     contaminants_fasta  // Path, fasta file with rRNA, tRNA, and other contaminants
     keep_bam            // Boolean, keep big SAM file for debugging
-    outdir              // Path, output directory
 
     main:
     // Run Trimgalore
-    trimgalore(reads, outdir)
+    trimgalore(reads)
     trimmed_reads = trimgalore.out.reads
 
     // Files for the MultiQC report
@@ -35,24 +34,23 @@ workflow SELECTION {
     } else {
         log.warn "Some bowtie2 index files are missing. Running bowtie2 indexing."
         // Run bowtie2 - index if none of the index files exist
-        bowtie2_index(contaminants_fasta, outdir)
+        bowtie2_index(contaminants_fasta)
         bowtie2_index_ch = bowtie2_index.out.bowtie2_index_prefix
         log.info "Using created Bowtie2 index: ${bowtie2_index_ch}"
     }
 
     // Run bowtie2 to filter out contaminants
-    bowtie2(bowtie2_index_ch,trimmed_reads, outdir)
+    bowtie2(bowtie2_index_ch,trimmed_reads)
     bowtie2_contaminants = bowtie2.out.bowtie_output_files
     rpf_reads = bowtie2.out.filtered_reads
 
     // Run FASTQC
-    fastqc(rpf_reads, outdir)
+    fastqc(rpf_reads)
     fastqc_zip = fastqc.out.fastqc_zip
 
     // Create QC stats
     contaminants_check(bowtie2_contaminants,
-                    keep_bam,
-                    outdir)
+                    keep_bam)
 
     // Combine all MultiQC files into one channel
     contaminant_samples = contaminants_check.out.contaminant_samples.collect()

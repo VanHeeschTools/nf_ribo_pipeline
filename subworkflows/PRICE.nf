@@ -10,7 +10,6 @@ workflow PRICE {
   fasta             // Path, reference FASTA file
   gtf               // Path, input GTF file
   gedi_exec_loc     // Path, location of local GEDI installation
-  outdir            // Path, output directory
 
   main:
 
@@ -31,20 +30,17 @@ workflow PRICE {
   }
   
   // Merge bam files before running PRICE
-  merge_price_bams(bamlist,
-    outdir)
+  merge_price_bams(bamlist)
 
   // Run PRICE
   price(merge_price_bams.out.merged_end2end_bam,
     price_index_ch,
-    gedi_exec_loc,
-    outdir
+    gedi_exec_loc
   )
   
   // Turn PRICE output into gtf format
   price_to_gtf(
-    price.out.price_orfs,
-    outdir
+    price.out.price_orfs
   )
 
   // Define PRICE subworkflow output

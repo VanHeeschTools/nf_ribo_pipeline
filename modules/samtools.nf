@@ -3,11 +3,9 @@ process samtools {
 
     tag "${sample_id}"
     label "samtools"
-    publishDir "${outdir}/star/", mode: 'copy'
 
     input: 
         tuple val(sample_id), path(bam) // Aligned BAMs
-        val outdir                      // Output directory
 
     output:
         tuple val(sample_id), path("${sample_id}/${sample_id}*.Aligned.sortedByCoord.out.bam"), emit:sorted_bam

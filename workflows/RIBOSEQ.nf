@@ -68,8 +68,7 @@ workflow RIBOSEQ {
                 ch_reads,
                 params.bowtie2_index_path,
                 params.contaminants_fasta,
-                params.keep_bam,
-                params.outdir
+                params.keep_bam
             )
             rpf_reads = SELECTION.out.rpf_reads
             multiqc_files = multiqc_files.mix(SELECTION.out.multiqc_read_samples)
@@ -86,8 +85,7 @@ workflow RIBOSEQ {
                 rpf_reads,
                 params.reference_fasta,
                 params.star_index_path,
-                params.reference_gtf,
-                params.outdir
+                params.reference_gtf
             )
             multiqc_files = multiqc_files.mix(ALIGNMENT.out.star_log_local)
 
@@ -125,8 +123,7 @@ workflow RIBOSEQ {
                 params.readlength_choice_method,
                 params.reference_fasta_fai,
                 orfquant_bams,
-                html_template,
-                params.outdir
+                html_template
             )
             for_orfquant_files = RIBOQC.out.for_orfquant_files
             multiqc_files = multiqc_files.mix(RIBOQC.out.multiqc_riboseq)
@@ -167,8 +164,7 @@ workflow RIBOSEQ {
                 for_orfquant_files,
                 params.orfquant_annotation,
                 params.reference_gtf,
-                params.package_install_loc,
-                params.outdir
+                params.package_install_loc
             )
             orfquant_gtf = ORFQUANT.out.orfquant_orf_gtf
         } else{
@@ -183,8 +179,7 @@ workflow RIBOSEQ {
                 params.price_index_path,
                 params.reference_fasta,
                 params.reference_gtf,
-                params.gedi_exec_loc,
-                params.outdir
+                params.gedi_exec_loc
             )          
             price_gtf = PRICE.out.price_orf_gtf
         } else{
@@ -198,8 +193,7 @@ workflow RIBOSEQ {
                 ribotie_bams,
                 params.reference_fasta,
                 params.reference_gtf,
-                params.ribotie_min_samples,
-                params.outdir
+                params.ribotie_min_samples
             )
             ribotie_gtf = RIBOTIE.out.ribotie_orf_gtf
         } else {
@@ -216,8 +210,7 @@ workflow RIBOSEQ {
                 orfcaller_gtf,
                 params.reference_gtf,
                 params.reference_protein_fa,
-                params.package_install_loc,
-                params.outdir
+                params.package_install_loc
             )
             // Merged ORFcallers p0 psites, expression input
             orfcaller_psites = PSITE.out.orfcaller_psites
@@ -262,8 +255,7 @@ workflow RIBOSEQ {
                 params.reference_gtf,
                 params.package_install_loc,
                 orf_gtf_bed,
-                ref_cds_rds,
-                params.outdir
+                ref_cds_rds
             )
             harmonised_table = ANNOTATION.out.harmonised_orf_table
             removed_orf_ids = ANNOTATION.out.removed_orf_ids
@@ -284,8 +276,7 @@ workflow RIBOSEQ {
                 for_orfquant_files,
                 harmonised_table,
                 removed_orf_ids,
-                orfcaller_psites,
-                params.outdir
+                orfcaller_psites
             )
             multiqc_files = multiqc_files.mix(EXPRESSION.out.multiqc_expression_plot_txt)
         }
@@ -296,8 +287,7 @@ workflow RIBOSEQ {
         multiqc_config = file("${projectDir}/${params.multiqc_config}")
         MULTIQC(
             multiqc_files.collect(),
-            multiqc_config,
-            params.outdir
+            multiqc_config
         )
     }
 }

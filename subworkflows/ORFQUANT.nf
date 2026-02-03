@@ -6,7 +6,6 @@ workflow ORFQUANT {
     orfquant_annotation     // Path, ORFquant Rannot file location
     reference_gtf           // Path, input reference gtf file
     package_install_loc     // Path, location where BSgenome package is installed
-    outdir                  // Path, output directory
 
     main:
     // Collect RiboseQC ouput paths into a single channel
@@ -15,17 +14,13 @@ workflow ORFQUANT {
         .collect()
 
     // Merge RiboseQC output 
-    prepare_orfquant(
-        collected_paths,
-        outdir
-    )
+    prepare_orfquant(collected_paths)
 
     // Run ORFquant using merged RiboseQC output
     orfquant(
         prepare_orfquant.out.psites_merged,
         orfquant_annotation,
-        package_install_loc,
-        outdir
+        package_install_loc
     )
 
     // Corrects the IDs of the ORFquant GTF and adds plus three to the end coordinates of CDS
@@ -33,8 +28,7 @@ workflow ORFQUANT {
         orfquant.out.orfquant_orfs,
         orfquant_annotation,
         reference_gtf,
-        package_install_loc,
-        outdir
+        package_install_loc
     )
 
     // Define ORFquant subworkflow output

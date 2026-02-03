@@ -1,13 +1,11 @@
 // Create RiboTIE template to be used in the next steps
 process create_template {
     label "create_ribotie_template"
-    publishDir "${outdir}/ribotie", mode: 'copy'
 
     input:
         val ribotie_bams // list of tuples of sample id and bam path
         path gtf
         path fasta
-        val outdir
 
     output:
         path "ribotie_template.yml", emit: template
@@ -34,12 +32,10 @@ process create_template {
 // Create h5 database based on genomic features from the gtf 
 process parse_genomic_features {
     label "ribotie"
-    publishDir "${outdir}/ribotie", mode: 'copy'
 
     input:
         path gtf
         path fasta
-        val outdir
 
     output:
         path "genomic_features_db.h5", emit: h5_path
@@ -62,7 +58,6 @@ process parse_genomic_features {
 // Create h5 database for every sample
 process parse_samples {
     label "ribotie"
-    publishDir "${outdir}/ribotie", mode: 'copy'
 
     input:
         path genomic_h5_db
@@ -70,7 +65,6 @@ process parse_samples {
         tuple val(sample_id), path(sample_bam)
         path gtf
         path fasta
-        val outdir
 
     output:
         tuple val(sample_id), path("genomic_features_db_${sample_id}.h5"), emit: h5_path
@@ -94,7 +88,6 @@ process parse_samples {
 // Run RiboTIE for all samples individually
 process ribotie_predict_samples {
     label "ribotie"
-    publishDir "${outdir}/ribotie", mode: 'copy'
 
     input:
         tuple val(sample_id), path(sample_h5)
@@ -102,7 +95,6 @@ process ribotie_predict_samples {
         path ribotie_template
         path gtf
         path fasta
-        val outdir
 
     output:
         path "genomic_features_db_${sample_id}.csv", emit: ribotie_orf_csv
@@ -127,14 +119,12 @@ process ribotie_predict_samples {
 
 // Merge and filter the RiboTIE output files
 process merge_ribotie_output{
-    publishDir "${outdir}/merged_ribotie", mode: 'copy', pattern: "*.csv"
     label "ribotie"
 
     input:
         val ribotie_csv_files
         path genomic_h5_db
         val ribotie_min_samples
-        val outdir
 
     output:
         path "RiboTIE_merged.gtf", emit: ribotie_merged_gtf
@@ -152,13 +142,11 @@ process merge_ribotie_output{
 }
 
 process ribotie_add_stop{
-    publishDir "${outdir}/merged_ribotie", mode: 'copy'
     label "Ribo_Seq_R_scripts"
 
     input:
         path merged_ribotie
         path gtf
-        val outdir
 
     output:
         path "RiboTIE.gtf", emit: ribotie_gtf

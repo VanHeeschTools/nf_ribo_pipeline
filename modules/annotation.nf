@@ -2,14 +2,12 @@
 process get_orf_category{
 
     label "Ribo_Seq_R_scripts"
-        publishDir "${outdir}/annotate_orfs", mode: 'copy'
 
     input:
         tuple path(orfcaller_gtf), path(cds_orf_bed_file)
         path reference_gtf         // Path, input reference gtf file
         path ref_cds_rds           // RDS file altered CDS regions that have a proper start and stop
         path package_install_loc   // Path, BSgenome package install location
-        val outdir                 // Path, output directory
 
     output:
         path "${orfcaller_gtf.baseName}_orfs.csv", emit: basic_orf_table
@@ -33,13 +31,8 @@ process get_orf_category{
 process harmonise_orfs {
 
     label "Ribo_Seq_R_scripts"
-    publishDir "${outdir}/harmonise_orfs", mode: 'copy'
-    publishDir "${outdir}/final_orf_table", mode: 'copy', pattern: 'orf_sequences.fa.gz'
-    publishDir "${outdir}/final_orf_table", mode: 'copy', pattern: 'orf_harmonised.gtf'
-
     input:
         val orfcaller_tables
-        val outdir                                                        
     
     output:
         path "harmonised_orf_table.csv",         emit: harmonised_orf_table

@@ -6,7 +6,6 @@ workflow RIBOTIE {
     fasta               // Path, reference FASTA file
     gtf                 // Path, input GTF file
     ribotie_min_samples // Val, min amount of samples the ORF should be found in 
-    outdir              // Path, output directory
 
     main:
     //Create sample template for use in RiboTIE
@@ -14,7 +13,6 @@ workflow RIBOTIE {
         ribotie_bams.collect(flat: false),
         gtf,
         fasta,
-        outdir
     )
     ribotie_template = create_template.out.template
 
@@ -23,7 +21,6 @@ workflow RIBOTIE {
     parse_genomic_features(
         gtf,
         fasta,
-        outdir
     )
     // Define genomic h5 database
     genomic_h5_db = parse_genomic_features.out.h5_path
@@ -35,7 +32,6 @@ workflow RIBOTIE {
         ribotie_bams,
         gtf,
         fasta,
-        outdir
     )
     // Define sample h5 database
     sample_h5 = parse_samples.out.h5_path
@@ -47,8 +43,8 @@ workflow RIBOTIE {
         ribotie_template,
         gtf,
         fasta,
-        outdir
     )
+
     // Define RiboTIE output
     ribotie_orf_csv = ribotie_predict_samples.out.ribotie_orf_csv
     
@@ -57,7 +53,6 @@ workflow RIBOTIE {
         ribotie_orf_csv.collect(),
         genomic_h5_db,
         ribotie_min_samples,
-        outdir
     )
 
     // Define RIBOTIE subworkflow output 
@@ -67,7 +62,6 @@ workflow RIBOTIE {
     ribotie_add_stop(
         ribotie_gtf_no_stop,
         gtf,
-        outdir
     )
 
     ribotie_orf_gtf = ribotie_add_stop.out.ribotie_gtf

@@ -2,11 +2,9 @@
 process prepare_orfquant {
 
     label "orfquant"
-    publishDir "${outdir}/orfquant", mode: 'copy'
 
     input:
         val collected_paths
-        val outdir
 
     output:
         path "Merged_for_ORFquant", emit: psites_merged
@@ -29,13 +27,11 @@ process prepare_orfquant {
 process orfquant {
 
     label "orfquant"
-    publishDir "${outdir}/orfquant", mode: 'copy'
 
     input:
         val psites_merged
         val rannot
         val package_install_loc
-        val outdir
 
     output:
         path "output_final_ORFquant_results", emit: orfquant_orfs
@@ -56,14 +52,12 @@ process orfquant {
 // Fixes ORFquant GTF which has incorrect names and doesn't include the stop codon in the coords
 process fix_orfquant {
     label "Ribo_Seq_R_scripts"
-    publishDir "${outdir}/orfquant", mode: 'copy'
 
     input:
         path(orfquant_orfs)
         path rannot
         path reference_gtf
         val package_install_loc
-        val outdir
 
     output:
         path "ORFquant.gtf", emit: orfquant_gtf
