@@ -81,7 +81,7 @@ process parse_samples {
         --parallel \
         --no_backup \
         --num_workers $task.cpus \
-        --accelerator cpu
+        --accelerator cpu \
         """
 }
 
@@ -118,7 +118,7 @@ process ribotie_predict_samples {
 }
 
 // Merge and filter the RiboTIE output files
-process merge_ribotie_output{
+process merge_ribotie_output {
     label "ribotie"
 
     input:
@@ -141,7 +141,7 @@ process merge_ribotie_output{
         """
 }
 
-process ribotie_add_stop{
+process ribotie_add_stop {
     label "Ribo_Seq_R_scripts"
 
     input:

@@ -35,7 +35,7 @@ knitr::knit_meta(class = NULL, clean = TRUE)
 
 suppressWarnings(
     render(
-        paste(rmd_path,"riboseqc_template.Rmd", sep="/"),
+        rmd_path,
         params = list(
             input_files = input_files,
             input_sample_names = input_sample_names,

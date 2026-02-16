@@ -188,7 +188,7 @@ custom_data:
     id: 'inframe_reads_all'
     file_format: txt
     section_name: 'RiboseQC in-frame reads percentages'
-    description: 'RiboseQC in-frame percentages for read lengths 28-31'
+    description: 'RiboseQC in-frame percentages for read lengths 28-31. If a cell shows NA it either means there are no reads with that readlength found or that readlength was filtered out by RiboseQC.'
     plot_type: 'table'
     categories:
     pconfig:

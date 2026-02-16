@@ -43,7 +43,6 @@ process reference_psites {
       create_p0_bed.R ${orfcaller_gtf} ${type} ${reference_protein_fa} ${package_install_loc}
       sort -T \$PWD -k1,1 -k2,2n "${orfcaller_gtf.baseName}_p0.bed" > "${orfcaller_gtf.baseName}_p0_reference_sorted.bed"
       """
-
 }
 
 // Create reference in-frame P-sites file from GTF
@@ -70,7 +69,6 @@ process orfcaller_psites {
       create_p0_bed.R ${orfcaller_gtf} ${type} ${reference_protein_fa} ${package_install_loc}
       sort -T \$PWD -k1,1 -k2,2n "${orfcaller_gtf.baseName}_p0.bed" > "${orfcaller_gtf.baseName}_p0_orf_sorted.bed"
       """
-
 }
 
 // Combine the p_site bed files from all ORFcallers
@@ -93,6 +91,7 @@ process merge_orfcaller_psites {
       """
 }
 
+// Obtain overlap of in-frame ORFs and reference P-sites
 process orf_ref_p0_intersect {
 
     label "intersect_psites"

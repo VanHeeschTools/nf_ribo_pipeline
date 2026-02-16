@@ -19,7 +19,7 @@ Main steps:
 */
 
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
-include { validateGTF; validate_bowtie2_index; validate_star_index; validate_price_index; copy_samplesheet; collect_output_previous_run } from '../modules/helperFunctions.nf'
+include { validateGTF; checkInputFiles; validate_bowtie2_index; validate_star_index; validate_price_index; copy_samplesheet; collect_output_previous_run } from '../modules/helperFunctions.nf'
 include { SELECTION   } from '../subworkflows/SELECTION.nf'
 include { ALIGNMENT   } from '../subworkflows/ALIGNMENT.nf'
 include { RIBOQC      } from '../subworkflows/RIBOQC.nf'
@@ -35,6 +35,8 @@ workflow RIBOSEQ {
 
     // Validate input parameters
     validateParameters()
+    // Check if input files exist
+    //checkInputFiles()
 
     // Print summary of supplied parameters
     log.info paramsSummaryLog(workflow)

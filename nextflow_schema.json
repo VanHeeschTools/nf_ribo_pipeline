@@ -86,10 +86,24 @@
                     "type": "string",
                     "description": "Path to container location"
                 },
+                "html_template:": {
+                    "type": "string",
+                    "description": "Path to RiboseQC tempate for RiboseQC reports",
+                    "default": "assets/riboseqc_template.Rmd"
+                },
                 "multiqc_config": {
                     "type": "string",
                     "description": "Path to multiqc yaml config file for custom plots",
                     "default": "assets/multiqc.yaml"
+                },        
+                "pandoc_dir": {
+                    "type": "string",
+                    "description": "Location of pandoc_dir",
+                    "default": "/usr/src/pandoc/bin"
+                },        
+                "gedi_exec_loc": {
+                    "type": "string",
+                    "description": "Path to gedi software for PRICE"
                 },
                 "resource_folder": {
                     "type": "string",
@@ -103,7 +117,15 @@
                 "reference_protein_fa",
                 "reference_twobit",
                 "package_install_loc",
-                "orfquant_annotation"
+                "orfquant_annotation",
+                "contaminants_fasta",
+                "container_folder",
+                "html_template",
+                "multiqc_config",
+                "pandoc_dir",
+                "gedi_exec_loc",
+                "orfquant_annotation",
+                "resource_folder"
             ]
         },
         "modules": {
@@ -112,16 +134,66 @@
             "description": "Toggles for the different pipeline modules",
             "default": "",
             "properties": {
-                "run_orf_prediction": {
+                "run_selection": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Toggle for ORF prediction modules"
+                    "description": "Toggle for input filtering and selection modules"
+                },
+                "run_alignment": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Toggle for STAR alignment modules"
+                },
+                "run_riboseqc": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Toggle for RiboseQC modules"
+                },
+                "run_orfquant": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Toggle for ORFquant ORF prediction modules"
+                },
+                "run_price": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Toggle for PRICE ORF prediction modules"
                 },
                 "run_ribotie": {
                     "type": "boolean",
                     "default": true,
                     "description": "Toggle for RiboTIE module"
-                }
+                },                
+                "run_psite": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Toggle for Psite modules"
+                },
+                "run_annotation": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Toggle for ORF annotation modules"
+                },
+                "run_expression": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Toggle for ORF expression modules"
+                },
+                "run_multiqc": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Toggle for MultiQC module"
+                },                                                                                                                                 
+                "run_qc": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Toggle for QC modules"
+                },   
+                "run_orf_prediction": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Toggle for ORF prediction modules"
+                }                                           
             }
         },
         "extended_pipeline_options": {
