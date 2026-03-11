@@ -1,7 +1,6 @@
 // Remove filtred out orf_ids from the orfcaller psites bed file
 process filter_removed_orf_ids{
-
-    label "filter_removed_orf_ids"
+    label "Ribo_Seq_tools"
 
     input:
         path removed_orf_ids
@@ -23,7 +22,7 @@ process filter_removed_orf_ids{
 process intersect_psites {
 
     tag "${sample_id}"
-    label "intersect_psites"
+    label "Ribo_Seq_tools"
 
     input:
         tuple val(sample_id), path(sample_psite_bed)
@@ -52,7 +51,7 @@ process intersect_psites {
 // each sample included in the cohort
 process ppm_matrix {
 
-    label "Ribo_Seq_R_scripts"
+    label "Ribo_Seq_R"
 
     input:
         path ref_psite_bed
@@ -76,7 +75,7 @@ process ppm_matrix {
 // Add the expression information to the harmonised orf table
 process expression_table{
 
-    label "Ribo_Seq_R_scripts"
+    label "Ribo_Seq_R"
 
     input:
         val harmonised_orf_table
@@ -124,7 +123,7 @@ process expression_table{
 // Create plot of translated Canonical and Non-canonical ORFs for MultiQC
 process multiqc_expression_plot{
 
-    label "Ribo_Seq_R_scripts"
+    label "Ribo_Seq_R"
 
     input:
         path harmonised_orf_table

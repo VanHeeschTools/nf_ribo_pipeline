@@ -1,7 +1,7 @@
 // Create RiboseQC statistics tables for MultiQC
 process riboseqc_tables {
 
-    label "Ribo_Seq_R_scripts"
+    label "Ribo_Seq_R"
 
     input:
         val riboseqc_all

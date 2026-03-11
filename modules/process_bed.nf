@@ -2,7 +2,7 @@
 process sample_psites {
 
     tag "${sample_id}"
-    label "Ribo_Seq_R_scripts"
+    label "Ribo_Seq_R"
 
     input:
       tuple val(sample_id), path(riboseqc_results)
@@ -23,7 +23,7 @@ process sample_psites {
 // Create reference in-frame P-sites file from GTF
 process reference_psites {
 
-    label "Ribo_Seq_R_scripts"
+    label "Ribo_Seq_R"
 
     input:
       path orfcaller_gtf
@@ -48,7 +48,7 @@ process reference_psites {
 // Create reference in-frame P-sites file from GTF
 process orfcaller_psites {
 
-    label "Ribo_Seq_R_scripts"
+    label "Ribo_Seq_R"
 
     input:
       path orfcaller_gtf 
@@ -74,7 +74,7 @@ process orfcaller_psites {
 // Combine the p_site bed files from all ORFcallers
 process merge_orfcaller_psites {
 
-    label "merge_psites"
+    label "Ribo_Seq_tools"
 
     input:
       path orfcaller_psites
@@ -94,7 +94,7 @@ process merge_orfcaller_psites {
 // Obtain overlap of in-frame ORFs and reference P-sites
 process orf_ref_p0_intersect {
 
-    label "intersect_psites"
+    label "Ribo_Seq_tools"
 
     input:
       tuple path(orfcaller_gtf), path(orf_psite_bed)

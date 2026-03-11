@@ -2,7 +2,7 @@
 process samtools {
 
     tag "${sample_id}"
-    label "samtools"
+    label "Ribo_Seq_tools"
 
     input: 
         tuple val(sample_id), path(bam) // Aligned BAMs

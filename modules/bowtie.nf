@@ -1,7 +1,7 @@
 // Create index for bowtie2 alignment
 process bowtie2_index {
 
-    label "bowtie2"
+    label "Ribo_Seq_tools"
 
     input:
         path contaminants_fasta // FASTA with unwanted sequences
@@ -32,7 +32,7 @@ process bowtie2 {
     // ribosome-protected fragments for mapping and ORF calling
 
     tag "${sample_id}"
-    label "bowtie2"
+    label "Ribo_Seq_tools"
 
     input:
         val bowtie2_index_prefix      // Bowtie2 reference index
@@ -63,7 +63,7 @@ process bowtie2 {
 process contaminants_check {
 
     tag "multi-sample-contaminants"
-    label "samtools"
+    label "Ribo_Seq_tools"
 
     input:
         tuple val(sample_id), path(reads), path(filtered_reads), val(bam_file)

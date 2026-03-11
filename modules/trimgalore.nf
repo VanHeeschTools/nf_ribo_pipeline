@@ -2,7 +2,7 @@
 process trimgalore{
 
     tag "${meta.sample_id}"
-    label "read_trimming"
+    label "Ribo_Seq_tools"
 
     input:
         tuple val(meta),val(reads)    // Tuple, val: meta data and path: input FASTQ reads

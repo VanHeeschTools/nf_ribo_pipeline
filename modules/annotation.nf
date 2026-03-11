@@ -1,10 +1,10 @@
 // Annotate ORFcaller output
 process get_orf_category{
 
-    label "Ribo_Seq_R_scripts"
+    label "Ribo_Seq_R"
 
     input:
-        tuple path(orfcaller_gtf), path(cds_orf_bed_file)
+        path orfcaller_gtf
         path reference_gtf         // Path, input reference gtf file
         path ref_cds_rds           // RDS file altered CDS regions that have a proper start and stop
         path package_install_loc   // Path, BSgenome package install location
@@ -20,7 +20,6 @@ process get_orf_category{
         get_orf_categories.R \
         "${reference_gtf}" \
         "${orfcaller_gtf}" \
-        "${cds_orf_bed_file}" \
         "${ref_cds_rds}" \
         "${package_install_loc}" \
         "${orfcaller_gtf.baseName}" # ORFcaller name
@@ -30,7 +29,7 @@ process get_orf_category{
 // Combine annotate_orfs results into a single coord sorted csv file
 process harmonise_orfs {
 
-    label "Ribo_Seq_R_scripts"
+    label "Ribo_Seq_R"
     input:
         val orfcaller_tables
     

@@ -1,6 +1,6 @@
 // Create MultiQC output report, including custom sections
 process MULTIQC {
-    label "multiqc"
+    label "Ribo_Seq_tools"
 
     input:
         path multiqc_files, stageAs: "?/*" // List, channel with paths to all files that should be in the report

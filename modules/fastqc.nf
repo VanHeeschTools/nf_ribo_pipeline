@@ -2,7 +2,7 @@
 process fastqc {
 
     tag "${sample_id}"
-    label "fastqc"
+    label "Ribo_Seq_tools"
 
     input:
         tuple val(sample_id), path(reads) // Tuple, meta info plus trimmed FASTQ reads

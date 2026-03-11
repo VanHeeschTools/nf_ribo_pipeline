@@ -2,7 +2,7 @@
 process riboseqc {
 
     tag "${sample_id}"
-    label "Ribo_Seq_R_scripts"
+    label "Ribo_Seq_R"
 
     input:
         tuple val(sample_id), path(bam)
@@ -35,6 +35,7 @@ process riboseqc {
 
 // Sort RiboseQC output bedgraphs
 process sort_bedgraphs{
+    label "Ribo_Seq_tools"
 
     input:
         path bedgraph_file
@@ -51,7 +52,7 @@ process sort_bedgraphs{
 // Merge sorted bedgraphs into the correct groups
 process merge_bedgraphs{
 
-    label "intersect_psites"
+    label "Ribo_Seq_tools"
 
     input:
         path bedgraphs
@@ -90,6 +91,8 @@ process merge_bedgraphs{
 // Convert the bedgraph files to bigwig files
 process convert_to_bigwig{
 
+    label "Ribo_Seq_tools"
+
     input:
         path summed_bedgraph
         val genome_fai
@@ -111,7 +114,7 @@ process convert_to_bigwig{
 // Create RiboseQC html report
 process create_riboseqc_report{
 
-    label "orfquant"
+    label "Ribo_Seq_R"
 
     input:
         val riboseqc_all

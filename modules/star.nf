@@ -1,7 +1,7 @@
 // Create index for STAR if a valid path is not given in parm file
 process star_index {
 
-    label "alignment"
+    label "Ribo_Seq_tools"
 
     input: 
         val genome // Reference genome fasta file
@@ -30,6 +30,7 @@ process star_index {
 process star_local{
 
     tag "${sample_id}"
+    label "Ribo_Seq_tools"
     label "alignment"
 
     input: 
@@ -72,6 +73,7 @@ process star_local{
 process star_end_to_end {
 
     tag "${sample_id}"
+    label "Ribo_Seq_tools"
     label "alignment"
 
     input: 

@@ -124,7 +124,6 @@ def validate_price_index(String price_index_path){
     return file("${price_index_path}/PRICE_index.oml").exists()
 }
 
-// Check the first 10k rows of the input gtf for the correct attributes and exon order
 def validateGTF(String gtfPath) {
     def requiredAttrs = [
         gene      : ["gene_id", "gene_biotype", "gene_name"],
@@ -138,19 +137,19 @@ def validateGTF(String gtfPath) {
 
     println "Validating input GTF: ${gtfPath}"
 
-    // Parse gtf and obtain attributes
+    // Parse GTF
     new File(gtfPath).eachLine { line ->
         if (line.startsWith("#") || !line.trim()) return
 
         def fields = line.split("\t")
         if (fields.size() < 9) return
 
-        def type   = fields[2]
-        def start  = fields[3].toInteger()
-        def strand = fields[6]
-        def attrText = fields[8]
+        def type      = fields[2]
+        def start     = fields[3].toInteger()
+        def strand    = fields[6]
+        def attrText  = fields[8]
 
-        // Parse attributes into map
+        // Parse attributes
         def attrs = [:]
         attrText.split(";").each { part ->
             part = part.trim()
@@ -163,7 +162,7 @@ def validateGTF(String gtfPath) {
             }
         }
 
-        // Check if required attributes are present
+        // Check required attributes
         if (requiredAttrs.containsKey(type)) {
             def missing = requiredAttrs[type].findAll { !attrs.containsKey(it) || !attrs[it] }
             if (missing) {
@@ -176,12 +175,16 @@ def validateGTF(String gtfPath) {
             def tid = attrs.transcript_id
             seenTranscripts << tid
             if (seenTranscripts.size() <= 10_000) {
-                exonByTranscript[tid] << [start: start, strand: strand]
+                exonByTranscript[tid] << [
+                    start      : start,
+                    strand     : strand,
+                    exon_number: attrs.exon_number?.toInteger()
+                ]
             }
         }
     }
 
-    // Throw error if attributes are missing
+    // Attribute check
     if (missingAttrs) {
         println "Attribute check failed:"
         missingAttrs.take(10).each { println "- $it" }
@@ -192,22 +195,48 @@ def validateGTF(String gtfPath) {
         println "All required attributes are present."
     }
 
-    // Check if exons are sorted correctly
+    // Exon order validation for first 10k transcripts
     exonByTranscript.each { tid, exons ->
-        def strand = exons[0].strand
-        def starts = exons*.start
-
-        // Check that the starts follow correct strand-specific order
-        def isOrdered = (strand == "+") ? 
-            starts.inject([true, starts[0]]) { acc, val -> [acc[0] && val >= acc[1], val] }[0] :
-            starts.inject([true, starts[0]]) { acc, val -> [acc[0] && val <= acc[1], val] }[0]
-        // Throw error if not sorted correctly
-        if (!isOrdered) {
-            println "Exons not sorted correctly for transcript ${tid} on strand '${strand}'"
-            println "Start positions: ${starts}"
+        if (exons.any { it.exon_number == null }) {
+            println "Warning: Missing exon_number for transcript ${tid}."
             System.exit(1)
         }
+
+        def strand = exons[0].strand
+        // Sort exons by exon_number
+        def exonsByNumber = exons.sort { it.exon_number }
+        def exonNumbers   = exonsByNumber*.exon_number
+        def starts        = exonsByNumber*.start
+
+        if (strand == "+") {
+            // Positive strand: exon_number and starts must increase
+            if (starts != starts.sort()) {
+                println "Exon starts not increasing for transcript ${tid} on '+' strand"
+                println "Start positions: ${starts}"
+                System.exit(1)
+            }
+        } else { // Negative strand
+            boolean increasing = exonNumbers == exonNumbers.sort()
+            boolean decreasing = exonNumbers == exonNumbers.sort().reverse()
+
+            if (!(increasing || decreasing)) {
+                println "Exon numbers not either all increasing or all decreasing for transcript ${tid} on '-' strand"
+                println "Exon numbers: ${exonNumbers}"
+                System.exit(1)
+            }
+
+            if (increasing && starts != starts.sort { -it }) {
+                println "Exon starts not reverse-ordered for transcript ${tid} on '-' strand with increasing exon_number"
+                println "Start positions: ${starts}"
+                System.exit(1)
+            } else if (decreasing && starts != starts.sort()) {
+                println "Exon starts not forward-ordered for transcript ${tid} on '-' strand with decreasing exon_number"
+                println "Start positions: ${starts}"
+                System.exit(1)
+            }
+        }
     }
+
     println "Exons ordered correctly in first 10,000 transcripts."
     println "GTF validation passed for ${exonByTranscript.size()} transcripts."
 }

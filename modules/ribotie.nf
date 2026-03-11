@@ -1,6 +1,6 @@
 // Create RiboTIE template to be used in the next steps
 process create_template {
-    label "create_ribotie_template"
+    label "Ribo_Seq_tools"
 
     input:
         val ribotie_bams // list of tuples of sample id and bam path
@@ -31,7 +31,7 @@ process create_template {
 
 // Create h5 database based on genomic features from the gtf 
 process parse_genomic_features {
-    label "ribotie"
+    label "Ribo_Seq_RiboTIE"
 
     input:
         path gtf
@@ -57,7 +57,7 @@ process parse_genomic_features {
 
 // Create h5 database for every sample
 process parse_samples {
-    label "ribotie"
+    label "Ribo_Seq_RiboTIE"
 
     input:
         path genomic_h5_db
@@ -87,7 +87,7 @@ process parse_samples {
 
 // Run RiboTIE for all samples individually
 process ribotie_predict_samples {
-    label "ribotie"
+    label "Ribo_Seq_RiboTIE"
 
     input:
         tuple val(sample_id), path(sample_h5)
@@ -119,7 +119,7 @@ process ribotie_predict_samples {
 
 // Merge and filter the RiboTIE output files
 process merge_ribotie_output {
-    label "ribotie"
+    label "Ribo_Seq_RiboTIE"
 
     input:
         val ribotie_csv_files
@@ -142,7 +142,7 @@ process merge_ribotie_output {
 }
 
 process ribotie_add_stop {
-    label "Ribo_Seq_R_scripts"
+    label "Ribo_Seq_R"
 
     input:
         path merged_ribotie

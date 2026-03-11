@@ -1,24 +1,21 @@
 // Create PRICE index file
 process price_index {
 
-    label "price"
+    label "Ribo_Seq_tools"
 
     input:
         path fasta        // Genome fasta used for alingment
         path gtf          // Transcriptome GTF used for alignment
-        val gedi_exec_loc // Location of gedi installation, until containerisation works
 
     output:
         path "PRICE_index.oml", emit: price_index
-        //path "${gtf.baseName}.*"
-        //path "${fasta.baseName}.*"
 
     when:
         task.ext.when == null || task.ext.when
 
     script:
         """
-        ${gedi_exec_loc}/gedi -e IndexGenome \
+        gedi -e IndexGenome \
             -s "${fasta}" \
             -a "${gtf}" \
             -f "." \
@@ -31,7 +28,7 @@ process price_index {
 
 // Merge all end2end BAM files into a single BAM to be used by PRICE
 process merge_price_bams{
-    label "samtools"
+    label "Ribo_Seq_tools"
 
     input:
         path bam_files // File that lists all BAM files
@@ -53,12 +50,11 @@ process merge_price_bams{
 // Run PRICE on merged bam
 process price {
 
-    label "price"
+    label "Ribo_Seq_tools"
 
     input:
         path merged_bam   // Merged BAM file
         path price_index  // Index for PRICE
-        val gedi_exec_loc // Location of gedi installation, until containerisation works
 
     output:
         path "PRICE.orfs.cit.bed", emit: price_orfs
@@ -68,12 +64,12 @@ process price {
 
     script:
         """
-        ${gedi_exec_loc}/gedi -e Price \
+        gedi -e Price \
             -reads ${merged_bam} \
             -genomic ${price_index} \
             -prefix "PRICE"
         
-        ${gedi_exec_loc}/gedi Nashorn -e \
+        gedi Nashorn -e \
             'load("'PRICE.orfs.cit'").ei().map(function(o) new BedEntry(o.data.getStartStop(o,true).toMutable().setData(new NameAnnotation(o.data.getGeneId()+"__"+o.data.getTranscript()+"__"+o.data.getType()+"__"+o.data.getOrfid()+"__"+o.data.getStartCodon())))).print()' \
             > "PRICE.orfs.cit.bed"
         """
@@ -81,7 +77,7 @@ process price {
 
 // Convert PRICE output bed file to a semi gtf format only keeping the CDS rows
 process price_to_gtf{
-    label "Ribo_Seq_R_scripts"
+    label "Ribo_Seq_R"
 
     input:
         val price_bed_file

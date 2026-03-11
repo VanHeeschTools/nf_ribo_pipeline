@@ -9,7 +9,6 @@ workflow PRICE {
   price_index       // Path, PRICE index file
   fasta             // Path, reference FASTA file
   gtf               // Path, input GTF file
-  gedi_exec_loc     // Path, location of local GEDI installation
 
   main:
 
@@ -24,8 +23,7 @@ workflow PRICE {
       // Create PRICE annotation
       log.warn "PRICE index file missing. Running PRICE indexing."
       price_index(fasta,
-                  gtf,
-                  gedi_exec_loc)
+                  gtf)
       price_index_ch = price_index.out.price_index
   }
   
@@ -34,8 +32,7 @@ workflow PRICE {
 
   // Run PRICE
   price(merge_price_bams.out.merged_end2end_bam,
-    price_index_ch,
-    gedi_exec_loc
+    price_index_ch
   )
   
   // Turn PRICE output into gtf format

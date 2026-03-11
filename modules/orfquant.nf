@@ -1,7 +1,7 @@
 // Merge RiboseQC output 
 process prepare_orfquant {
 
-    label "orfquant"
+    label "Ribo_Seq_R"
 
     input:
         val collected_paths
@@ -26,7 +26,7 @@ process prepare_orfquant {
 // Run ORFquant on merged psites level
 process orfquant {
 
-    label "orfquant"
+    label "Ribo_Seq_R"
 
     input:
         val psites_merged
@@ -51,7 +51,7 @@ process orfquant {
 
 // Fixes ORFquant GTF which has incorrect names and doesn't include the stop codon in the coords
 process fix_orfquant {
-    label "Ribo_Seq_R_scripts"
+    label "Ribo_Seq_R"
 
     input:
         path(orfquant_orfs)
