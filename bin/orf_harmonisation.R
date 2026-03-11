@@ -44,6 +44,7 @@ orf_filter <- function(orfs){
   
   filtered_table <- orfs %>%
     # Group on the list of transcripts_ids it has a match with, the protein seq, and the ORF starts and ends
+    # tx_id contains all transcript ids the ORF can map on
     group_by(tx_id, protein_seq, starts, ends) %>%
     mutate(
       caller_count = n_distinct(orfcaller),  # Amount of callers ORF occurs in

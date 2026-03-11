@@ -181,7 +181,6 @@ workflow RIBOSEQ {
                 params.price_index_path,
                 params.reference_fasta,
                 params.reference_gtf,
-                params.gedi_exec_loc
             )          
             price_gtf = PRICE.out.price_orf_gtf
         } else{

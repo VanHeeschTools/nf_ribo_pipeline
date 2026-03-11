@@ -260,7 +260,7 @@ The orf_biotype_single is decided by comparing the orf_biotypes_all to the facto
 |doORF | A downstream overlapping ORF which is not inframe with reference CDS|
 |uORF | An upstream ORF which is not inframe with reference CDS|
 |dORF | A downstream ORF which is not inframe with reference CDS|
-|Processed_transcript_ORF | An ORF found within the exon boundaries of a transcript for which no CDS is found|
+|Processed_transcript_ORF | An ORF found within the exon boundaries of a transcript that has no defined CDS|
 |novel-ORF | An ORF of which the transcript was created by StringTie|
 |undefined | An ORF without transcript assignment|
 
