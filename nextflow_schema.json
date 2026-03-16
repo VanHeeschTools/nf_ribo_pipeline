@@ -101,10 +101,6 @@
                     "description": "Location of pandoc_dir",
                     "default": "/usr/src/pandoc/bin"
                 },        
-                "gedi_exec_loc": {
-                    "type": "string",
-                    "description": "Path to gedi software for PRICE"
-                },
                 "resource_folder": {
                     "type": "string",
                     "description": "path to annotation folder"
@@ -123,7 +119,6 @@
                 "html_template",
                 "multiqc_config",
                 "pandoc_dir",
-                "gedi_exec_loc",
                 "orfquant_annotation",
                 "resource_folder"
             ]
