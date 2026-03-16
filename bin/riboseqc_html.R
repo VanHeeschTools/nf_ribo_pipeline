@@ -11,10 +11,13 @@ args <- commandArgs(trailingOnly = TRUE)
 input_files <- args[-length(args)]
 rmd_path <- args[length(args)]
 
+# Sort input_files numeric aware to always have same order
+input_files <- stringr::str_sort(input_files, numeric = TRUE)
+
 input_sample_names <- gsub("_results_RiboseQC", "", basename(input_files))
 
 # Find Pandoc in container
-rmarkdown::find_pandoc(dir = "/usr/src/pandoc/bin")
+rmarkdown::find_pandoc(dir = "/usr/local/bin/")
 
 # Paths
 workdir = getwd()

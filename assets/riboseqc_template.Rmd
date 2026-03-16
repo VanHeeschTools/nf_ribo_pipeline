@@ -16,14 +16,14 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(RiboseQC) # RiboseQC package (contains report functions)
-library(knitr) # R Markdown to HTML wrapper
-library(DT) # interactive JavaScript-based tables
-library(ggplot2) # plotting
-library(reshape2) # data formatting for ggplot2
-library(gridExtra) # multiple plots per figure
-library(ggpubr)
-library(viridis) # nice coloring scheme
+library(RiboseQC)   # RiboseQC package (contains report functions)
+library(knitr)      # R Markdown to HTML wrapper
+library(DT)         # interactive JavaScript-based tables
+library(ggplot2)    # plotting
+library(reshape2)   # data formatting for ggplot2
+library(gridExtra)  # multiple plots per figure
+library(ggpubr)     
+library(viridis)    # nice coloring scheme
 library(Biostrings) # codon usage
 ```
 
@@ -41,13 +41,12 @@ rdata_list <- generate_rdata_list(input_files)
 
 # Data information
 
-Sample names and data file paths visualized in this report:
+Samples visualized in this report:
 
 ```{r data_info, echo=FALSE, warning=FALSE, message=FALSE, results="asis", fig.width=10, dpi=150}
 cat("\n\n")
 for (i in 1:length(input_files)){
-    cat("**", names(input_files[i]), "**: \n", sep="")
-    cat(input_files[i], "\n\n\n")
+    cat("**", names(input_files[i]), "** \n\n\n\n", sep="")
 }
 cat("\n\n")
 ```
@@ -179,16 +178,28 @@ out <- NULL
 for (i in c(1:length(datasets))) {
   sample <- names(datasets)[[i]]
   
-  knit_expanded <- paste0("\n\n```{r results='asis', echo=FALSE}\n\n
-                            cat(\"#### ", sample," {.tabset} \n \n\")\n\n
-                            ```") 
+  knit_expanded <- paste0(
+"\n\n```{r results='asis', echo=FALSE}
+
+cat(\"#### ", sample," {.tabset} \\n \\n\")
+
+```"
+  )
   out = c(out, knit_expanded)
   
   for (comp in names(datasets[[sample]])){
-    knit_expanded <- paste0("\n\n```{r results='asis', echo=FALSE}\n\n
-                            cat(\"##### ", comp, "\n \n\")\n\n
-                            datatable(datasets[[\"", sample, "\"]][[\"", comp, "\"]], rownames=FALSE, options=list(dom='t')) %>% formatRound(c(3,4,5), 2)\n\n
-                            ```") 
+    knit_expanded <- paste0(
+"\n\n```{r results='asis', echo=FALSE}
+
+cat(\"##### ", comp, "\\n \\n\")
+
+datatable(datasets[[\"", sample, "\"]][[\"", comp, "\"]], 
+          rownames=FALSE, 
+          options=list(dom='t')) %>% 
+  formatRound(c(3,4,5), 2)
+
+```"
+    )
     out = c(out, knit_expanded)
   }
 }
@@ -222,12 +233,19 @@ for (i in 1:length(rdata_list)){
 
 ```{r rl_sel_table, echo=FALSE, warning=FALSE, message=FALSE, include=FALSE}
 out = NULL
-for (i in c(1:length(datasets))) {
+for (i in seq_along(datasets)) {
   sample <- names(datasets)[[i]]
-  knit_expanded <- paste0("\n```{r results='asis', echo=FALSE}\n\n
-                          cat(\"#### ", sample," {.tabset} \n \n\")\n\n
-                          datatable(datasets[[\"", sample, "\"]], rownames=FALSE, options=list(dom='t'))\n\n
-                          ```")
+  
+  knit_expanded <- paste0(
+"\n```{r results='asis', echo=FALSE}
+
+cat(\"#### ", sample," {.tabset} \\n \\n\")
+
+datatable(datasets[[\"", sample, "\"]], rownames=FALSE, options=list(dom='t'))
+
+```"
+  )
+  
   out = c(out, knit_expanded)
 }
 ```
@@ -253,10 +271,11 @@ for (i in c(1:length(rdata_list))){
 ```{r top50_table, echo=FALSE, warning=FALSE, message=FALSE, include=FALSE}
 out = NULL
 for (i in c(1:length(rdata_list))) {
-  knit_expanded <- paste0("\n```{r results='asis', echo=FALSE}\n\n
+  knit_expanded <- paste0(
+"\n```{r results='asis', echo=FALSE}\n\n
                           cat(\"## \", names(rdata_list)[", i,"], \"\n \n\")\n\n
                           datatable(datasets[[", i, "]], rownames=FALSE)\n\n
-                          ```")
+```")
   out = c(out, knit_expanded)
 }
 ```
@@ -283,10 +302,11 @@ for (i in c(1:length(rdata_list))){
 ```{r topgenescds_table, include=FALSE}
 out = NULL
 for (k in c(1:length(rdata_list))) {
-  knit_expanded <- paste0("\n```{r results='asis', echo=FALSE}\n\n
+  knit_expanded <- paste0(
+"\n```{r results='asis', echo=FALSE}\n\n
                           cat(\"### \", names(rdata_list)[",k ,"], \"\n \n\")\n\n
                           datatable(datasets[[", k, "]])\n\n
-                          ```")
+```")
   out = c(out, knit_expanded)
 }
 ```
@@ -309,12 +329,11 @@ for (i in c(1:length(rdata_list))){
 ```{r topgenesall_table, include=FALSE}
 out = NULL
 for (k in c(1:length(rdata_list))) {
-  knit_expanded <- paste0("\n```{r results='asis', echo=FALSE}\n\n
+  knit_expanded <- paste0(
+"\n```{r results='asis', echo=FALSE}\n\n
                           cat(\"### \", names(rdata_list)[",k ,"], \"\n \n\")\n\n
                           datatable(datasets[[", k, "]])\n\n
-                          ```")
+```")
   out = c(out, knit_expanded)
 }
 ```
-
-`r paste(knit(text = out), collapse = '\n')`
