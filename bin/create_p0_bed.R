@@ -39,7 +39,7 @@ load_orfcaller_gtf <- function(gtf_file_path){
         dplyr::filter(type == "CDS") %>%                 # Keep only CDS features
         dplyr::group_by(ORF_id) %>%                      # Group by ORF identifier
         dplyr::summarise(
-        chr   = unique(as.character(seqnames))[1],  # Extract chromosome
+        chr   = unique(as.character(seqnames))[1],       # Extract chromosome
         strand = unique(as.character(strand))[1],        # Extract strand
         starts = paste(sort(start), collapse = ","),     # Combine sorted starts
         ends   = paste(sort(end), collapse = ",")        # Combine sorted ends
@@ -54,7 +54,6 @@ load_orfcaller_gtf <- function(gtf_file_path){
 #'
 #' Expands CDS exon coordinates for each ORF into single-nucleotide positions
 #' and determines the codon frame per nucleotide based on strand orientation.
-#' Only nucleotides in frame 0 (`p0`)  are retained.
 #'
 #' @param gtf A data frame containing predicted ORF CDS
 #' 
@@ -100,8 +99,6 @@ obtain_orfcaller_p0 <- function(gtf){
         pos_2 = pos) %>%
         dplyr::ungroup() %>%
         
-        # Keep only nucleotides in frame 0 (first base of each codon)
-        #dplyr::filter(frame == "p0") %>%
         # Subtract 1 from pos to create proper bed file format
         mutate(pos = pos - 1) %>% 
         

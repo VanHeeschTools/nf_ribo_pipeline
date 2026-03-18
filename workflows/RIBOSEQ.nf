@@ -198,8 +198,8 @@ workflow RIBOSEQ {
             )
             ribotie_gtf = RIBOTIE.out.ribotie_orf_gtf
         } else {
-            ribotie_output_gtf = "${params.outdir}/merged_ribotie/RiboTIE.gtf"
-            ribotie_gtf = collect_output_previous_run(ribotie_output_gtf, "path", true, "RIBOTIE.gtf")
+            ribotie_output_gtf = "${params.outdir}/ribotie/RiboTIE.gtf"
+            ribotie_gtf = collect_output_previous_run(ribotie_output_gtf, "path", true, "RIBOTIE")
         }
 
         // Combine outputs of ORFcallers into one channel including RiboTIE output
@@ -215,38 +215,18 @@ workflow RIBOSEQ {
             )
             // Merged ORFcallers p0 psites, expression input
             orfcaller_psites = PSITE.out.orfcaller_psites
-            // ORFcaller gtf file plus reference p-site overlap bed file, annotation input
-            orf_gtf_bed = PSITE.out.orf_gtf_bed
             // Altered reference cds rds file, annotation input
             ref_cds_rds = PSITE.out.ref_cds_rds
         } else {
             if (params.run_annotation){
-                // Obtain tuple of ORFcaller gtf and ORF - REF psite intersect bed
-                search_orfcaller_gtf = "${params.outdir}/annotation/*.gtf"
-                if( !file(search_orfcaller_gtf).isEmpty() ) {
-                    // Create tuple channel of (gtf, gtf_ref_intersect.bed)
-                    orfcaller_gtf_bed = Channel
-                        .fromPath(search_orfcaller_gtf)
-                        .map { gtf ->
-                            def base = gtf.simpleName.replace('.gtf', '')
-                            def bed  = file("${gtf.parent}/${base}_ref_intersect.bed")
-                            if( !bed.exists() )
-                                throw new IllegalStateException("Missing ORF - Ref intersect BED file for ${gtf}")
-                            tuple(gtf, bed)
-                        }
-                        .collect()
-                } else {
-                    log.info "No ORFcaller GTF files found."
-                    orfcaller_gtf_bed = null
-                }
                 // Search for cds rds file from previous run
                 search_ref_cds_rds = "${params.outdir}/annotation/*correct_cds.rds"
-                ref_cds_rds = collect_output_previous_run(search_ref_cds_rds, "path", true, "PSITE ref cds rds file")
+                ref_cds_rds = collect_output_previous_run(search_ref_cds_rds, "path", true, "PSITE: ref cds rds file")
             }
             // Search for combined ORFcaller psite bed file from previous run
             if (params.run_expression){
                 search_orfcaller_psites = "${params.outdir}/annotation/combined_psites.bed"
-                orf_gtf_bed = collect_output_previous_run(search_orfcaller_psites, "path", true, "PSITE: combined orfcaller psites bed")
+                orfcaller_psites = collect_output_previous_run(search_orfcaller_psites, "path", true, "PSITE: combined orfcaller psites bed")
             }
         }
 
@@ -255,7 +235,7 @@ workflow RIBOSEQ {
             ANNOTATION(
                 params.reference_gtf,
                 params.package_install_loc,
-                orf_gtf_bed,
+                orfcaller_gtf,
                 ref_cds_rds
             )
             harmonised_table = ANNOTATION.out.harmonised_orf_table

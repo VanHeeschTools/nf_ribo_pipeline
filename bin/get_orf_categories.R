@@ -15,10 +15,9 @@ args <- commandArgs(trailingOnly=TRUE)
 
 gtf_file <- args[1]
 orf_file <- args[2]
-cds_orf_bed_file <- args[3]
-cds_id_gene_file <- args[4] 
-bsgenome_path <- args[5]
-orfcaller <- args[6]
+cds_id_gene_file <- args[3] 
+bsgenome_path <- args[4]
+orfcaller <- args[5]
 
 # Create txdb file using reference gtf
 txdb <- txdbmaker::makeTxDbFromGFF(gtf_file)
@@ -80,33 +79,129 @@ extract_transcript_biotypes <- function(gtf_file) {
     return(tx_df)
 }
 
-#' Obtain in-frame ORFs overlapping CDS regions using P0 sites
+
+#' Identify in-frame overlaps between ORFs and CDS exons
 #'
-#' This function reads the P0 BED file between CDS and ORF regions and returns 
-#' the unique pairs of `cds_id` and `orf_id` that have an in-frame overlap.
+#' This function finds overlaps between predicted ORF segments and annotated
+#' CDS exons, calculates reading frame offsets, and returns only the ORF–CDS
+#' pairs that are in-frame.
 #'
-#' @param cds_orf_bed_file Path to the BED file containing CDS–ORF P0 
-#'  intersections.
+#' @param orf_list Data frame with ORF coordinates. 
+#' @param cds_id_gene_file Path to an RDS file containing CDS exons
 #'
-#' @return A dataframe with two columns: cds_id and orf_id, containing the 
-#'  distinct in-frame overlaps.
-obtain_inframe_orfs <- function(cds_orf_bed_file) {
-    # Read BED intersection file and set column names
-    cds_orf_intersect <- data.table::fread(
-        cds_orf_bed_file,
-        col.names = c(
-        "chr", "start", "end", "cds_id", "frame", "strand", "nt_position",
-        "chr_match", "start_match", "end_match", "orf_id", "frame_orf",
-        "strand_orf", "nt_position_orf"
-        )
-    ) %>%
-    # Only keep locations where reference and ORF have a p0 location
-    filter(frame == "p0" & frame_orf == "p0") %>% 
-    # Keep unique CDS ORF p0 pairs (remove duplicates)
-    dplyr::distinct(cds_id, orf_id)
+#' @return Data frame of in-frame overlaps with columns `unique_id_cds` and
+#'   `unique_id_orf`.
+#'
+obtain_inframe_orfs <- function(orf_list, cds_id_gene_file) {
+
+    # Load CDS exon annotation from RDS file
+    cds_list <- readRDS(cds_id_gene_file)
     
-    return(cds_orf_intersect)
+    # Helper function: convert a dataframe with start/end/strand to a GRanges object
+    df_to_granges <- function(df) {
+        gr <- makeGRangesFromDataFrame(
+        df,
+        seqnames.field = "chr",
+        start.field = "start",
+        end.field = "end",
+        strand.field = "strand",
+        keep.extra.columns = TRUE
+        )
+        names(gr) <- df$temp_id  # use unique exon IDs as names
+        gr
+    }
+    
+    # Helper function: calculate exon/segment reading frames
+    compute_frame <- function(df, id_col) {
+        df %>%
+        group_by(.data[[id_col]]) %>%
+        mutate(
+            width = end - start + 1,  # exon/segment length
+            frame_end = width %% 3,   # frame remainder at exon end
+            frame_start = (cumsum(frame_end) - frame_end) %% 3  # frame start for each exon
+        ) %>%
+        ungroup()
+    }
+    
+    # Prepare CDS dataframe: order exons and assign unique exon IDs
+    cds_df <- cds_list %>%
+        arrange(chr, tx_id, if_else(strand == "+", start, -start)) %>%
+        group_by(tx_id) %>%
+        mutate(temp_id = paste0(tx_id, "__", row_number())) %>%
+        ungroup()
+    
+    # Convert CDS dataframe to GRanges
+    cds_grange <- df_to_granges(cds_df)
+    
+    # Prepare ORF dataframe: split comma-separated exon coordinates, ensure numeric,
+    # order segments, and assign unique segment IDs
+    orf_df <- orf_list %>%
+        separate_rows(starts, ends, sep = ",", convert = TRUE) %>%
+        dplyr::rename(start = starts, end = ends) %>%
+        mutate(
+        start = as.numeric(start),
+        end = as.numeric(end)
+        ) %>%
+        arrange(chr, orf_id, if_else(strand == "+", start, -start)) %>%
+        group_by(orf_id) %>%
+        mutate(temp_id = paste0(orf_id, "__", row_number())) %>%
+        ungroup()
+    
+    # Convert ORF dataframe to GRanges
+    orf_grange <- df_to_granges(orf_df)
+    
+    # Find overlapping regions between CDS exons and ORF segments
+    cds_orf_hits <- findOverlaps(cds_grange, orf_grange, ignore.strand = FALSE)
+    cds_match <- cds_grange[queryHits(cds_orf_hits)]
+    orf_match <- orf_grange[subjectHits(cds_orf_hits)]
+    
+    # Compute reading frames for CDS exons and ORF segments
+    cds_exon_frame <- cds_df %>%
+        compute_frame("tx_id") %>%
+        dplyr::select(
+        unique_id_cds = temp_id,
+        frame_start_cds = frame_start,
+        start_cds = start,
+        end_cds = end
+        )
+    
+    orf_exon_frame <- orf_df %>%
+        compute_frame("orf_id") %>%
+        dplyr::select(
+        unique_id_orf = temp_id,
+        frame_start_orf = frame_start,
+        start_orf = start,
+        end_orf = end
+        )
+    
+    # Intersect CDS and ORF segments, compute frame offsets, and filter in-frame overlaps
+    cds_ovl <- pintersect(cds_match, orf_match) %>%
+        data.frame() %>%
+        mutate(
+            unique_id_orf = names(orf_match),
+            unique_id_cds = names(cds_match)
+        ) %>%
+        inner_join(cds_exon_frame, by = "unique_id_cds") %>%
+        inner_join(orf_exon_frame, by = "unique_id_orf") %>%
+        mutate(
+            frame_dif_cds = ifelse(strand == "+", start - start_cds, end_cds - end) %% 3,
+            frame_dif_orf = ifelse(strand == "+", start - start_orf, end_orf - end) %% 3
+        ) %>%
+        mutate(
+            unique_id_orf = stringr::str_remove(unique_id_orf, "__\\d+$"),
+            unique_id_cds = stringr::str_remove(unique_id_cds, "__\\d+$")
+        ) %>%
+        filter((frame_dif_cds + frame_start_cds) %% 3 ==
+                (frame_dif_orf + frame_start_orf) %% 3) %>%
+        group_by(unique_id_orf) %>%
+        filter(sum(width) >= 3) %>%
+        ungroup() %>%
+        distinct(unique_id_orf, unique_id_cds)
+    
+    # Return list of ORF CDS pairs that are in the same frame
+    return(cds_ovl)
 }
+
 
 #' Load ORFcaller gtf file
 #'
@@ -127,7 +222,7 @@ load_orfcaller_gtf <- function(gtf_file, orf_gtf_file, txdb, orfcaller){
         dplyr::filter(type == "CDS") %>%                 # Keep only CDS features
         dplyr::group_by(ORF_id) %>%                      # Group by ORF identifier
         dplyr::summarise(
-        chr   = unique(as.character(seqnames))[1],  # Extract chromosome
+        chr   = unique(as.character(seqnames))[1],       # Extract chromosome
         strand = unique(as.character(strand))[1],        # Extract strand
         starts = paste(sort(start), collapse = ","),     # Combine sorted starts
         ends   = paste(sort(end), collapse = ","),       # Combine sorted ends
@@ -272,7 +367,8 @@ categorize_orf_cds_overlap <- function(cds_orf_intersect,
     # Determine category for all transcripts for which the ORF has exon overlap or p0 CDS overlap
     cds_overlap_orfs <- cds_orf_intersect %>%
         # Align column names for joining
-        dplyr::rename(tx_id = cds_id) %>%
+        dplyr::rename(tx_id = unique_id_cds,
+                    orf_id = unique_id_orf) %>%
         # Join overlap and coordinate summary data
         dplyr::left_join(hits_with_range, by = c("orf_id", "tx_id")) %>%
         dplyr::left_join(cds_id_tx_limits, by = "tx_id") %>%
@@ -360,7 +456,6 @@ classify_orfs <- function(orf_list, hits_with_range, cds_overlap_orfs, cds_overl
             
             # Has both cds_overlap_cat and lncRNA biotype
             has_p0_cds_overlap == "Has_p0_CDS_overlap" & biotype == "lncRNA" ~ "ovCDS_lncRNA-ORF",
-            #TODO: what about out of frame CDS overlap
             
             #Check if novel-ORFs can be intORFs
             biotype == "lncRNA" ~ "lncRNA-ORF",
@@ -529,11 +624,11 @@ generate_orf_sequences <- function(orf_table, genome) {
 # Extract the biotypes of the reference transcripts
 transcript_biotype_ids <- extract_transcript_biotypes(gtf_file)
 
-# Load p0 overlap bed file to determine ORF frame
-cds_orf_intersect <- obtain_inframe_orfs(cds_orf_bed_file)
-
-# Load ORFcaller ORFS
+# Load ORFcaller ORFs
 orf_list <- load_orfcaller_gtf(gtf_file, orf_file, txdb, orfcaller)
+
+# Load p0 overlap bed file to determine ORF frame
+cds_orf_intersect <- obtain_inframe_orfs(orf_list, cds_id_gene_file)
 
 # Obtains overlap of ORF CDS with reference exons
 hits_with_range <- match_orfs_to_transcripts(orf_file, gtf_file, txdb)

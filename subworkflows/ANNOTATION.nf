@@ -4,13 +4,13 @@ workflow ANNOTATION {
     take:
     reference_gtf           // Path, input gtf file
     package_install_loc     // Path, Location where BSgenome R package is installed
-    orf_gtf_bed             // Path, bed-like file of ORF and ref CDS overlap
+    orfcaller_gtf           
     ref_cds_rds             // Path, RDS file of altered reference CDS
 
     main:
     // Load ORFcaller gtf and annotates the ORFs
     get_orf_category(
-        orf_gtf_bed,
+        orfcaller_gtf,
         reference_gtf,
         ref_cds_rds,
         package_install_loc,
@@ -21,7 +21,7 @@ workflow ANNOTATION {
 
     // Combines the ORFcaller annotated csv files into one harmonised ORF table
     harmonise_orfs(
-        annotated_orf_tables,
+        annotated_orf_tables
     )
 
     // Define subworkflow output

@@ -31,19 +31,11 @@ workflow PSITE {
         package_install_loc,
     )
 
-    // Obtain intersect of ORF p sites and reference p sites
-    orf_ref_p0_intersect(
-        orfcaller_psites.out.orfcaller_psite_bed,
-        reference_psites.out.reference_psite_bed,
-    )
-
     // Define PSITE subworkflow output
     orfcaller_psites = merge_orfcaller_psites.out.combined_psites
     ref_cds_rds = reference_psites.out.reference_cds_rds
-    orf_gtf_bed = orf_ref_p0_intersect.out.orf_ref_intersect
 
     emit:
     orfcaller_psites
-    orf_gtf_bed
     ref_cds_rds
 }
