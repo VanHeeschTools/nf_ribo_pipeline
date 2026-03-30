@@ -76,7 +76,7 @@ workflow RIBOSEQ {
             multiqc_files = multiqc_files.mix(SELECTION.out.multiqc_read_samples)
         } else {
             if (params.run_alignment){
-                bowtie_output_files = "${params.outdir}/bowtie2/*/*_filtered.{fastq.gz,fq.gz}"
+                bowtie_output_files = "${params.outdir}/bowtie2/*_filtered.{fastq.gz,fq.gz}"
                 rpf_reads = collect_output_previous_run(bowtie_output_files, "sample_id", false, "Bowtie2")
             }
         }
@@ -94,7 +94,7 @@ workflow RIBOSEQ {
             // Star output channels
             orfquant_bams = ALIGNMENT.out.bam_list
             price_bams = ALIGNMENT.out.bam_list_end2_end.collect()
-            ribotie_bams = ALIGNMENT.out.bam_list_end2end_transcriptome
+            ribotie_bams = ALIGNMENT.out.bam_list_end2end_transcriptome_sorted
         } else {
             if (params.run_riboseqc){
                 // Check if BAM files required for RiboseQC can be found otherwise set to null

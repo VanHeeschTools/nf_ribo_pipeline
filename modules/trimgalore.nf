@@ -18,7 +18,7 @@ process trimgalore{
 
     script:
         """
-        mkdir "${meta.sample_id}"
+        mkdir -p "${meta.sample_id}"
         
         # Run Trimgalore    
         trim_galore \

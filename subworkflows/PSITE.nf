@@ -1,4 +1,4 @@
-include { orfcaller_psites ; reference_psites; sample_psites ; merge_orfcaller_psites; orf_ref_p0_intersect } from "../modules/process_bed.nf"
+include { orfcaller_psites ; reference_psites; sample_psites ; merge_orfcaller_psites; } from "../modules/process_bed.nf"
 
 // Obtain P0 sites of all reference transcripts and all predicted ORFs
 // Required to classify intORFs and to calculate PPM

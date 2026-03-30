@@ -1,6 +1,6 @@
 include { validate_star_index }                       from "../modules/helperFunctions.nf"
 include { star_index ; star_local ; star_end_to_end } from '../modules/star.nf'
-include { samtools ; samtools as samtools_end2end }   from '../modules/samtools.nf'
+include { samtools ; samtools as samtools_end2end; samtools as samtools_transcriptome  }   from '../modules/samtools.nf'
 
 workflow ALIGNMENT {
     take:
@@ -32,7 +32,7 @@ workflow ALIGNMENT {
         star_index_ch,
     )
 
-    // Sort output BAM file 
+    // Sort local BAM file 
     samtools(star_local.out.bams)
     bam_list = samtools.out.sorted_bam
     star_log_local = star_local.out.star_log_local
@@ -46,9 +46,13 @@ workflow ALIGNMENT {
 
     bam_list_end2end_transcriptome = star_end_to_end.out.bams_end2end_transcriptome
 
-    // Sort output BAM file 
+    // Sort end2end BAM file 
     samtools_end2end(star_end_to_end.out.bams_end2end)
     star_log_end_to_end = star_end_to_end.out.star_log_end_to_end
+
+    // Sort end2end transcriptome BAM file 
+    samtools_transcriptome(bam_list_end2end_transcriptome)
+    bam_list_end2end_transcriptome_sorted = samtools_transcriptome.out.sorted_bam
 
     // Obtain all STAR end2end sorted BAM file paths and change path to string
     bam_list_end2_end = samtools_end2end.out.bam_files
@@ -61,5 +65,5 @@ workflow ALIGNMENT {
     star_log_end_to_end            // star output log file for end2end run
     bam_list                       // bam files for ORFquant
     bam_list_end2_end              // bam files for PRICE
-    bam_list_end2end_transcriptome // bam list for RiboTIE
+    bam_list_end2end_transcriptome_sorted // bam list for RiboTIE
 }

@@ -92,23 +92,39 @@ def load_and_concat_csvs(csv_files: List[str]) -> pl.DataFrame:
         "sample_id": pl.Utf8,
     }
 
+    # Override columns that could break inference while reading csv file
+    dtype_overrides = {
+        "seqname": pl.Utf8,
+        "strand": pl.Utf8,
+        "ORF_type": pl.Utf8,
+    }
+
     dfs = []
 
     for path in csv_files:
-        df = pl.read_csv(path, infer_schema_length=1000, null_values=["."])
+        df = pl.read_csv(
+            path,
+            infer_schema_length=1000,
+            null_values=["."],
+            schema_overrides=dtype_overrides,
+        )
 
-        # Add any missing required columns as Null
-        for col, dtype in required_schema.items():
-            if col not in df.columns:
-                df = df.with_columns(pl.lit(None, dtype=dtype).alias(col))
+        # Add missing required columns
+        missing_cols = [
+            pl.lit(None, dtype=dtype).alias(col)
+            for col, dtype in required_schema.items()
+            if col not in df.columns
+        ]
+        if missing_cols:
+            df = df.with_columns(missing_cols)
 
         # Keep only required columns
         df = df.select(list(required_schema.keys()))
 
-        # Force cast to correct dtype (safe=True prevents errors)
+        # Enforce dtype of columns
         df = df.with_columns([
-            pl.col(c).cast(required_schema[c], strict=False)
-            for c in required_schema
+            pl.col(col).cast(dtype, strict=False)
+            for col, dtype in required_schema.items()
         ])
 
         dfs.append(df)

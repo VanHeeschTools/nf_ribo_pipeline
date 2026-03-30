@@ -8,15 +8,25 @@ process samtools {
         tuple val(sample_id), path(bam) // Aligned BAMs
 
     output:
-        tuple val(sample_id), path("${sample_id}/${sample_id}*.Aligned.sortedByCoord.out.bam"), emit:sorted_bam
-        path "${sample_id}/${sample_id}*.Aligned.sortedByCoord.out.bam", emit:bam_files
+        tuple val(sample_id), path("${sample_id}/${sample_id}*.sortedByCoord.out.bam"), emit:sorted_bam
+        path "${sample_id}/${sample_id}*.sortedByCoord.out.bam", emit:bam_files
         path "${sample_id}/${sample_id}*" // Output all files to publishDir
 
     when:
         task.ext.when == null || task.ext.when
 
     script:
-        def new_bam = "${bam.name.replaceFirst('.Aligned.out.bam', '.Aligned.sortedByCoord.out.bam')}"
+        def new_bam = bam.name
+
+        if (bam.name.endsWith(".Aligned.toTranscriptome.out.bam")) {
+            new_bam = bam.name.replaceFirst('.Aligned.toTranscriptome.out.bam', '.Aligned.toTranscriptome.sortedByCoord.out.bam')
+        } else if (bam.name.endsWith(".Aligned.out.bam")) {
+            new_bam = bam.name.replaceFirst('.Aligned.out.bam', '.Aligned.sortedByCoord.out.bam')
+        } else {
+            error "Unexpected BAM filename: ${bam.name}"
+        }
+
+        //def new_bam = "${bam.name.replaceFirst('.Aligned.out.bam', '.Aligned.sortedByCoord.out.bam')}"
         """
         mkdir -p ${sample_id}
         mkdir -p tmp/

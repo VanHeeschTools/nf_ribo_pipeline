@@ -91,31 +91,3 @@ process merge_orfcaller_psites {
       """
 }
 
-// Obtain overlap of in-frame ORFs and reference P-sites
-process orf_ref_p0_intersect {
-
-    label "Ribo_Seq_tools"
-
-    input:
-      tuple path(orfcaller_gtf), path(orf_psite_bed)
-      path ref_psite_bed
-
-    output:
-      tuple path(orfcaller_gtf), path("${orfcaller_gtf.baseName}_ref_intersect.bed"), emit: orf_ref_intersect
-
-    when:
-        task.ext.when == null || task.ext.when
-
-    script:
-    """
-      bedtools intersect \
-      -a ${ref_psite_bed} \
-      -b ${orf_psite_bed} \
-      -wa \
-      -wb \
-      -header \
-      -f 1.00 \
-      -s \
-      -sorted > "${orfcaller_gtf.baseName}_ref_intersect.bed"
-      """
-}
