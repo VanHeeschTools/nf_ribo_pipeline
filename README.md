@@ -12,11 +12,11 @@ This pipeline is designed for the analysis and interpretation of Ribosome profil
 * STAR               (2.7.8)
 * SAMtools           (1.12)
 * ORFquant           (4.1.2)
-* java (as a module) (1.8.0)
+* java               (1.8.0)
 * bedgraphtobigwig   (ucsc 482)
 * Bedtools           (2.31.0)
-* TRISTAN            (1.0.0)
-* MultiQC            (1.30)
+* TRISTAN            (1.1.1)
+* MultiQC            (1.33)
 * R, including the following packages:
     * tidyverse
     * tibble
@@ -36,7 +36,7 @@ This pipeline is designed for the analysis and interpretation of Ribosome profil
     * BSgenomeForge
     * txdbmaker
     * github repo = 'damhof/RiboseQC'
-    * github repo = 'damhof/ORFquant
+    * github repo = 'Edwinvanderwerf/ORFquant
 
 ## **Overview**
 
@@ -166,19 +166,19 @@ Note: You can start the pipeline in a later step by setting these parameters. It
 | --keep_bam                 | Run RiboseQC on STAR output                                | true    |
 
 
+
 ### Optional Parameters
 
-#### RiboTIE
 
-
-| Parameter             | Description                                                                       | Default |
-| :---------------------| --------------------------------------------------------------------------------- | ------- |
-| --ribotie_min_samples | Minimal amount of samples RiboTIE needs to call the same ORF in for it to be kept | 2       |
+| Parameter                  | Description                                                                        | Default        |
+| :--------------------------| ---------------------------------------------------------------------------------- | -------------- |
+| --ribotie_min_samples      | Minimal amount of samples RiboTIE needs to call the same ORF in for it to be kept  | 2              |
+| --readlength_choice_method | RiboseQC filter to be used. Needs to be one of: 'max_coverage','max_inframe','all' | "max_coverage" |
 
 
 ## Outputs
 
-The pipeline generates output files including trimmed reads, filtered reads, alignment results, RiboseQC output, ORF calls, ORF annotation tables, ORF expression tables, and a basic MultiQC report. The output directory is specified by the parameter `outdir` and has the following structure:
+The pipeline generates output files including trimmed reads, filtered reads, alignment results, RiboseQC output and html report, ORF calls, ORF annotation tables, ORF expression tables, and a basic MultiQC report. The output directory is specified by the parameter `outdir` and has the following structure:
 
 ```
 {outdir}
