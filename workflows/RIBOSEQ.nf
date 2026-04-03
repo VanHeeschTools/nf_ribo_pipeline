@@ -108,7 +108,7 @@ workflow RIBOSEQ {
             }
             if (params.run_ribotie){
                 // Check if BAM files required for RiboTIE can be found otherwise set to null
-                ribotie_bam_files ="${params.outdir}/star/*/*.end2end.Aligned.toTranscriptome.out.bam"
+                ribotie_bam_files ="${params.outdir}/star/*/*.end2end.Aligned.toTranscriptome.sortedByCoord.out.bam"
                 ribotie_bams_search = collect_output_previous_run(ribotie_bam_files, "sample_id", false, "STAR transcriptome end2end alignment")
                 ribotie_bams = ribotie_bams_search.map { sample_id, file_list ->
                     [ sample_id, file_list[0] ]
@@ -149,7 +149,7 @@ workflow RIBOSEQ {
         }
         if (params.run_ribotie){
             // Check if BAM files required for RiboTIE can be found otherwise set to null
-            ribotie_bam_files ="${params.outdir}/star/*/*.end2end.Aligned.toTranscriptome.out.bam"
+            ribotie_bam_files ="${params.outdir}/star/*/*.end2end.Aligned.toTranscriptome.sortedByCoord.out.bam"
             ribotie_bams_search = collect_output_previous_run(ribotie_bam_files, "sample_id", false, "STAR transcriptome end2end alignment")
             ribotie_bams = ribotie_bams_search.map { sample_id, file_list ->
                 [ sample_id, file_list[0] ]
