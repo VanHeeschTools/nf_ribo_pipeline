@@ -198,7 +198,7 @@ workflow RIBOSEQ {
             )
             ribotie_gtf = RIBOTIE.out.ribotie_orf_gtf
         } else {
-            ribotie_output_gtf = "${params.outdir}/ribotie/RiboTIE.gtf"
+            ribotie_output_gtf = "${params.outdir}/merged_ribotie/RiboTIE.gtf"
             ribotie_gtf = collect_output_previous_run(ribotie_output_gtf, "path", true, "RIBOTIE")
         }
 
