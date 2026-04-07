@@ -29,7 +29,6 @@ show_analysis_paths: False
 title: 'Nextflow Ribo_Seq pipeline report'
 subtitle: 'The following shows a summary of the output of the Ribo_Seq pipeline'
 intro_text: 'MultiQC reports summarise analysis results.'
-report_comment: 'The pipeline is still in development, sections might change in newer versions.'
 
 report_section_order:
   cutadapt:
