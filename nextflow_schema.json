@@ -54,10 +54,6 @@
                     "type": "string",
                     "description": "Reference protein fasta file"
                 },
-                "reference_twobit": {
-                    "type": "string",
-                    "description": "Reference genome twobit file"
-                },
                 "package_install_loc": {
                     "type": "string",
                     "description": "Path to bsgenome library directory"
@@ -111,7 +107,6 @@
                 "reference_fasta",
                 "reference_fasta_fai",
                 "reference_protein_fa",
-                "reference_twobit",
                 "package_install_loc",
                 "orfquant_annotation",
                 "contaminants_fasta",
