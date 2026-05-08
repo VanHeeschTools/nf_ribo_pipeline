@@ -127,8 +127,8 @@ def validate_price_index(String price_index_path){
 def validateGTF(String gtfPath) {
     def requiredAttrs = [
         gene      : ["gene_id", "gene_biotype", "gene_name"],
-        transcript: ["gene_id", "gene_biotype", "gene_name", "transcript_id"],
-        exon      : ["gene_id", "gene_biotype", "gene_name", "transcript_id", "exon_number"]
+        transcript: ["gene_id", "gene_biotype", "gene_name", "transcript_id", "transcript_biotype"],
+        exon      : ["gene_id", "gene_biotype", "gene_name", "transcript_id", "exon_number", "transcript_biotype"]
     ]
 
     def exonByTranscript = [:].withDefault { [] }
