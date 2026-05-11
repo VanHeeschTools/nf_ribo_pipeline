@@ -34,7 +34,7 @@ process merge_price_bams{
         path bam_files // File that lists all BAM files
 
     output:
-        path "star_end2end_merged_sorted.bam", emit: merged_end2end_bam
+        tuple path("star_end2end_merged_sorted.bam"), path("star_end2end_merged_sorted.bam.bai"), emit: merged_end2end_bam
 
     when:
         task.ext.when == null || task.ext.when
@@ -53,7 +53,7 @@ process price {
     label "Ribo_Seq_tools"
 
     input:
-        path merged_bam   // Merged BAM file
+        tuple path(merged_bam), path(merged_bam_bai)
         path price_index  // Index for PRICE
 
     output:
@@ -64,6 +64,7 @@ process price {
 
     script:
         """
+        export _JAVA_OPTIONS="${task.ext.java_opts}"
         gedi -e Price \
             -reads ${merged_bam} \
             -genomic ${price_index} \
