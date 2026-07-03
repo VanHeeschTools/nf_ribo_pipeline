@@ -47,7 +47,6 @@ process bowtie2 {
 
     script:
         """
-        mkdir -p "${sample_id}"
         bowtie2 \
         --seedlen=25 \
         --threads $task.cpus \

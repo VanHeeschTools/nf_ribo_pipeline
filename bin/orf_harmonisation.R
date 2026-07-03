@@ -42,17 +42,24 @@ read_orf_tables <- function(orfcaller_tables) {
 orf_filter <- function(orfs){
   caller_order <- c("ORFquant", "PRICE", "RiboTIE")
   
-  filtered_table <- orfs %>%
-    # Group on the list of transcripts_ids it has a match with, the protein seq, and the ORF starts and ends
-    # tx_id contains all transcript ids the ORF can map on
+  # Annotate if ORFs are found in each ORFcaller
+  annotated <- orfs %>%
     group_by(tx_id, protein_seq, starts, ends) %>%
     mutate(
-      caller_count = n_distinct(orfcaller),  # Amount of callers ORF occurs in
-      pref = match(orfcaller, caller_order), # Add preference column
+      pref = match(orfcaller, caller_order),
+      found_in_ORFquant = any(orfcaller == "ORFquant"),
+      found_in_PRICE    = any(orfcaller == "PRICE"),
+      found_in_RiboTIE  = any(orfcaller == "RiboTIE"),
+      caller_count = n_distinct(orfcaller)
     ) %>%
+    ungroup()
+  
+  # Keep preferred ORF per group
+  filtered_table <- annotated %>%
+    group_by(tx_id, protein_seq, starts, ends) %>%
     slice_min(pref, n = 1, with_ties = FALSE) %>%
     ungroup() %>%
-    dplyr::select(-pref) # Remove helper column
+    dplyr::select(-pref)  # remove helper column
   
   return(filtered_table)
 }
