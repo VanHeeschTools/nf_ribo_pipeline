@@ -6,6 +6,7 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(data.table)
   library(rtracklayer)
+  library(stringr)
 })
 
 # Obtain input arguments
@@ -29,6 +30,9 @@ ref_ORFs_codons <- ref_bed %>%
 
 # Split the string into a vector of filenames
 bed_file_list <- strsplit(bedfile_loc, " ")[[1]]
+
+# Sort bedfile vector numerically-aware
+bed_file_list <- str_sort(bed_file_list, numeric = TRUE)
 
 # Initiate DFs for populating (with ref_id as a column)
 ppm <- data.frame(orf_id = ref_ORFs_codons$ref_id)
