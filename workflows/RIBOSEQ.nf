@@ -59,10 +59,9 @@ workflow RIBOSEQ {
     copy_samplesheet(params.input, params.outdir)
 
     // Declare empty multiqc file channel
-    multiqc_files = Channel.empty()
+    multiqc_files = channel.empty()
 
     // Run subworkflows
-
     if (params.run_qc){
         // Quality filtering and contamination removal
         if (params.run_selection){
@@ -150,18 +149,18 @@ workflow RIBOSEQ {
         if (params.run_ribotie){
             // Check if BAM files required for RiboTIE can be found otherwise set to null
             ribotie_bam_files ="${params.outdir}/star/*/*.end2end.Aligned.toTranscriptome.sortedByCoord.out.bam"
-            ribotie_bams_search = collect_output_previous_run(ribotie_bam_files, "sample_id", false, "STAR transcriptome end2end alignment")
+            ribotie_bams_search = collect_output_previous_run(ribotie_bam_files, "sample_id", true, "STAR transcriptome end2end alignment")
             ribotie_bams = ribotie_bams_search.map { sample_id, file_list ->
                 [ sample_id, file_list[0] ]
             }
         }
     }
 
-    // ORF prediction steps
-    if (params.run_orf_prediction) {
+    // ORF Analysis steps
+    if (params.run_orf_analysis) {
 
         // ORFquant run on merged RiboseQC output
-        if (params.run_orfquant){
+        if (params.run_orfquant && !params.run_quantify_existing){
             ORFQUANT(
                 for_orfquant_files,
                 params.orfquant_annotation,
@@ -170,12 +169,16 @@ workflow RIBOSEQ {
             )
             orfquant_gtf = ORFQUANT.out.orfquant_orf_gtf
         } else{
-            orfquant_output_gtf = "${params.outdir}/orfquant/ORFquant.gtf"
-            orfquant_gtf = collect_output_previous_run(orfquant_output_gtf, "path", true, "ORFquant")
+            if (!params.run_quantify_existing){
+                orfquant_output_gtf = "${params.outdir}/orfquant/ORFquant.gtf"
+                orfquant_gtf = collect_output_previous_run(orfquant_output_gtf, "path", true, "ORFquant")
+            } else {
+                orfquant_gtf = channel.empty()
+            }
         }
 
         // PRICE run on merged end2end bam files
-        if (params.run_price){
+        if (params.run_price && !params.run_quantify_existing){
             PRICE(
                 price_bams,
                 params.price_index_path,
@@ -184,22 +187,30 @@ workflow RIBOSEQ {
             )          
             price_gtf = PRICE.out.price_orf_gtf
         } else{
-            price_output_gtf = "${params.outdir}/price/PRICE.gtf"
-            price_gtf = collect_output_previous_run(price_output_gtf, "path", true, "PRICE")
+            if (!params.run_quantify_existing){
+                price_output_gtf = "${params.outdir}/price/PRICE.gtf"
+                price_gtf = collect_output_previous_run(price_output_gtf, "path", true, "PRICE")
+            } else {
+                price_gtf = channel.empty()
+            }
         }
 
         // Run RiboTIE on transciptome end2end bam files
-        if (params.run_ribotie) {
+        if (params.run_ribotie && !params.run_quantify_existing) {
             RIBOTIE(
                 ribotie_bams,
                 params.reference_fasta,
                 params.reference_gtf,
                 params.ribotie_min_samples
             )
-            ribotie_gtf = RIBOTIE.out.ribotie_orf_gtf
+            ribotie_gtf = RIBOTIE.out
         } else {
-            ribotie_output_gtf = "${params.outdir}/merged_ribotie/RiboTIE.gtf"
-            ribotie_gtf = collect_output_previous_run(ribotie_output_gtf, "path", true, "RIBOTIE")
+            if (!params.run_quantify_existing){
+                ribotie_output_gtf = "${params.outdir}/merged_ribotie/RiboTIE.gtf"
+                ribotie_gtf = collect_output_previous_run(ribotie_output_gtf, "path", true, "RIBOTIE")
+            } else {
+                ribotie_gtf = channel.empty()
+            }
         }
 
         // Combine outputs of ORFcallers into one channel including RiboTIE output
@@ -211,7 +222,9 @@ workflow RIBOSEQ {
                 orfcaller_gtf,
                 params.reference_gtf,
                 params.reference_protein_fa,
-                params.package_install_loc
+                params.package_install_loc,
+                params.run_quantify_existing,
+                params.existing_orf_table
             )
             // Merged ORFcallers p0 psites, expression input
             orfcaller_psites = PSITE.out.orfcaller_psites
@@ -231,7 +244,7 @@ workflow RIBOSEQ {
         }
 
         // Annotate the ORFcaller output gtf files and harmonises them into a single table
-        if (params.run_annotation){
+        if (params.run_annotation && !params.run_quantify_existing){
             ANNOTATION(
                 params.reference_gtf,
                 params.package_install_loc,
@@ -242,12 +255,16 @@ workflow RIBOSEQ {
             removed_orf_ids = ANNOTATION.out.removed_orf_ids
             multiqc_files = multiqc_files.mix(ANNOTATION.out.annotation_multiqc)
         } else {
-            if (params.run_expression){
+            if (params.run_expression && !params.run_quantify_existing){
                 harmonised_table_csv = "${params.outdir}/harmonise_orfs/harmonised_orf_table.csv"
                 harmonised_table = collect_output_previous_run(harmonised_table_csv, "path", true, "ANNOTATION: harmonised ORF table csv")
 
                 search_removed_orf_ids = "${params.outdir}/harmonise_orfs/removed_orf_ids.txt"
                 removed_orf_ids = collect_output_previous_run(search_removed_orf_ids, "path", true, "ANNOTATION: removed ORF ids txt")
+            }
+            if (params.run_expression && params.run_quantify_existing){
+                harmonised_table = params.existing_orf_table
+                removed_orf_ids = null
             }
         }
 

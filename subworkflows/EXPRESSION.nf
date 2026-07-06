@@ -10,12 +10,15 @@ workflow EXPRESSION {
 
     main:
     // Remove filtered out ORF ids from the merged ORFcaller p0 site bed file
-    filter_removed_orf_ids(
-        removed_orf_ids,
-        orfcaller_psites,
-    )
-    orfcaller_psites_filtered = filter_removed_orf_ids.out.orfcaller_psites_filtered
-
+    if (removed_orf_ids != null){
+        filter_removed_orf_ids(
+            removed_orf_ids,
+            orfcaller_psites,
+        )
+        orfcaller_psites_filtered = filter_removed_orf_ids.out.orfcaller_psites_filtered
+    } else{
+        orfcaller_psites_filtered = orfcaller_psites
+    }
     // Create sample P-site files
     sample_psites(
         for_orfquant_files,
@@ -51,9 +54,7 @@ workflow EXPRESSION {
         ppm_matrix,
     )
 
-    multiqc_expression_plot_txt = multiqc_expression_plot.out
-    
     emit:
     ppm_matrix
-    multiqc_expression_plot_txt
+    multiqc_expression_plot_txt = multiqc_expression_plot.out
 }

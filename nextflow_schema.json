@@ -50,6 +50,10 @@
                     "type": "string",
                     "description": "Reference genome fasta fai file"
                 },
+                "reference_twobit": {
+                    "type": "string",
+                    "description": "Reference 2bit file"
+                },
                 "reference_protein_fa": {
                     "type": "string",
                     "description": "Reference protein fasta file"
@@ -82,7 +86,7 @@
                     "type": "string",
                     "description": "Path to container location"
                 },
-                "html_template:": {
+                "html_template": {
                     "type": "string",
                     "description": "Path to RiboseQC tempate for RiboseQC reports",
                     "default": "assets/riboseqc_template.Rmd"
@@ -99,13 +103,20 @@
                 },        
                 "resource_folder": {
                     "type": "string",
-                    "description": "path to annotation folder"
+                    "description": "Path to annotation folder"
+                },
+                "existing_orf_table": {
+                    "type": "string",
+                    "format": "file-path",
+                    "pattern": "^\\S+\\.csv$",
+                    "description": "Path to existing ORF table csv to quantify against"
                 }
             },
             "required": [
                 "reference_gtf",
                 "reference_fasta",
                 "reference_fasta_fai",
+                "reference_twobit",
                 "reference_protein_fa",
                 "package_install_loc",
                 "orfquant_annotation",
@@ -179,10 +190,15 @@
                     "default": true,
                     "description": "Toggle for QC modules"
                 },   
-                "run_orf_prediction": {
+                "run_orf_analysis": {
                     "type": "boolean",
                     "default": true,
                     "description": "Toggle for ORF prediction modules"
+                },
+                "run_quantify_existing":{
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Toggle for ORF quantification on existing ORF list"
                 }                                           
             }
         },
@@ -252,6 +268,24 @@
         },
         {
             "$ref": "#/defs/specs"
+        },
+        {
+            "if": {
+                "properties": {
+                    "run_quantify_existing": { "const": true }
+                },
+                "required": ["run_quantify_existing"]
+            },
+            "then": {
+                "properties": {
+                    "existing_orf_table": {
+                        "type": "string",
+                        "format": "file-path",
+                        "pattern": "^\\S+\\.csv$"
+                    }
+                },
+                "required": ["existing_orf_table"]
+            }
         }
     ]
 }
