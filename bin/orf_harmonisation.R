@@ -153,72 +153,78 @@ write_orf_dna_fasta <- function(sorted_df, fasta_file) {
   writeLines(fasta_entries, con)
 }
 
-#' Turn the sorted and filtered harmonised ORF table into a gtf-like file
+#' Turn the harmonised ORF table into a gtf-like file
 #' 
 #' @param sorted_df data.frame produced by orf_filter()
 convert_to_gtf <- function(sorted_df, gtf_output_file) {
 
-  # Handle transcript rows
-  transcripts <- sorted_df %>%
+    orf_table <-read.csv(sorted_df)
+
+    # Handle transcript rows
+    transcripts <- orf_table %>%
     mutate(
-      start = orf_start, 
-      end = orf_end,
-      feature    = "transcript",
-      score      = ".",
-      frame      = ".",
-      attributes = paste0('transcript_id "', orf_id, '"; gene_id "', 
-                          gene_id, '"; gene_name "', gene_name,
-                          '"; gene_biotype "', gene_biotype, 
-                          '"; ORF_category "', orf_biotype_single, 
-                          '"; ORFcaller "', orfcaller, '";')
+        start = orf_start, 
+        end = orf_end,
+        feature    = "transcript",
+        score      = ".",
+        frame      = ".",
+        attributes = paste0('transcript_id "', orf_id, '"; gene_id "', 
+                            gene_id, '"; gene_name "', gene_name, 
+                            '"; gene_biotype "', gene_biotype,
+                            '"; ORF_id "', orf_id,
+                            '"; ORF_biotype "', orf_biotype_single, 
+                            '"; ORFcaller "', orfcaller, '";')
     ) %>%
     # Orf_id will be used to join with cds rows, and is removed afterwards
     dplyr::select(chr, orfcaller, feature, start, end, 
-                  score, strand, frame, attributes, orf_id) %>%
+                    score, strand, frame, attributes, orf_id) %>%
     arrange(chr, start) # Sort based on genomic location
-  
-  cds <- sorted_df %>%
+
+    cds <- orf_table %>%
     mutate(
-      starts = strsplit(as.character(starts), "_"),
-      ends   = strsplit(as.character(ends), "_")
+        starts = strsplit(as.character(starts), "_"),
+        ends   = strsplit(as.character(ends), "_")
     ) %>%
     unnest(c(starts, ends)) %>%
     mutate(
-      start = as.integer(starts),
-      end   = as.integer(ends)
+        start = as.integer(starts),
+        end   = as.integer(ends)
     ) %>%
     mutate(
-      feature    = "CDS",
-      score      = ".",
-      frame      = ".",
-      attributes = paste0('transcript_id "', orf_id, '"; gene_id "', 
-                          gene_id, '"; gene_name "', gene_name, 
-                          '"; gene_biotype "', gene_biotype,
-                          '"; orf_biotype "', orf_biotype_single, 
-                          '"; orfcaller "', orfcaller, '";')
+        feature    = "CDS",
+        score      = ".",
+        frame      = ".",
+        attributes = paste0('transcript_id "', orf_id, '"; gene_id "', 
+                            gene_id, '"; gene_name "', gene_name, 
+                            '"; gene_biotype "', gene_biotype,
+                            '"; ORF_id "', orf_id,
+                            '"; ORF_biotype "', orf_biotype_single, 
+                            '"; ORFcaller "', orfcaller, '";')
     ) %>%
     dplyr::select(chr, orfcaller, feature, start, end, 
-                  score, strand, frame, attributes, orf_id)
-  
-  
-  # Combine transcript rows with their corresponding CDS rows
-  # The CDS rows are sorted by strand
-  gtf_list <- lapply(1:nrow(transcripts), function(i) {
-    tx <- transcripts[i, ] # current transcript row index
-    tx_cds <- cds %>% filter(orf_id == tx$orf_id) # CDS rows for this transcript
-    
-    # Combine transcript and its CDS rows
-    bind_rows(tx, tx_cds)
-  })
-  
-  # Combine all transcript+CDS groups into a single tibble
-  gtf_out <- do.call(rbind, gtf_list) %>%
+                    score, strand, frame, attributes, orf_id)
+
+    # Combine transcript rows with their corresponding CDS rows
+    # The CDS rows are sorted by strand
+    n_tx <- nrow(transcripts) 
+    cds_by_orf <- split(cds, cds$orf_id)
+
+    gtf_list <- lapply(1:n_tx, function(i) {
+        tx <- transcripts[i, ]
+        tx_cds <- cds_by_orf[[tx$orf_id]]
+        if (is.null(tx_cds)) tx else bind_rows(tx, tx_cds)
+    })
+
+    # Combine all transcript+CDS groups into a single tibble
+    gtf_out <- do.call(rbind, gtf_list) %>%
     dplyr::select(-orf_id) %>% # remove helper column used for grouping
-    mutate(chr = as.character(chr)) %>%  # convert factor back to character
+    mutate(chr = as.character(chr)) # convert factor back to character
+
     # Write output gtf file
-    write.table(gtf_output_file, sep = "\t", quote = FALSE, 
+    write.table(gtf_out, file = gtf_output_file, sep = "\t", quote = FALSE, 
                 col.names = FALSE, row.names = FALSE)
 }
+
 
 #' Generate MultiQC table of ORF categories per ORFcaller
 #'
