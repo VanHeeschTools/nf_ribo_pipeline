@@ -53,3 +53,22 @@ process harmonise_orfs {
         """
 }
 
+// Takes an existing ORF table df and converts it to a gtf-like file
+process convert_table_to_gtf {
+
+    label "Ribo_Seq_R"
+    input:
+        val orf_table
+    
+    output:
+        path "harmonised_orf_table.gtf", emit:  harmonised_orf_table_gtf
+
+    when:
+        task.ext.when == null || task.ext.when
+
+    script:
+        """
+        convert_to_gtf.R \
+        ${orf_table}
+        """
+}
