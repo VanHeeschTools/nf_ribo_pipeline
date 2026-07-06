@@ -31,11 +31,8 @@ workflow ORFQUANT {
         package_install_loc
     )
 
+    emit:
     // Define ORFquant subworkflow output
     orfquant_orf_gtf = fix_orfquant.out.orfquant_gtf
     orfquant_orfs = orfquant.out.orfquant_orfs
-
-    emit:
-    orfquant_orf_gtf
-    orfquant_orfs
 }

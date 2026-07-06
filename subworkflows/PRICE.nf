@@ -6,18 +6,18 @@ workflow PRICE {
 
   take:
   bamlist           // List, PRICE input BAM files
-  price_index       // Path, PRICE index file
+  price_index_path  // Path, PRICE index file
   fasta             // Path, reference FASTA file
   gtf               // Path, input GTF file
 
   main:
 
   // Validate price index file
-  price_index_check = validate_price_index(price_index)
+  price_index_check = validate_price_index(price_index_path)
 
   // Create PRICE index if it is not found
   if (price_index_check) {
-      price_index_ch = Channel.value(file("${price_index}/PRICE_index.oml"))
+      price_index_ch = channel.value(file("${price_index_path}/PRICE_index.oml"))
       log.info "Using existing PRICE index: ${price_index_ch}"
   } else {
       // Create PRICE annotation
@@ -40,12 +40,9 @@ workflow PRICE {
     price.out.price_orfs
   )
 
+  emit:
   // Define PRICE subworkflow output
   price_orfs = price.out.price_orfs
   price_orf_gtf = price_to_gtf.out.price_gtf
-
-  emit:
-  price_orfs
-  price_orf_gtf
 
 }

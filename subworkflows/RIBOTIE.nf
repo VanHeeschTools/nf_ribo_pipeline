@@ -63,8 +63,6 @@ workflow RIBOTIE {
         gtf,
     )
 
-    ribotie_orf_gtf = ribotie_add_stop.out.ribotie_gtf
-
     emit:
-    ribotie_orf_gtf
+    ribotie_add_stop.out.ribotie_gtf
 }

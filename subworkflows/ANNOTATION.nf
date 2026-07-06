@@ -24,19 +24,14 @@ workflow ANNOTATION {
         annotated_orf_tables
     )
 
-    // Define subworkflow output
-    harmonised_orf_table = harmonise_orfs.out.harmonised_orf_table
-    removed_orf_ids = harmonise_orfs.out.removed_orf_ids
-
     // Annotation multiqc output files
     orfcaller_multiq = harmonise_orfs.out.orfcaller_multiq
     merged_multiqc = harmonise_orfs.out.merged_multiqc
     caller_count_multiqc = harmonise_orfs.out.caller_count_multiqc
-    
-    annotation_multiqc = orfcaller_multiq.mix(merged_multiqc, caller_count_multiqc).collect()
 
     emit:
-    harmonised_orf_table
-    removed_orf_ids
-    annotation_multiqc
+    // Define subworkflow output
+    harmonised_orf_table = harmonise_orfs.out.harmonised_orf_table
+    removed_orf_ids = harmonise_orfs.out.removed_orf_ids
+    annotation_multiqc = orfcaller_multiq.mix(merged_multiqc, caller_count_multiqc).collect()
 }

@@ -10,7 +10,7 @@ workflow SELECTION {
 
     take:
     reads               // Tuple, path to ribo-seq reads with associated sample ID
-    bowtie2_index       // Path, precomputed contaminants index for bowtie2
+    bowtie2_index_path  // Path, precomputed contaminants index for bowtie2
     contaminants_fasta  // Path, fasta file with rRNA, tRNA, and other contaminants
     keep_bam            // Boolean, keep big SAM file for debugging
 
@@ -25,11 +25,11 @@ workflow SELECTION {
     removed_reads = trimgalore.out.removed_reads.collect()
 
     // Validate all bowtie2 index files
-    bowtie2_index_check = validate_bowtie2_index(bowtie2_index)
+    bowtie2_index_check = validate_bowtie2_index(bowtie2_index_path)
 
     if (bowtie2_index_check) {
         // If index files already exist, use the provided index prefix
-        bowtie2_index_ch = bowtie2_index
+        bowtie2_index_ch = bowtie2_index_path
         log.info "Using existing Bowtie2 index: ${bowtie2_index_ch}"
     } else {
         log.warn "Some bowtie2 index files are missing. Running bowtie2 indexing."
@@ -55,14 +55,15 @@ workflow SELECTION {
     // Combine all MultiQC files into one channel
     contaminant_samples = contaminants_check.out.contaminant_samples.collect()
     contaminant_samples_passed = contaminants_check.out.contaminant_samples_passed.collect()
+
+    emit:
+    // Selected riboseq reads
+    rpf_reads
+    // Variable to be passed to MultiQC
     multiqc_read_samples = trimgalore_report.mix(total_reads,
                                                 removed_reads,
                                                 fastqc_zip,
                                                 contaminant_samples,
                                                 contaminant_samples_passed)
                                                 .collect()
-
-    emit:
-    rpf_reads            // Selected riboseq reads
-    multiqc_read_samples // Multiqc input files
-}
+    }

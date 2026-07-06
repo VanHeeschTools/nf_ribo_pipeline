@@ -164,7 +164,7 @@ def validateGTF(String gtfPath) {
 
         // Check required attributes
         if (requiredAttrs.containsKey(type)) {
-            def missing = requiredAttrs[type].findAll { !attrs.containsKey(it) || !attrs[it] }
+            def missing = requiredAttrs[type].findAll { attr -> !attrs.containsKey(attr) || !attrs[attr] }
             if (missing) {
                 missingAttrs << "Missing ${missing.join(", ")} in ${type} line: ${line.take(80)}..."
             }
@@ -187,7 +187,7 @@ def validateGTF(String gtfPath) {
     // Attribute check
     if (missingAttrs) {
         println "Attribute check failed:"
-        missingAttrs.take(10).each { println "- $it" }
+        missingAttrs.take(10).each { msg -> println "- $msg" }
         if (missingAttrs.size() > 10)
             println "... and ${missingAttrs.size() - 10} more."
         System.exit(1)
@@ -197,14 +197,14 @@ def validateGTF(String gtfPath) {
 
     // Exon order validation for first 10k transcripts
     exonByTranscript.each { tid, exons ->
-        if (exons.any { it.exon_number == null }) {
+        if (exons.any { exon -> exon.exon_number == null }) {
             println "Warning: Missing exon_number for transcript ${tid}."
             System.exit(1)
         }
 
         def strand = exons[0].strand
         // Sort exons by exon_number
-        def exonsByNumber = exons.sort { it.exon_number }
+        def exonsByNumber = exons.sort { exon -> exon.exon_number }
         def exonNumbers   = exonsByNumber*.exon_number
         def starts        = exonsByNumber*.start
 
@@ -225,7 +225,7 @@ def validateGTF(String gtfPath) {
                 System.exit(1)
             }
 
-            if (increasing && starts != starts.sort { -it }) {
+            if (increasing && starts != starts.sort { s -> -s }) {
                 println "Exon starts not reverse-ordered for transcript ${tid} on '-' strand with increasing exon_number"
                 println "Start positions: ${starts}"
                 System.exit(1)
@@ -283,15 +283,15 @@ def collect_output_previous_run(
             log.info "ERROR: No matching output files found for step: ${step}, please make sure to provide them correctly or re-run the step."
         }
         // Return empty channel or null
-        return emptyInsteadOfNull ? Channel.empty() : null
+        return emptyInsteadOfNull ? channel.empty() : null
     }
 
     // If sample_id is required just create tuple channel of sample_ids and found files
     if (mode == 'sample_id') {
-        return Channel.fromFilePairs(pattern, size: 1, checkIfExists: true)
+        return channel.fromFilePairs(pattern, size: 1, checkIfExists: true)
     // If sample_id is not required create channel of found files
     } else if (mode == "path") {
-        return Channel.fromPath(pattern)
+        return channel.fromPath(pattern)
     } else{
         return null 
     }

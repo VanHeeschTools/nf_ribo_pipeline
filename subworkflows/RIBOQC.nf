@@ -12,13 +12,13 @@ workflow RIBOQC {
     html_template            // Path, location of RiboseQC html report template
 
     main:
-    // 01 - Create riboseqc files
+    // Create RiboseQC files
     riboseqc(orfquant_bams,
             orfquant_annotation,
             package_install_loc,
             readlength_choice_method)
 
-    // 02 - Create p-site tracks
+    // Create p-site tracks
     // Sort each bedgraph file
     riboseqc_bedgraphs = riboseqc.out.bedgraphs.flatten()
     sort_bedgraphs(riboseqc_bedgraphs)
@@ -34,26 +34,21 @@ workflow RIBOQC {
     convert_to_bigwig(list_of_bedgraphs,
                     reference_fasta_fai)
 
-    // 03 - Create riboseqc tables for MultiQC
+    // Create RiboseQC tables for MultiQC
     riboseqc_tables(riboseqc.out.riboseqc_all.collect())
     riboseqc_inframe_percentages = riboseqc_tables.out.riboseqc_inframe_percentages
     riboseqc_category_counts = riboseqc_tables.out.riboseqc_category_counts
 
+    // Creat RiboseQC output html report
     create_riboseqc_report(
         riboseqc.out.riboseqc_all.collect(),
         html_template
     )
 
+    emit:
+    // Obtain ORFquant input files, collect is used in the RIBOSEQ workflow
+    for_orfquant_files = riboseqc.out.orfquant_psites
     // Combine into one channel for MultiQC
     multiqc_riboseq = riboseqc_inframe_percentages.mix(riboseqc_category_counts).collect()
-
-
-    // Obtain ORFquant input files
-    // Collect is done in the RIBOSEQ workflow
-    for_orfquant_files = riboseqc.out.orfquant_psites
-
-    emit:
-    for_orfquant_files     // Files for ORFquant
-    multiqc_riboseq        // Files for MultiQC
 
 }

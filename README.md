@@ -90,7 +90,7 @@ nextflow run nf_riboseq_pipeline/main.nf \
 ```
 subject_id,sample_id,group_id,sample_type,sequence_type,file_type,filename_1
 subject1,sampleA,cohort1,tumor,rna,fastq,/path/to/sampleA_R1.fastq.gz,/path/to/sampleA_R2.fastq.gz
-subject2,sampleB,,normal,rna,bam,/path/to/sampleB.bam,
+subject2,sampleB,normal,rna,bam,/path/to/sampleB.bam,
 subject3,sampleC,cohort2,tumor,dna,vcf,/path/to/sampleC.vcf,
 subject4,sampleA,cohort1,tumor,ribo,fastq,/path/to/sampleA.fastq.gz
 ```
