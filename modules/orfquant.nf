@@ -30,8 +30,8 @@ process orfquant {
 
     input:
         val psites_merged
-        val rannot
-        val package_install_loc
+        path rannot
+        path package_install_loc
 
     output:
         path "output_final_ORFquant_results", emit: orfquant_orfs
@@ -57,7 +57,7 @@ process fix_orfquant {
         path(orfquant_orfs)
         path rannot
         path reference_gtf
-        val package_install_loc
+        path package_install_loc
 
     output:
         path "ORFquant.gtf", emit: orfquant_gtf

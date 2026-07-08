@@ -118,14 +118,11 @@
                 "reference_fasta_fai",
                 "reference_twobit",
                 "reference_protein_fa",
-                "package_install_loc",
-                "orfquant_annotation",
                 "contaminants_fasta",
                 "container_folder",
                 "html_template",
                 "multiqc_config",
                 "pandoc_dir",
-                "orfquant_annotation",
                 "resource_folder"
             ]
         },

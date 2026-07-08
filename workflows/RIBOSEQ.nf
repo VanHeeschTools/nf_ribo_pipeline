@@ -20,6 +20,7 @@ Main steps:
 
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'
 include { validateGTF; checkInputFiles; validate_bowtie2_index; validate_star_index; validate_price_index; copy_samplesheet; collect_output_previous_run } from '../modules/helperFunctions.nf'
+include { riboseqc_index } from '../modules/riboseqc.nf'
 include { SELECTION   } from '../subworkflows/SELECTION.nf'
 include { ALIGNMENT   } from '../subworkflows/ALIGNMENT.nf'
 include { RIBOQC      } from '../subworkflows/RIBOQC.nf'
@@ -60,6 +61,20 @@ workflow RIBOSEQ {
 
     // Declare empty multiqc file channel
     multiqc_files = channel.empty()
+
+    // Create index files for RiboseQC and ORFquant if not defined in config file
+    if (!params.orfquant_annotation || !params.package_install_loc) {
+        riboseqc_index(
+            params.reference_twobit,
+            params.reference_gtf,
+            params.reference_fasta
+        )
+        orfquant_annotation = riboseqc_index.out.rannot_file
+        package_install_loc = riboseqc_index.out.bsgenome_install_dir
+    } else {
+        orfquant_annotation = channel.fromPath(params.orfquant_annotation, checkIfExists: true).first()
+        package_install_loc = channel.fromPath(params.package_install_loc, checkIfExists: true).first()
+    }
 
     // Run subworkflows
     if (params.run_qc){
@@ -119,8 +134,8 @@ workflow RIBOSEQ {
         if (params.run_riboseqc){
             html_template = file("${projectDir}/${params.html_template}")
             RIBOQC(
-                params.orfquant_annotation,
-                params.package_install_loc,
+                orfquant_annotation,
+                package_install_loc,
                 params.readlength_choice_method,
                 params.reference_fasta_fai,
                 orfquant_bams,
@@ -163,9 +178,9 @@ workflow RIBOSEQ {
         if (params.run_orfquant && !params.run_quantify_existing){
             ORFQUANT(
                 for_orfquant_files,
-                params.orfquant_annotation,
+                orfquant_annotation,
                 params.reference_gtf,
-                params.package_install_loc
+                package_install_loc
             )
             orfquant_gtf = ORFQUANT.out.orfquant_orf_gtf
         } else{
@@ -222,7 +237,7 @@ workflow RIBOSEQ {
                 orfcaller_gtf,
                 params.reference_gtf,
                 params.reference_protein_fa,
-                params.package_install_loc,
+                package_install_loc,
                 params.run_quantify_existing,
                 params.existing_orf_table
             )
@@ -247,7 +262,7 @@ workflow RIBOSEQ {
         if (params.run_annotation && !params.run_quantify_existing){
             ANNOTATION(
                 params.reference_gtf,
-                params.package_install_loc,
+                package_install_loc,
                 orfcaller_gtf,
                 ref_cds_rds
             )

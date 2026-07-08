@@ -1,3 +1,38 @@
+// Run RiboseQC index file creation
+process riboseqc_index {
+
+    label "Ribo_Seq_R"
+
+    input:
+        path reference_twobit
+        path reference_gtf
+        path reference_fasta
+
+    output:
+        path "bsgenome_install", emit: bsgenome_install_dir
+        path "${reference_gtf}_Rannot", emit: rannot_file
+
+    when:
+        task.ext.when == null || task.ext.when
+
+    script:
+        """
+        mkdir bsgenome_install
+        mkdir temp
+        export TMPDIR=\$PWD/temp
+        export PKGCACHE_OFFLINE=true
+
+        create_riboseq_annotation.R \
+            ${reference_twobit} \
+            ${reference_gtf} \
+            "\${PWD}/bsgenome_install" \
+            "custom" \
+            \${PWD} \
+            ${reference_fasta}
+        """
+}
+
+
 // Run RiboseQC on every sample
 process riboseqc {
 
@@ -6,8 +41,8 @@ process riboseqc {
 
     input:
         tuple val(sample_id), path(bam)
-        val orfquant_annotation
-        val package_install_loc
+        path orfquant_annotation
+        path package_install_loc
         val readlength_choice_method
 
     output:

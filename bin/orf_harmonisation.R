@@ -158,10 +158,8 @@ write_orf_dna_fasta <- function(sorted_df, fasta_file) {
 #' @param sorted_df data.frame produced by orf_filter()
 convert_to_gtf <- function(sorted_df, gtf_output_file) {
 
-    orf_table <-read.csv(sorted_df)
-
     # Handle transcript rows
-    transcripts <- orf_table %>%
+    transcripts <- sorted_df %>%
     mutate(
         start = orf_start, 
         end = orf_end,
@@ -180,7 +178,7 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
                     score, strand, frame, attributes, orf_id) %>%
     arrange(chr, start) # Sort based on genomic location
 
-    cds <- orf_table %>%
+    cds <- sorted_df %>%
     mutate(
         starts = strsplit(as.character(starts), "_"),
         ends   = strsplit(as.character(ends), "_")

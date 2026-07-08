@@ -122,8 +122,8 @@ Notes:
 | --reference_gtf        | **(Required)** GTF file with reference annotations    |
 | --reference_protein_fa | **(Required)** FASTA file with reference proteins     |
 | --contaminants_fasta   | **(Required)** FASTA file with known RNA contaminants |
-| --package_install_loc  | **(Required)** Path to BSgenome directory             |
-| --orfquant_annotation  | **(Required)** Path to ORFquant index .rannot file    |
+| --package_install_loc  | **(Optional)** Path to BSgenome directory             |
+| --orfquant_annotation  | **(Optional)** Path to ORFquant index .rannot file    |
 | --bowtie2_index_path   | **(Optional)** Path to Bowtie2 index directory        |
 | --price_index_path     | **(Optional)** Path to PRICE index file               |
 | --star_index_path      | **(Optional)** Path to star_index directory           |
@@ -153,6 +153,8 @@ Note: the last three index paths can be automatically generated if the paths are
 | --run_annotation | Run ORF annotation and harmonisation         | true    |
 | --run_expression | Run ORF expression                           | true    |
 | --run_multiqc    | Create MultiQC output report                 | true    |
+
+Note: RiboTIE requires GPU support.
 
 Note: You can start the pipeline in a later step by setting these parameters. It will search the given outdir for the required files, make sure to give these files in the correct format and directory.
 
