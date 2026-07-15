@@ -64,5 +64,6 @@ workflow RIBOTIE {
     )
 
     emit:
+    // RiboTIE output gtf file
     ribotie_add_stop.out.ribotie_gtf
 }

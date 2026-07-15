@@ -30,8 +30,10 @@ workflow ANNOTATION {
     caller_count_multiqc = harmonise_orfs.out.caller_count_multiqc
 
     emit:
-    // Define subworkflow output
+    // Harmonoised ORF table
     harmonised_orf_table = harmonise_orfs.out.harmonised_orf_table
+    // ORFs removed during harmonisation step
     removed_orf_ids = harmonise_orfs.out.removed_orf_ids
+    // Annotation statistic files for MultiQC
     annotation_multiqc = orfcaller_multiq.mix(merged_multiqc, caller_count_multiqc).collect()
 }

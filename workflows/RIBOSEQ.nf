@@ -84,7 +84,8 @@ workflow RIBOSEQ {
                 ch_reads,
                 params.bowtie2_index_path,
                 params.contaminants_fasta,
-                params.keep_bam
+                params.keep_bam,
+                params.adapter
             )
             rpf_reads = SELECTION.out.rpf_reads
             multiqc_files = multiqc_files.mix(SELECTION.out.multiqc_read_samples)

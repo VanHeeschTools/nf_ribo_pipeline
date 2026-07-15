@@ -105,6 +105,10 @@
                     "type": "string",
                     "description": "Path to annotation folder"
                 },
+                "adapter": {
+                    "type": "string",
+                    "description": "Adapter string to be removed by trimgalore"
+                },
                 "existing_orf_table": {
                     "type": "string",
                     "format": "file-path",

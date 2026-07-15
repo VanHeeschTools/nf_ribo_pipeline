@@ -13,10 +13,11 @@ workflow SELECTION {
     bowtie2_index_path  // Path, precomputed contaminants index for bowtie2
     contaminants_fasta  // Path, fasta file with rRNA, tRNA, and other contaminants
     keep_bam            // Boolean, keep big SAM file for debugging
+    adapter             // Val, optional adapter sequence to give to trimgalore
 
     main:
     // Run Trimgalore
-    trimgalore(reads)
+    trimgalore(reads, adapter)
     trimmed_reads = trimgalore.out.reads
 
     // Files for the MultiQC report

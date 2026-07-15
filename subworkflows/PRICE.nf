@@ -41,8 +41,9 @@ workflow PRICE {
   )
 
   emit:
-  // Define PRICE subworkflow output
+  // PRICE ORF output file
   price_orfs = price.out.price_orfs
+  // PRICE ORF output file in gtf format
   price_orf_gtf = price_to_gtf.out.price_gtf
 
 }

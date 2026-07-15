@@ -1,11 +1,12 @@
 // Remove low-quality and short reads from fastq file using trimgalore
-process trimgalore{
+process trimgalore {
 
     tag "${meta.sample_id}"
     label "Ribo_Seq_tools"
 
     input:
-        tuple val(meta),val(reads)    // Tuple, val: meta data and path: input FASTQ reads
+        tuple val(meta), val(reads) // Tuple, val: meta data and path: input FASTQ reads
+        val adapter                 // Val, optional adapter sequence to give to trimgalore
 
     output:
         tuple val(meta.sample_id), path("${meta.sample_id}/${meta.sample_id}_trimmed.fq.gz"), emit: reads
@@ -17,6 +18,8 @@ process trimgalore{
         task.ext.when == null || task.ext.when
 
     script:
+        // Set adapter argument if adapter is defined in input config file
+        def adapter_arg = adapter ? "--adapter ${adapter}" : ""
         """
         mkdir -p "${meta.sample_id}"
         
@@ -27,6 +30,7 @@ process trimgalore{
         --gzip \
         --length 25 \
         --trim-n \
+        ${adapter_arg} \
         --output_dir "${meta.sample_id}/" \
         --basename "${meta.sample_id}"
 
