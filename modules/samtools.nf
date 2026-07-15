@@ -33,7 +33,6 @@ process samtools {
         # Sort BAM
         samtools sort \
         -@ $task.cpus \
-        -l 9 \
         -o "${sample_id}/${new_bam}" \
         -T "tmp/" \
         "${bam}"
