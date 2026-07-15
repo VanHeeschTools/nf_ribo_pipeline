@@ -1,5 +1,5 @@
 include { sample_psites } from "../modules/process_bed.nf"
-include { filter_removed_orf_ids ; intersect_psites ; ppm_matrix ; expression_table; multiqc_expression_plot } from "../modules/expression.nf"
+include { filter_removed_orf_ids; intersect_psites ; ppm_matrix ; expression_table; multiqc_expression_plot } from "../modules/expression.nf"
 
 workflow EXPRESSION {
     take:
@@ -40,21 +40,27 @@ workflow EXPRESSION {
     )
 
     // Define output ppm_matrix
-    ppm_matrix = ppm_matrix.out.ppm_matrix
+    ppm_matrix_csv = ppm_matrix.out.ppm_matrix
 
     // Merge the PPM results with the ORF table, creating the final output table
     expression_table(
         harmonised_orf_table,
-        ppm_matrix,
+        ppm_matrix_csv,
     )
     
     // Create MultiQC plot to show amount of expressed canonical and non-canonical ORFs
     multiqc_expression_plot(
         harmonised_orf_table,
-        ppm_matrix,
+        ppm_matrix_csv,
     )
 
     emit:
-    ppm_matrix
+    // PPM matrix csv file
+    ppm_matrix_csv
+    // P-site matrix csv file
+    psite_matrix_csv = ppm_matrix.out.psite_matrix
+    // PIF and Uniformity score calculation
+    orf_table_translation_scores = ppm_matrix.out.orf_table_translation_scores
+    // EXPRESSION subworkflow statistics for MultiQC
     multiqc_expression_plot_txt = multiqc_expression_plot.out
 }

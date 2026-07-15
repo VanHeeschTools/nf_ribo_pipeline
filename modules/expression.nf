@@ -26,7 +26,8 @@ process intersect_psites {
 
     input:
         tuple val(sample_id), path(sample_psite_bed)
-        path ref_psite_bed
+        path orfcaller_psites_filtered
+
 
     output:
         path "${sample_id}_intersect.bed", emit: sample_intersect
@@ -38,7 +39,7 @@ process intersect_psites {
         """
         bedtools intersect \
         -a ${sample_psite_bed} \
-        -b ${ref_psite_bed} \
+        -b ${orfcaller_psites_filtered} \
         -wa \
         -wb \
         -header \
@@ -60,6 +61,7 @@ process ppm_matrix {
     output:
         path "orf_table_psites_permillion.csv", emit: ppm_matrix
         path "orf_table_psites.csv", emit: psite_matrix
+        path "orf_table_translation_scores.csv", emit: orf_table_translation_scores
 
     when:
         task.ext.when == null || task.ext.when

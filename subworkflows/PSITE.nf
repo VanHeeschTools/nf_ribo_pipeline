@@ -48,6 +48,8 @@ workflow PSITE {
     orfcaller_psites = merge_orfcaller_psites.out.combined_psites
 
     emit:
+    // p0 locations in ORF callers
     orfcaller_psites
+    // RDS file of the reference CDS
     ref_cds_rds
 }
