@@ -45,9 +45,9 @@ extract_transcript_biotypes <- function(gtf_file) {
         biotype = if (!is.null(tx$transcript_biotype)) {
         tx$transcript_biotype
         } else if (!is.null(tx$gene_biotype)) {
-        tx$gene_biotype # Set gene_biotype if transcript_biotype not found
+            tx$gene_biotype # Set gene_biotype if transcript_biotype not found
         } else {
-        NA_character_
+            NA_character_
         },
         stringsAsFactors = FALSE
     )
@@ -234,7 +234,6 @@ load_orfcaller_gtf <- function(gtf_file, orf_gtf_file, txdb, orfcaller){
             orf_id = ORF_id,
             orf_start = str_extract(starts, "^[^,]+") %>% as.numeric(),
             orf_end  = str_extract(ends, "[^,]+$") %>% as.numeric(),
-            summary_id = paste0(orfcaller, "_", chr, ":", orf_start, "-", orf_end, "_", strand), 
             orfcaller = orfcaller
         )%>%
         rowwise() %>%
@@ -258,9 +257,10 @@ load_orfcaller_gtf <- function(gtf_file, orf_gtf_file, txdb, orfcaller){
     orf_list <- orf_list %>%
         dplyr::left_join(gene_meta, by = "transcript_id") %>% 
         dplyr::select(-transcript_id)
-    
+
     return(orf_list)
 }
+
 
 #' Match ORFs to annotated transcripts and measure overlap
 #'
@@ -496,16 +496,13 @@ classify_orfs <- function(orf_list, hits_with_range, cds_overlap_orfs, cds_overl
     # Summarise orf_table to get one row per ORF 
     orf_list_sum <- orf_list_cat %>%
         arrange(orf_id, orf_cat) %>%
-        group_by(orf_id, summary_id, chr,orf_start, orf_end, strand, starts, ends, 
+        group_by(orf_id, chr,orf_start, orf_end, strand, starts, ends, 
             has_p0_cds_overlap,orfcaller, gene_id, gene_name, gene_biotype ) %>%
         summarise(tx_id = paste0(tx_id, collapse = "__"),
                 transcript_biotype_all = paste0(biotype, collapse = "__"),
                 orf_biotypes_all = paste0(orf_cat, collapse = "__"),
                 orf_biotype_single = dplyr::first(orf_cat),
                 .groups = "drop")%>%
-        mutate(
-            summary_id = paste0(summary_id, "_", orf_biotype_single,"_",orf_id),
-        )%>% 
         dplyr::left_join(orf_isoform_transcripts, by = "orf_id") %>% 
         dplyr::mutate(cds_isoform_transcripts = if_else(
             is.na(cds_isoform_transcripts), 
@@ -545,6 +542,18 @@ load_bsgenome_library <- function(bsgenome_path){
 #' @param genome A `BSgenome` object representing the reference genome.
 #' 
 #' @return The orf_table dataframe plus added Proteins sequence and start, stop
+#' codon info
+#'   
+#' Generate ORF sequences and protein translations
+#'
+#' This function takes an ORF table and a reference genome, merges exon sequences
+#' per ORF strand-aware, translates them to protein sequences, and returns a data frame
+#' with nucleotide and protein sequences including start and stop codons.
+#'
+#' @param orf_table A data frame containing the ORF information.
+#' @param genome A `BSgenome` object representing the reference genome.
+#' 
+#' @return The orf_table dataframe plus added protein sequence and start, stop
 #' codon info
 #'   
 generate_orf_sequences <- function(orf_table, genome) {
@@ -593,19 +602,19 @@ generate_orf_sequences <- function(orf_table, genome) {
     protein_seqs <- as.character(protein_aa)
     
     # Remove trailing stop codons (*) if any
-    protein_seqs <- sub("\\*$", "", protein_seqs)  
+    protein_seqs <- sub("\\*$", "", protein_seqs)
+    
     # Build final ORF table
     orf_final <- tibble(
         orf_id      = names(dna_seqs),
         dna_seq     = as.character(dna_seqs),
         protein_seq = protein_seqs,
-        protein_length = length(protein_seq),
         start_codon = substr(dna_seq, 1, 3),
         stop_codon  = substr(dna_seq, nchar(dna_seq)-2, nchar(dna_seq))
     ) %>%
         left_join(distinct(orf_table, orf_id, .keep_all = TRUE), by = "orf_id") %>%
         dplyr::mutate(protein_length = nchar(protein_seq)) %>%
-        dplyr::select(orf_id, summary_id, gene_id, gene_name, gene_biotype, 
+        dplyr::select(orf_id, gene_id, gene_name, gene_biotype, 
                     protein_seq, protein_length, dna_seq, start_codon, stop_codon, 
                     chr, orf_start, orf_end, strand, starts, ends, 
                     has_p0_cds_overlap, cds_isoform_transcripts, orfcaller,
@@ -613,10 +622,38 @@ generate_orf_sequences <- function(orf_table, genome) {
                     orf_biotype_single) %>%
         dplyr::mutate(starts = gsub(",", "_", starts)) %>%
         dplyr::mutate(ends = gsub(",", "_", ends)) %>%
-        dplyr::arrange(chr, orf_start, orf_end) # Sort on genomic coordinates
+        dplyr::arrange(chr, orf_start, orf_end)
     
     return(orf_final)
-    
+}
+
+#' Create unique ORF and summary IDs from a completed ORF table
+#'
+#' This function generates a new unique orf_id by hashing the protein sequence
+#' and genomic coordinates, then builds a summary_id from that.
+#'
+#' @param orf_final Data frame returned by generate_orf_sequences().
+#'
+#' @return The same data frame with orf_id replaced by a unique hash-based ID
+#'   and a new summary_id column added.
+#'
+alter_orf_ids <- function(orf_final){
+    orf_final %>%
+    # Go over df per rows
+    dplyr::rowwise() %>%
+    # Create 8 char hash based on column values (4.3 billion possible hashes)
+    dplyr::mutate(
+        hash_suffix = substr(digest::digest(paste0(protein_seq, chr, starts, ends, strand)), 1, 8)
+    ) %>%
+    dplyr::ungroup() %>%
+    # Create unique orf_id by joining gene_id and hash
+    dplyr::mutate(
+        orf_id = paste0(gene_id, "_", hash_suffix),
+        summary_id = paste0(orf_id, "_", chr, "_", orf_start, "_", orf_end, "_", strand, "_", orf_biotype_single)
+    ) %>%
+    dplyr::select(-hash_suffix) %>%
+    # In the rare case that the gene and the hash is the same, add _n
+    dplyr::mutate(summary_id = make.unique(summary_id, sep = "_"))
 }
 
 # Run functions:
@@ -653,14 +690,11 @@ orf_table <- classify_orfs(orf_list, hits_with_range,
 # Load BSgenome library to obtain ORF nucleotide sequence
 genome <- load_bsgenome_library(bsgenome_path)
 
-# Add Protein sequence to ORF table and finalise table
-orf_results <- generate_orf_sequences(orf_table, genome)
+# Add protein sequence to ORF table
+orf_sequences <- generate_orf_sequences(orf_table, genome)
+
+# Create unique, hash-based orf_id and summary_id now that protein_seq exists
+orf_results <- alter_orf_ids(orf_sequences)
 
 # Write results to table
-write.table(
-    orf_results,
-    file = file.path(".", paste0(orfcaller, "_orfs.csv")),
-    quote = FALSE,
-    row.names = FALSE,
-    sep = ","
-)
+readr::write_csv(orf_results, file.path(".", paste0(orfcaller, "_orfs.csv")))

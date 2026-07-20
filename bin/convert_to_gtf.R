@@ -18,6 +18,12 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
 
     orf_table <-read.csv(sorted_df)
 
+    # Find all columns that show if ORF is found in caller
+    found_cols <- grep("^found_in_", names(sorted_df), value = TRUE)
+    found_attrs <- Reduce(paste0, lapply(found_cols, function(col) {
+        paste0(col, ' "', sorted_df[[col]], '"; ')
+    }))
+
     # Handle transcript rows
     message("Building transcript-level rows")
     transcripts <- orf_table %>%
@@ -31,8 +37,8 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
                             gene_id, '"; gene_name "', gene_name, 
                             '"; gene_biotype "', gene_biotype,
                             '"; ORF_id "', orf_id,
-                            '"; ORF_biotype "', orf_biotype_single, 
-                            '"; ORFcaller "', orfcaller, '";')
+                            '"; ORF_biotype_single "', orf_biotype_single, '"; ',
+                            found_attrs)
     ) %>%
     # Orf_id will be used to join with cds rows, and is removed afterwards
     dplyr::select(chr, orfcaller, feature, start, end, 
@@ -60,8 +66,8 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
                             gene_id, '"; gene_name "', gene_name, 
                             '"; gene_biotype "', gene_biotype,
                             '"; ORF_id "', orf_id,
-                            '"; ORF_biotype "', orf_biotype_single, 
-                            '"; ORFcaller "', orfcaller, '";')
+                            '"; ORF_biotype_single "', orf_biotype_single, '"; ',
+                            found_attrs)
     ) %>%
     dplyr::select(chr, orfcaller, feature, start, end, 
                     score, strand, frame, attributes, orf_id)

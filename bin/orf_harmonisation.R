@@ -61,6 +61,11 @@ orf_filter <- function(orfs){
     ungroup() %>%
     dplyr::select(-pref)  # remove helper column
   
+  # Drop found_in columns if all values are FALSE
+  found_cols <- c("found_in_ORFquant", "found_in_PRICE", "found_in_RiboTIE")
+  unused_cols <- found_cols[sapply(filtered_table[found_cols], function(x) all(!x))]
+  filtered_table <- filtered_table %>% dplyr::select(-dplyr::all_of(unused_cols))
+  
   return(filtered_table)
 }
 
@@ -72,6 +77,7 @@ sort_orfs <- function(filtered_table){
   filtered_table_sorted <- filtered_table %>%
     # Arrange by chromosome order, then start and end
     dplyr::arrange(chr, orf_start, orf_end) %>%
+    dplyr::select(-orfcaller)
 
   return(filtered_table_sorted)
 }
@@ -102,34 +108,51 @@ write_results <- function(sorted_df, output_file){
 #' Write a protein FASTA file from a dataframe
 #'
 #' This function takes the orf_table dataframe and writes a compressed FASTA file (.fa.gz). 
-#' Each `orf_id` is used as the FASTA header, and the corresponding `Protein` entry 
+#' Each `summary_id` is used as the FASTA header, and the corresponding `Protein` entry 
 #' is written as the sequence, wrapped at 60 characters per line.
 #'
 #' @param sorted_df
 #' @param fasta_file
 
-write_orf_protein_fasta <- function(sorted_df, fasta_file) {
-  # Open a gzipped file connection
-  con <- gzfile(fasta_file, "w")
-  on.exit(close(con))
-  
-  # Helper: wrap sequence into 60-char lines
-  wrap_seq <- function(seq, width = 60) {
-    paste(strwrap(seq, width = width), collapse = "\n")
-  }
-  
-  # Build FASTA entries
-  fasta_entries <- paste0(">", sorted_df$orf_id, "\n",
-                          vapply(sorted_df$protein_seq, wrap_seq, character(1)))
-  
-  # Write to file
-  writeLines(fasta_entries, con)
+write_orf_protein_fasta <- function(sorted_df, fasta_file, mstart = FALSE) {
+    # Open a gzipped file connection
+    con <- gzfile(fasta_file, "w")
+    on.exit(close(con))
+    
+    # Helper: wrap sequence into 60-char lines
+    wrap_seq <- function(seq, width = 60) {
+      paste(strwrap(seq, width = width), collapse = "\n")
+    }
+    
+    # Replace the first amino acid with M if mstart is true
+    if (mstart) {
+      # Substitute the first character of each protein sequence with "M"
+      seq_df <- sorted_df %>%
+        dplyr::mutate(protein_seq_out = sub("^.", "M", protein_seq))
+    } else {
+      # Keep protein sequence unchanged
+      seq_df <- sorted_df %>%
+        dplyr::mutate(protein_seq_out = protein_seq)
+    }
+    
+    # Wrap each protein sequence into 60-char lines, one row at a time
+    seq_df <- seq_df %>%
+      dplyr::rowwise() %>%
+      dplyr::mutate(protein_seq_wrapped = wrap_seq(protein_seq_out)) %>%
+      dplyr::ungroup()
+    
+    # Build FASTA entries: ">summary_id" header line followed by wrapped sequence
+    fasta_entries <- paste0(">", seq_df$summary_id, "\n", seq_df$protein_seq_wrapped)
+    
+    # Write all entries to the gzipped fasta file
+    writeLines(fasta_entries, con)
 }
+
 
 #' Write a DNA FASTA file from a dataframe
 #'
 #' This function takes the orf_table dataframe and writes a compressed FASTA file (.fa.gz). 
-#' Each `orf_id` is used as the FASTA header, and the corresponding `DNA` entry 
+#' Each `summary_id` is used as the FASTA header, and the corresponding `DNA` entry 
 #' is written as the sequence, wrapped at 60 characters per line.
 #'
 #' @param sorted_df
@@ -146,7 +169,7 @@ write_orf_dna_fasta <- function(sorted_df, fasta_file) {
   }
   
   # Build FASTA entries
-  fasta_entries <- paste0(">", sorted_df$orf_id, "\n",
+  fasta_entries <- paste0(">", sorted_df$summary_id, "\n",
                           vapply(sorted_df$dna_seq, wrap_seq, character(1)))
   
   # Write to file
@@ -157,6 +180,12 @@ write_orf_dna_fasta <- function(sorted_df, fasta_file) {
 #' 
 #' @param sorted_df data.frame produced by orf_filter()
 convert_to_gtf <- function(sorted_df, gtf_output_file) {
+
+    # Find all columns that show if ORF is found in caller
+    found_cols <- grep("^found_in_", names(sorted_df), value = TRUE)
+    found_attrs <- Reduce(paste0, lapply(found_cols, function(col) {
+      paste0(col, ' "', sorted_df[[col]], '"; ')
+    }))
 
     # Handle transcript rows
     transcripts <- sorted_df %>%
@@ -170,11 +199,11 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
                             gene_id, '"; gene_name "', gene_name, 
                             '"; gene_biotype "', gene_biotype,
                             '"; ORF_id "', orf_id,
-                            '"; ORF_biotype "', orf_biotype_single, 
-                            '"; ORFcaller "', orfcaller, '";')
+                            '"; ORF_biotype_single "', orf_biotype_single, '"; ',
+                            found_attrs)
     ) %>%
     # Orf_id will be used to join with cds rows, and is removed afterwards
-    dplyr::select(chr, orfcaller, feature, start, end, 
+    dplyr::select(chr, feature, start, end, 
                     score, strand, frame, attributes, orf_id) %>%
     arrange(chr, start) # Sort based on genomic location
 
@@ -196,10 +225,10 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
                             gene_id, '"; gene_name "', gene_name, 
                             '"; gene_biotype "', gene_biotype,
                             '"; ORF_id "', orf_id,
-                            '"; ORF_biotype "', orf_biotype_single, 
-                            '"; ORFcaller "', orfcaller, '";')
+                            '"; ORF_biotype_single "', orf_biotype_single, '"; ', 
+                            found_attrs)
     ) %>%
-    dplyr::select(chr, orfcaller, feature, start, end, 
+    dplyr::select(chr, feature, start, end, 
                     score, strand, frame, attributes, orf_id)
 
     # Combine transcript rows with their corresponding CDS rows
@@ -326,7 +355,8 @@ if (length(orfcaller_tables) > 1) {
 sorted_df <- sort_orfs(filtered_table)
 
 # Write ORF protein and DNA sequences to fasta files
-write_orf_protein_fasta(sorted_df, "orf_protein_sequences.fa.gz")
+write_orf_protein_fasta(sorted_df, "orf_protein_sequences.fa.gz", FALSE)
+write_orf_protein_fasta(sorted_df, "orf_protein_sequences_M_start.fa.gz", TRUE)
 write_orf_dna_fasta(sorted_df, "orf_dna_sequences.fa.gz")
 
 # Remove DNA-seq from harmonised ORF table

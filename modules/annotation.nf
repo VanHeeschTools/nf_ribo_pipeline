@@ -34,14 +34,15 @@ process harmonise_orfs {
         val orfcaller_tables
     
     output:
-        path "harmonised_orf_table.csv",         emit: harmonised_orf_table
-        path "removed_orf_ids.txt",              emit: removed_orf_ids
-        path "orf_protein_sequences.fa.gz",      emit: orf_protein_sequences
-        path "orf_dna_sequences.fa.gz",          emit: orf_dna_sequences
-        path "harmonised_orf_table.gtf",         emit:  harmonised_orf_table_gtf
-        path "orfcaller_orf_categories_mqc.txt", emit: orfcaller_multiq
-        path "merged_orf_categories_mqc.txt",    emit: merged_multiqc
-        path "merged_orf_caller_count_mqc.txt",  emit: caller_count_multiqc
+        path "harmonised_orf_table.csv",            emit: harmonised_orf_table
+        path "removed_orf_ids.txt",                 emit: removed_orf_ids
+        path "orf_protein_sequences.fa.gz",         emit: orf_protein_sequences
+        path "orf_protein_sequences_M_start.fa.gz", emit: orf_protein_sequences_m_start
+        path "orf_dna_sequences.fa.gz",             emit: orf_dna_sequences
+        path "harmonised_orf_table.gtf",            emit:  harmonised_orf_table_gtf
+        path "orfcaller_orf_categories_mqc.txt",    emit: orfcaller_multiq
+        path "merged_orf_categories_mqc.txt",       emit: merged_multiqc
+        path "merged_orf_caller_count_mqc.txt",     emit: caller_count_multiqc
 
     when:
         task.ext.when == null || task.ext.when
