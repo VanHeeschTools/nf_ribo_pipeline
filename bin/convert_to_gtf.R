@@ -28,8 +28,8 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
     message("Building transcript-level rows")
     transcripts <- orf_table %>%
     mutate(
-        start = orf_start, 
-        end = orf_end,
+        start = as.integer(orf_start), 
+        end   = as.integer(orf_end),
         feature    = "transcript",
         score      = ".",
         frame      = ".",
