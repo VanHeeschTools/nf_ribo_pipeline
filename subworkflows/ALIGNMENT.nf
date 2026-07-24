@@ -1,6 +1,6 @@
 include { validate_star_index }                       from "../modules/helperFunctions.nf"
-include { star_index ; star_local ; star_end_to_end } from '../modules/star.nf'
-include { samtools ; samtools as samtools_end2end; samtools as samtools_transcriptome  }   from '../modules/samtools.nf'
+include { star_index ; star_local ; star_end_to_end; preseq } from '../modules/star.nf'
+include { samtools ; samtools as samtools_end2end; samtools as samtools_transcriptome }   from '../modules/samtools.nf'
 
 workflow ALIGNMENT {
     take:
@@ -9,7 +9,7 @@ workflow ALIGNMENT {
     star_index_path    // Path, location of precomputed STAR index
     gtf                // Path, reference gtf file
 
-    main:
+    main: 
 
     // Validate all STAR index files
     star_index_check =  validate_star_index(star_index_path)
@@ -34,6 +34,8 @@ workflow ALIGNMENT {
 
     // Sort local BAM file 
     samtools(star_local.out.bams)
+
+    preseq(samtools.out.sorted_bam)
 
     // Run STAR end2end mode
     star_end_to_end(

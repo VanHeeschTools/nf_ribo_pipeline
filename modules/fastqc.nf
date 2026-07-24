@@ -24,7 +24,7 @@ process fastqc {
         fastqc \
         ${reads} \
         --threads $task.cpus \
-        -d "tmp" \
+        --dir "tmp" \
         --outdir "." 
 
         # Remove fastqc temp direcory

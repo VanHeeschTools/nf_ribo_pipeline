@@ -26,7 +26,6 @@ process samtools {
             error "Unexpected BAM filename: ${bam.name}"
         }
 
-        //def new_bam = "${bam.name.replaceFirst('.Aligned.out.bam', '.Aligned.sortedByCoord.out.bam')}"
         """
         mkdir -p ${sample_id}
         mkdir -p tmp/

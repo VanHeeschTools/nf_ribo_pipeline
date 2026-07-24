@@ -112,3 +112,25 @@ process star_end_to_end {
         --outTmpKeep None
         """
 }
+
+process preseq {
+    tag "${sample_id}"
+    label "Ribo_Seq_tools"
+
+    input:
+        tuple val(sample_id), path(sorted_bam_file)
+
+    output:
+        path "${sample_id}_c_curve.txt", emit: c_curve
+        path "${sample_id}_lc_curve.txt", emit: lc_curve
+
+    script:
+        """
+        # Look at library complexity based on existing value
+        preseq c_curve -B -v -s 500000 -o "${sample_id}_c_curve.txt" ${sorted_bam_file}
+        
+        # Predict library complexity at deeper sequencing
+        preseq lc_extrap -B -v -e 500000000 -s 1000000 -o "${sample_id}_lc_curve.txt" ${sorted_bam_file}
+        """
+
+}
