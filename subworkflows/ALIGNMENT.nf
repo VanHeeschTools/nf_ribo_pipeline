@@ -1,5 +1,5 @@
 include { validate_star_index }                       from "../modules/helperFunctions.nf"
-include { star_index ; star_local ; star_end_to_end; preseq } from '../modules/star.nf'
+include { star_index ; star_local ; star_end_to_end; preseq; preseq as preseq_lc_extrap } from '../modules/star.nf'
 include { samtools ; samtools as samtools_end2end; samtools as samtools_transcriptome }   from '../modules/samtools.nf'
 
 workflow ALIGNMENT {
@@ -35,7 +35,11 @@ workflow ALIGNMENT {
     // Sort local BAM file 
     samtools(star_local.out.bams)
 
-    preseq(samtools.out.sorted_bam)
+    // Preseq c_curve
+    preseq(samtools.out.sorted_bam, true)
+
+    // Preseq lc_curve
+    preseq_lc_extrap(samtools.out.sorted_bam, false)
 
     // Run STAR end2end mode
     star_end_to_end(
@@ -51,7 +55,6 @@ workflow ALIGNMENT {
 
     // Sort end2end transcriptome BAM file 
     samtools_transcriptome(bam_list_end2end_transcriptome)
-
 
     emit:
     // STAR output log file for local run

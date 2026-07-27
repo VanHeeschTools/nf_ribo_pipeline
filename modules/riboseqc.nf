@@ -17,8 +17,8 @@ process riboseqc_index {
 
     script:
         """
-        mkdir bsgenome_install
-        mkdir temp
+        mkdir -p bsgenome_install
+        mkdir -p temp
         export TMPDIR=\$PWD/temp
         export PKGCACHE_OFFLINE=true
 
@@ -31,7 +31,6 @@ process riboseqc_index {
             ${reference_fasta}
         """
 }
-
 
 // Run RiboseQC on every sample
 process riboseqc {

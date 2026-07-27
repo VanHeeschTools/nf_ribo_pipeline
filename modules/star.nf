@@ -113,24 +113,30 @@ process star_end_to_end {
         """
 }
 
+// Run preseq, uses boolean to decide to either run c_curve or lc_extrap
 process preseq {
     tag "${sample_id}"
     label "Ribo_Seq_tools"
 
     input:
         tuple val(sample_id), path(sorted_bam_file)
+        val c_curve
 
     output:
-        path "${sample_id}_c_curve.txt", emit: c_curve
-        path "${sample_id}_lc_curve.txt", emit: lc_curve
+        path "${output}", emit: preseq_txt
 
     script:
-        """
-        # Look at library complexity based on existing value
-        preseq c_curve -B -v -s 500000 -o "${sample_id}_c_curve.txt" ${sorted_bam_file}
+        if (c_curve == true){
+            // Look at library complexity based on existing value
+            input_arguments = """ c_curve -B -v -s 500000 -o "${sample_id}_c_curve.txt" """
+            output = "${sample_id}_c_curve.txt"
+        } else {
+            // Predict library complexity at deeper sequencing
+            input_arguments = """ lc_extrap -B -v -e 500000000 -s 1000000 -o "${sample_id}_lc_extrap.txt" """
+            output = "${sample_id}_lc_extrap.txt"
+        }
         
-        # Predict library complexity at deeper sequencing
-        preseq lc_extrap -B -v -e 500000000 -s 1000000 -o "${sample_id}_lc_curve.txt" ${sorted_bam_file}
         """
-
+        preseq ${input_arguments} ${sorted_bam_file}
+        """
 }
