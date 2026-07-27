@@ -26,117 +26,75 @@ process star_index {
         """
 }
 
-// Aligns RPF reads to the reference genome to create input for RiboseQC
-process star_local{
-
+// Aligns RPF reads to the reference genome
+process star {
     tag "${sample_id}"
     label "Ribo_Seq_tools"
     label "alignment"
-
-    input: 
-        tuple val(sample_id), path(reads)   // Trimmed RPF reads
-        val gtf                             // Transcriptome GTF file
-        val star_index_path                 // STAR index
-
+    
+    input:
+        tuple val(sample_id), path(reads) // Sample id and filtered reads
+        val gtf                           // Reference gtf
+        val star_index_path               // Path to star index directory
+        val local                         // Boolean, true if running local mode
+    
     output:
         path("${sample_id}/${sample_id}.*")
-        tuple val(sample_id), path("${sample_id}/${sample_id}.local.Aligned.out.bam"), optional: true, emit: bams
-        path "${sample_id}/${sample_id}.local.Log.final.out", emit: star_log_local
-
+        tuple val(sample_id), path("${sample_id}/*.Aligned.out.bam"), emit: bam_file
+        tuple val(sample_id), path("${sample_id}/*.Aligned.toTranscriptome.out.bam"), optional: true, emit: bam_file_transcriptome
+        path "${sample_id}/*.Log.final.out", emit: star_log
+    
     when:
         task.ext.when == null || task.ext.when
-
+    
     script:
+        def prefix = local ? "${sample_id}/${sample_id}.local." : "${sample_id}/${sample_id}.end2end."
+        def extra_params = local ?
+            "--outSAMattributes All" :
+            "--alignEndsType EndToEnd --outSAMattributes MD NH --quantMode TranscriptomeSAM"
         """
-        # ORFquant BAM
         STAR \
-        --genomeDir ${star_index_path} \
-        --sjdbGTFfile ${gtf} \
-        --readFilesIn ${reads} \
-        --outSAMattrRGline ID:${sample_id} LB:${sample_id} PL:IllUMINA SM:${sample_id} \
-        --outFileNamePrefix "${sample_id}/${sample_id}.local." \
-        --runThreadN $task.cpus \
-        --readFilesCommand zcat \
-        --outSAMtype BAM Unsorted \
-        --runDirPerm All_RWX \
-        --twopassMode Basic \
-        --outFilterMismatchNmax 2 \
-        --outFilterMultimapNmax 20 \
-        --outSAMattributes All \
-        --outFilterType BySJout \
-        --alignSJoverhangMin 1000 \
-        --outTmpKeep None
+            --genomeDir ${star_index_path} \\
+            --sjdbGTFfile ${gtf} \\
+            --readFilesIn ${reads} \\
+            --outSAMattrRGline ID:${sample_id} LB:${sample_id} PL:ILLUMINA SM:${sample_id} \\
+            --outFileNamePrefix ${prefix} \\
+            --runThreadN ${task.cpus} \\
+            --readFilesCommand zcat \\
+            --outSAMtype BAM Unsorted \\
+            --runDirPerm All_RWX \\
+            --twopassMode Basic \\
+            --outFilterMismatchNmax 2 \\
+            --outFilterMultimapNmax 20 \\
+            --outFilterType BySJout \\
+            --alignSJoverhangMin 1000 \\
+            --outTmpKeep None \\
+            ${extra_params}
         """
 }
 
-// Aligns RPF reads to the reference genome to create PRICE input
-process star_end_to_end {
 
-    tag "${sample_id}"
-    label "Ribo_Seq_tools"
-    label "alignment"
-
-    input: 
-        tuple val(sample_id), path(reads) // Trimmed RPF reads
-        val gtf                           // Transcriptome GTF file
-        val star_index_path               // STAR index
-
-    output:
-        tuple val(sample_id), path("${sample_id}/${sample_id}.end2end.Aligned.out.bam"), optional: true, emit: bams_end2end
-        tuple val(sample_id), path("${sample_id}/${sample_id}.end2end.Aligned.toTranscriptome.out.bam"), optional: true, emit: bams_end2end_transcriptome
-        path "${sample_id}/${sample_id}.end2end.Log.final.out", emit: star_log_end_to_end
-
-    when:
-        task.ext.when == null || task.ext.when
-
-    script:
-        """
-        STAR \
-        --genomeDir ${star_index_path} \
-        --sjdbGTFfile ${gtf} \
-        --readFilesIn ${reads} \
-        --outSAMattrRGline ID:${sample_id} LB:${sample_id} PL:IllUMINA SM:${sample_id} \
-        --outFileNamePrefix "${sample_id}/${sample_id}.end2end." \
-        --runThreadN $task.cpus \
-        --quantMode TranscriptomeSAM \
-        --readFilesCommand zcat \
-        --outSAMtype BAM Unsorted \
-        --runDirPerm All_RWX \
-        --twopassMode Basic \
-        --outFilterMismatchNmax 2 \
-        --outFilterMultimapNmax 20 \
-        --outSAMattributes MD NH \
-        --outFilterType BySJout \
-        --alignSJoverhangMin 1000 \
-        --alignEndsType EndToEnd \
-        --outTmpKeep None
-        """
-}
-
-// Run preseq, uses boolean to decide to either run c_curve or lc_extrap
+// Run preseq
 process preseq {
     tag "${sample_id}"
     label "Ribo_Seq_tools"
 
     input:
-        tuple val(sample_id), path(sorted_bam_file)
-        val c_curve
+        tuple val(sample_id), path(sorted_bam_file) // Sample id and sorted local BAM file
+        val c_curve // Bool true if c_curve should be run, otherwise lc_extrap will be run
 
     output:
-        path "${output}", emit: preseq_txt
+        path "${out_file}", emit: preseq_txt
 
     script:
-        if (c_curve == true){
-            // Look at library complexity based on existing value
-            input_arguments = """ c_curve -B -v -s 500000 -o "${sample_id}_c_curve.txt" """
-            output = "${sample_id}_c_curve.txt"
-        } else {
-            // Predict library complexity at deeper sequencing
-            input_arguments = """ lc_extrap -B -v -e 500000000 -s 1000000 -o "${sample_id}_lc_extrap.txt" """
-            output = "${sample_id}_lc_extrap.txt"
-        }
-        
+        out_file = c_curve ? "${sample_id}_c_curve.txt" : "${sample_id}_lc_extrap.txt"
+        def subcommand = c_curve ? "c_curve" : "lc_extrap"
+        def input_arguments = c_curve ?
+            "-B -v -s 500000" :
+            "-e 500000000 -s 1000000"
+
         """
-        preseq ${input_arguments} ${sorted_bam_file}
+        preseq ${subcommand} ${input_arguments} -o ${out_file} ${sorted_bam_file}
         """
+
 }

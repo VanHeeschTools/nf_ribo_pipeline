@@ -14,12 +14,9 @@ workflow PSITE {
     main:
     // If running quantification on existing ORF list, convert ORF list to gtf-like format
     if (run_quantify_existing){
-        convert_table_to_gtf(
-            existing_orf_table
-        )
+        convert_table_to_gtf(existing_orf_table)
         orfcaller_gtf = convert_table_to_gtf.out
         ref_cds_rds = channel.empty() // Annotation won't be run in this mode so not required
-
     } else {
         // Create reference in-frame bed file for the reference gtf only when annotation is run
         reference_psites(

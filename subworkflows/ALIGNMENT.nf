@@ -1,6 +1,6 @@
 include { validate_star_index }                       from "../modules/helperFunctions.nf"
-include { star_index ; star_local ; star_end_to_end; preseq; preseq as preseq_lc_extrap } from '../modules/star.nf'
-include { samtools ; samtools as samtools_end2end; samtools as samtools_transcriptome }   from '../modules/samtools.nf'
+include { star_index ; star ; star as star_end_to_end; preseq; preseq as preseq_lc_extrap } from '../modules/star.nf'
+include { samtools ; samtools as samtools_end_to_end; samtools as samtools_transcriptome }   from '../modules/samtools.nf'
 
 workflow ALIGNMENT {
     take:
@@ -26,14 +26,15 @@ workflow ALIGNMENT {
     }
 
     // Run STAR local mode
-    star_local(
+    star(
         rpf_reads,
         gtf,
         star_index_ch,
+        true
     )
 
     // Sort local BAM file 
-    samtools(star_local.out.bams)
+    samtools(star.out.bam_file)
 
     // Preseq c_curve
     preseq(samtools.out.sorted_bam, true)
@@ -46,28 +47,27 @@ workflow ALIGNMENT {
         rpf_reads,
         gtf,
         star_index_ch,
+        false
     )
 
-    bam_list_end2end_transcriptome = star_end_to_end.out.bams_end2end_transcriptome
-
     // Sort end2end BAM file 
-    samtools_end2end(star_end_to_end.out.bams_end2end)
+    samtools_end_to_end(star_end_to_end.out.bam_file)
 
     // Sort end2end transcriptome BAM file 
-    samtools_transcriptome(bam_list_end2end_transcriptome)
+    samtools_transcriptome(star_end_to_end.out.bam_file_transcriptome)
 
     emit:
     // STAR output log file for local run
-    star_log_local = star_local.out.star_log_local
+    star_log_local = star.out.star_log
             
     // STAR output log file for end2end run
-    star_log_end_to_end = star_end_to_end.out.star_log_end_to_end
+    star_log_end_to_end = star_end_to_end.out.star_log
 
     // BAM files for ORFquant
     bam_list = samtools.out.sorted_bam
 
     // Obtain all STAR end2end sorted BAM file paths and change path to string for PRICE
-    bam_list_end2_end = samtools_end2end.out.bam_files
+    bam_list_end2_end = samtools_end_to_end.out.bam_files
         .collect()
         .flatten()
         .map { it -> it.toString() }
