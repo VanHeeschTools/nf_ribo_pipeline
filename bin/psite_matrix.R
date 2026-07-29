@@ -42,6 +42,7 @@ bed_file_list <- str_sort(bed_file_list, numeric = TRUE)
 # Define dataframes
 ppm <- data.frame(orf_id = ref_ORFs_codons$ref_id)
 psites <- data.frame(orf_id = ref_ORFs_codons$ref_id)
+psites_all_frames <- data.frame(orf_id = ref_ORFs_codons$ref_id)
 
 # Define vector of all input bedfiles
 codon_accum_list <- vector("list", length(bed_file_list))
@@ -68,9 +69,17 @@ for (i in seq_along(bed_file_list)) {
     by = .(ref_id, codon = ceiling(nt_position / 3), frame = frame_map[ref_frame])
   ]
 
-  # Calculate p-sites
+  # Calculate p-sites (frame 0 only)
   psites_overlap <- intersect_bed %>%
     dplyr::filter(ref_frame == "p0") %>%
+    dplyr::group_by(ref_id) %>%
+    dplyr::summarize(psites = sum(score), .groups = "drop") %>%
+    dplyr::full_join(ref_ORFs_codons, by = "ref_id") %>%
+    dplyr::mutate(psites = ifelse(is.na(psites), 0, psites)) %>%
+    dplyr::mutate(psites_perkb = psites / length_kb)
+
+  # Calculate p-sites across all frames (no ref_frame filter)
+  psites_overlap_allframes <- intersect_bed %>%
     dplyr::group_by(ref_id) %>%
     dplyr::summarize(psites = sum(score), .groups = "drop") %>%
     dplyr::full_join(ref_ORFs_codons, by = "ref_id") %>%
@@ -91,6 +100,21 @@ for (i in seq_along(bed_file_list)) {
     colnames(psites)[ncol(psites)] <- sample_name
   } else {
     warning(paste("No data available for sample:", sample_name))
+  }
+
+  if (nrow(psites_overlap_allframes) > 0) {
+    psites_overlap_allframes <- psites_overlap_allframes %>%
+      dplyr::rename(orf_id = ref_id)
+
+    psites_all_frames <- dplyr::left_join(
+      psites_all_frames,
+      psites_overlap_allframes %>% dplyr::select(orf_id, psites),
+      by = "orf_id"
+    )
+
+    colnames(psites_all_frames)[ncol(psites_all_frames)] <- sample_name
+  } else {
+    warning(paste("No data available (all frames) for sample:", sample_name))
   }
 }
 
@@ -144,5 +168,6 @@ scores <- orf_len %>%
 
 # Write outputs 
 write.csv(file = paste0(analysis_name, "_psites_permillion.csv"), x = ppm, quote = FALSE, row.names = FALSE)
-write.csv(file = paste0(analysis_name, "_psites.csv"), x = psites, quote = FALSE, row.names = FALSE)
+write.csv(file = paste0(analysis_name, "_psites_p0.csv"), x = psites, quote = FALSE, row.names = FALSE)
+write.csv(file = paste0(analysis_name, "_psites_all_frames.csv"), x = psites_all_frames, quote = FALSE, row.names = FALSE)
 write.csv(file = paste0(analysis_name, "_translation_scores.csv"), x = scores, quote = FALSE, row.names = FALSE)
