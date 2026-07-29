@@ -48,8 +48,9 @@ process star {
         task.ext.when == null || task.ext.when
     
     script:
-        def prefix = local ? "${sample_id}/${sample_id}.local." : "${sample_id}/${sample_id}.end2end."
-        def extra_params = local ?
+        def is_local = local
+        def prefix = is_local ? "${sample_id}/${sample_id}.local." : "${sample_id}/${sample_id}.end2end."
+        def extra_params = is_local ?
             "--outSAMattributes All" :
             "--alignEndsType EndToEnd --outSAMattributes MD NH --quantMode TranscriptomeSAM"
         """
@@ -73,28 +74,24 @@ process star {
         """
 }
 
-
-// Run preseq
 process preseq {
     tag "${sample_id}"
     label "Ribo_Seq_tools"
 
     input:
-        tuple val(sample_id), path(sorted_bam_file) // Sample id and sorted local BAM file
-        val c_curve // Bool true if c_curve should be run, otherwise lc_extrap will be run
+        tuple val(sample_id), path(sorted_bam_file)
+        val run_c_curve
 
     output:
         path "${out_file}", emit: preseq_txt
 
     script:
-        out_file = c_curve ? "${sample_id}_c_curve.txt" : "${sample_id}_lc_extrap.txt"
-        def subcommand = c_curve ? "c_curve" : "lc_extrap"
-        def input_arguments = c_curve ?
-            "-B -v -s 500000" :
-            "-e 500000000 -s 1000000"
+        def is_c_curve = run_c_curve // Define bool to prevent error with input being re-used
+        out_file = is_c_curve ? "${sample_id}_c_curve.txt" : "${sample_id}_lc_extrap.txt"
+        def subcommand = is_c_curve ? "c_curve" : "lc_extrap"
+        def input_arguments = is_c_curve ? "-B -v -s 500000" : "-B -e 500000000 -s 1000000"
 
         """
-        preseq ${subcommand} ${input_arguments} -o ${out_file} ${sorted_bam_file}
+        preseq ${subcommand} ${input_arguments} -o ${out_file} ${sorted_bam_file} 2> preseq.err || touch ${out_file}
         """
-
 }

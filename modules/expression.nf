@@ -60,14 +60,15 @@ process ppm_matrix {
 
     output:
         path "orf_table_psites_permillion.csv", emit: ppm_matrix
-        path "orf_table_psites.csv", emit: psite_matrix
+        path "orf_table_psites_p0.csv", emit: psite_matrix
+        path "orf_table_psites_all_frames.csv", emit: psite_matrix_all
         path "orf_table_translation_scores.csv", emit: orf_table_translation_scores
 
     when:
         task.ext.when == null || task.ext.when
 
     script:
-    """
+        """
         psite_matrix.R \
         "${ref_psite_bed}" \
         "${sample_intersect_bed}"
