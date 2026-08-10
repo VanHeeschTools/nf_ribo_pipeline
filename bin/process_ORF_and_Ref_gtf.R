@@ -1,5 +1,11 @@
 #!/usr/bin/env Rscript
 
+#' This script has two modes:
+#' 1. Write all ORF coordinate as seperate lines and show if the coordinate is p0/1/2.
+#'    Written to a bed like file. Used to see how many psites are on each ORF coordinate
+#' 2. Write all transcript coordinate as seperate lines and show if the coordinate is p0/1/2.
+#'    Written to rds file. Used in the ORF annotation script to figure out if ORFs are intORFs 
+
 # Load libraries
 suppressPackageStartupMessages({
     library(tidyverse)
@@ -50,7 +56,7 @@ load_orfcaller_gtf <- function(gtf_file_path){
     return(orf_list)
 }
 
-#' Obtain ORFcaller P0 Sites
+#' Obtain ORFcaller P Sites
 #'
 #' Expands CDS exon coordinates for each ORF into single-nucleotide positions
 #' and determines the codon frame per nucleotide based on strand orientation.
@@ -301,38 +307,10 @@ determine_correct_cds_coords <- function(cds_list, cds_frame) {
     return(cds_id_gene)
 }
 
-#' Create p0 bed file for reference CDS sequences
-#'
-#' @param cds_ids_gene A data.frame with adjusted CDS coordinates.
-#'
-#' @return A data.frame with bed file rows containing p0 sites
-create_reference_bed_file <- function(cds_ids_gene){
-
-    # Create bed file for CDS sequences
-    cds_list_bed <- cds_id_gene %>% 
-        rowwise() %>%
-        mutate(start_to_end = list(seq(start, end))) %>%
-        unnest(start_to_end) %>% 
-        arrange(start_to_end) %>% 
-        group_by(tx_id) %>% 
-        mutate(frame = case_when(
-            strand == "+" ~ (row_number() - 1) %% 3,
-            strand == "-" ~ (max(row_number()) - row_number()) %% 3),
-            frame = paste0("p", frame),
-            start_to_end2 = start_to_end,
-            nt_position = ifelse(strand == "+", row_number(), 
-                            max(row_number()) - row_number() + 1)) %>% 
-        ungroup() %>% 
-        #filter(frame == "p0") %>% 
-        # Subtract 1 from start_to_end to create proper bed format
-        mutate(start_to_end = start_to_end - 1) %>% 
-        dplyr::select(chr, start_to_end, start_to_end2, tx_id, frame, strand,
-                    nt_position) 
-}
-
 ### Run functions
 
-# Run p0 file creator on either ORFcaller gtf or reference gtf
+# Run p file creator on either ORFcaller gtf or reference gtf
+# Reference gtf will be turned into a rds with correct cds start and stop sites
 if (is_orfcaller == "ORF_id"){
     # Load ORF gtf file
     orf_list <- load_orfcaller_gtf(gtf)
@@ -341,7 +319,7 @@ if (is_orfcaller == "ORF_id"){
     # Write to bed(like) file
     write_tsv(orf_list_bed, paste0(tools::file_path_sans_ext(basename(gtf)),
         "_p0.bed"), col_names = FALSE)
-} else{
+} else {
     
     # Step 1: Load required input
     # Create TxDb for querying transcripts and CDSs
@@ -361,15 +339,10 @@ if (is_orfcaller == "ORF_id"){
     # Step 3: Determine correct CDS start and end coords
     cds_id_gene <- determine_correct_cds_coords(cds_list, cds_frame)
 
-    # Step 4: Create p0 bed file for reference CDS
-    cds_list_bed <- create_reference_bed_file(cds_ids_gene)
-
-    # Step 5: Save output
+    # Step 4: Save output
     saveRDS(cds_id_gene, paste0(tools::file_path_sans_ext(
         basename(gtf)),"_correct_cds.rds"))
-        
-    write_tsv(cds_list_bed, file = paste0(tools::file_path_sans_ext(
-        basename(gtf)),"_p0.bed"), col_names = FALSE)  
+
 }
 
 

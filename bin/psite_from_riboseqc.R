@@ -20,7 +20,7 @@ print(loaded_obj_names)
 # Assume only one object is loaded; get that object
 my_obj <- get(loaded_obj_names[1])
 
-# Extract p-sites from list of objects
+# Extract unique p-sites from list of objects
 p_sites <- data.frame(my_obj$P_sites_uniq)
 
 if(nrow(p_sites) == 0) {

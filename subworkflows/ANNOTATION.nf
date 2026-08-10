@@ -1,18 +1,26 @@
-include { get_orf_category; harmonise_orfs } from "../modules/annotation.nf"
+include { get_orf_category; harmonise_orfs; convert_table_to_gtf; correct_reference_cds } from "../modules/annotation.nf"
 
 workflow ANNOTATION {
     take:
     reference_gtf           // Path, input gtf file
     package_install_loc     // Path, Location where BSgenome R package is installed
-    orfcaller_gtf           
-    ref_cds_rds             // Path, RDS file of altered reference CDS
+    orfcaller_gtf           // Path, ORFcaller output in gtf format
+    reference_protein_fa    // Path, input reference protein fasta
 
     main:
+    // Create reference rds file with corrected cds start and stop location
+    correct_reference_cds(
+        reference_gtf,
+        "transcript_id",
+        reference_protein_fa,
+        package_install_loc,
+    )
+
     // Load ORFcaller gtf and annotates the ORFs
     get_orf_category(
         orfcaller_gtf,
         reference_gtf,
-        ref_cds_rds,
+        correct_reference_cds.out.reference_cds_rds,
         package_install_loc,
     )
 

@@ -39,7 +39,7 @@ process bowtie2 {
         tuple val(sample_id), path(reads)  // Trimmed reads
 
     output:
-        tuple val(sample_id), path(reads), path("${sample_id}_filtered.fastq.gz"), path("${sample_id}_contaminants.bam"), emit: bowtie_output_files
+        tuple val(sample_id), path("${sample_id}_filtered.fastq.gz"), path("${sample_id}_contaminants.bam"), emit: bowtie_output_files
         tuple val(sample_id), path("${sample_id}_filtered.fastq.gz"), emit: filtered_reads
 
     when:
@@ -65,10 +65,12 @@ process contaminants_check {
     label "Ribo_Seq_tools"
 
     input:
-        tuple val(sample_id), path(reads), path(filtered_reads), val(bam_file)
+        tuple val(sample_id), path(filtered_reads), val(bam_file)
         val keep_bam
 
     output:
+        path "contaminant_counts_${sample_id}.txt"
+        path "passed_contaminant_counts_${sample_id}.txt"
         path "contaminant_counts_${sample_id}_mqc.txt", emit: contaminant_samples
         path "passed_contaminant_counts_${sample_id}_mqc.txt", emit: contaminant_samples_passed
 
@@ -78,8 +80,14 @@ process contaminants_check {
     script:
         """
         sample_id="${sample_id}"
-        outfile="contaminant_counts_\${sample_id}_mqc.txt"
-        outfile_passed="passed_contaminant_counts_\${sample_id}_mqc.txt"
+
+        # Define output files
+        outfile="contaminant_counts_\${sample_id}.txt"
+        outfile_passed="passed_contaminant_counts_\${sample_id}.txt"
+        
+        # Output file with _mqc so MultiQC can recognise them
+        outfile_mqc="contaminant_counts_\${sample_id}_mqc.txt"
+        outfile_passed_mqc="passed_contaminant_counts_\${sample_id}_mqc.txt"
 
         filtered_reads_n=\$(zcat "${filtered_reads}" | wc -l)
         filtered_reads_n=\$((filtered_reads_n / 4))
@@ -99,6 +107,10 @@ process contaminants_check {
 
         echo -e "Sample\\tPassed" >> "\$outfile_passed"
         echo -e "\$sample_id\\t\$filtered_reads_n" >> "\$outfile_passed"
+
+        # Copy output to MultiQC ready text file
+        cp \${outfile} \${outfile_mqc}
+        cp \${outfile_passed} \${outfile_passed_mqc}
 
         if [ "$keep_bam" = false ]; then
             rm -f "${bam_file}"

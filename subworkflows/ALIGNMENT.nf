@@ -33,15 +33,6 @@ workflow ALIGNMENT {
         true
     )
 
-    // Sort local BAM file 
-    samtools(star.out.bam_file)
-
-    // Preseq c_curve
-    preseq(samtools.out.sorted_bam, true)
-
-    // Preseq lc_curve
-    preseq_lc_extrap(samtools.out.sorted_bam, false)
-
     // Run STAR end2end mode
     star_end_to_end(
         rpf_reads,
@@ -50,11 +41,20 @@ workflow ALIGNMENT {
         false
     )
 
+    // Sort local BAM file 
+    samtools(star.out.bam_file)
+
     // Sort end2end BAM file 
     samtools_end_to_end(star_end_to_end.out.bam_file)
 
     // Sort end2end transcriptome BAM file 
     samtools_transcriptome(star_end_to_end.out.bam_file_transcriptome)
+
+    // Preseq c_curve
+    preseq(samtools.out.sorted_bam, true)
+
+    // Preseq lc_curve
+    preseq_lc_extrap(samtools.out.sorted_bam, false)
 
     emit:
     // STAR output log file for local run

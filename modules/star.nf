@@ -85,6 +85,9 @@ process preseq {
     output:
         path "${out_file}", emit: preseq_txt
 
+    when:
+        task.ext.when == null || task.ext.when
+
     script:
         def is_c_curve = run_c_curve // Define bool to prevent error with input being re-used
         out_file = is_c_curve ? "${sample_id}_c_curve.txt" : "${sample_id}_lc_extrap.txt"

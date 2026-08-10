@@ -648,6 +648,7 @@ alter_orf_ids <- function(orf_final){
     dplyr::ungroup() %>%
     # Create unique orf_id by joining gene_id and hash
     dplyr::mutate(
+        orfcaller_orf_id = orf_id,
         orf_id = paste0(gene_id, "_", hash_suffix),
         summary_id = paste0(orf_id, "_", chr, "_", orf_start, "_", orf_end, "_", strand, "_", orf_biotype_single)
     ) %>%
@@ -682,7 +683,7 @@ cds_overlap_list <- categorize_orf_cds_overlap(
 cds_overlap_orfs <- cds_overlap_list$cds_overlap_orfs
 cds_overlap_orfs_summarized <- cds_overlap_list$cds_overlap_orfs_summarized
 
-# Classify remaning ORFs using transcript biotype and reference CDS
+# Classify remaining ORFs using transcript biotype and reference CDS
 orf_table <- classify_orfs(orf_list, hits_with_range, 
                             cds_overlap_orfs, cds_overlap_orfs_summarized,
                             cds_id_tx_limits)

@@ -87,8 +87,8 @@ sort_orfs <- function(filtered_table){
 #' @param orfs Original combined ORF data frame
 #' @param filtered_orfs Filtered ORF data frame
 obtain_removed_orf_ids <- function(orfs, filtered_orfs){
-  removed_orf_ids <- anti_join(orfs, filtered_orfs, by = "orf_id") %>%
-    pull(orf_id)
+  removed_orf_ids <- anti_join(orfs, filtered_orfs, by = "orfcaller_orf_id") %>%
+    pull(orfcaller_orf_id)
   
   # Save removed orf_ids to a text file
   writeLines(removed_orf_ids, "removed_orf_ids.txt")
@@ -190,6 +190,7 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
     # Handle transcript rows
     transcripts <- sorted_df %>%
     mutate(
+        source = "Harmonised",
         start = as.integer(orf_start), 
         end   = as.integer(orf_end),
         feature    = "transcript",
@@ -203,12 +204,13 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
                             found_attrs)
     ) %>%
     # Orf_id will be used to join with cds rows, and is removed afterwards
-    dplyr::select(chr, feature, start, end, 
+    dplyr::select(chr, source, feature, start, end, 
                     score, strand, frame, attributes, orf_id) %>%
     arrange(chr, start) # Sort based on genomic location
 
     cds <- sorted_df %>%
     mutate(
+        source = "Harmonised",
         starts = strsplit(as.character(starts), "_"),
         ends   = strsplit(as.character(ends), "_")
     ) %>%
@@ -228,7 +230,7 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
                             '"; ORF_biotype_single "', orf_biotype_single, '"; ', 
                             found_attrs)
     ) %>%
-    dplyr::select(chr, feature, start, end, 
+    dplyr::select(chr, source, feature, start, end, 
                     score, strand, frame, attributes, orf_id)
 
     # Combine transcript rows with their corresponding CDS rows
@@ -359,7 +361,7 @@ write_orf_protein_fasta(sorted_df, "orf_protein_sequences.fa.gz", FALSE)
 write_orf_protein_fasta(sorted_df, "orf_protein_sequences_M_start.fa.gz", TRUE)
 write_orf_dna_fasta(sorted_df, "orf_dna_sequences.fa.gz")
 
-# Remove DNA-seq from harmonised ORF table
+# Remove extra columns from harmonised ORF table
 sorted_df <- sorted_df %>%
   dplyr::select(-dna_seq)
 

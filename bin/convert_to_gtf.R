@@ -16,7 +16,7 @@ orfcaller_tables <- args[1]
 #' @param sorted_df data.frame produced by orf_filter()
 convert_to_gtf <- function(sorted_df, gtf_output_file) {
 
-    orf_table <-read.csv(sorted_df)
+    orf_table <- read.csv(sorted_df)
 
     # Find all columns that show if ORF is found in caller
     found_cols <- grep("^found_in_", names(sorted_df), value = TRUE)
@@ -28,6 +28,7 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
     message("Building transcript-level rows")
     transcripts <- orf_table %>%
     mutate(
+        source = "Harmonised",
         start = as.integer(orf_start), 
         end   = as.integer(orf_end),
         feature    = "transcript",
@@ -41,7 +42,7 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
                             found_attrs)
     ) %>%
     # Orf_id will be used to join with cds rows, and is removed afterwards
-    dplyr::select(chr, orfcaller, feature, start, end, 
+    dplyr::select(chr, source, feature, start, end, 
                     score, strand, frame, attributes, orf_id) %>%
     arrange(chr, start) # Sort based on genomic location
 
@@ -50,6 +51,7 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
     message("Building CDS rows (splitting multi-exon start/end fields)")
     cds <- orf_table %>%
     mutate(
+        source = "Harmonised",
         starts = strsplit(as.character(starts), "_"),
         ends   = strsplit(as.character(ends), "_")
     ) %>%
@@ -69,7 +71,7 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
                             '"; ORF_biotype_single "', orf_biotype_single, '"; ',
                             found_attrs)
     ) %>%
-    dplyr::select(chr, orfcaller, feature, start, end, 
+    dplyr::select(chr, source, feature, start, end, 
                     score, strand, frame, attributes, orf_id)
 
     message("  -> Built ", nrow(cds), " CDS rows")

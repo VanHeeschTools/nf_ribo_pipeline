@@ -27,7 +27,6 @@ include { RIBOQC      } from '../subworkflows/RIBOQC.nf'
 include { ORFQUANT    } from '../subworkflows/ORFQUANT.nf'
 include { PRICE       } from '../subworkflows/PRICE.nf'
 include { RIBOTIE     } from '../subworkflows/RIBOTIE.nf'
-include { PSITE       } from '../subworkflows/PSITE.nf'
 include { ANNOTATION  } from '../subworkflows/ANNOTATION.nf'
 include { EXPRESSION  } from '../subworkflows/EXPRESSION.nf'
 include { MULTIQC     } from '../modules/multiqc.nf'
@@ -232,40 +231,13 @@ workflow RIBOSEQ {
         // Combine outputs of ORFcallers into one channel including RiboTIE output
         orfcaller_gtf = price_gtf.mix(orfquant_gtf, ribotie_gtf)
 
-        // Calculate p0 sites in reference CDS and in ORFs
-        if (params.run_psite){
-            PSITE(
-                orfcaller_gtf,
-                params.reference_gtf,
-                params.reference_protein_fa,
-                package_install_loc,
-                params.run_quantify_existing,
-                params.existing_orf_table
-            )
-            // Merged ORFcallers p0 psites, expression input
-            orfcaller_psites = PSITE.out.orfcaller_psites
-            // Altered reference cds rds file, annotation input
-            ref_cds_rds = PSITE.out.ref_cds_rds
-        } else {
-            if (params.run_annotation){
-                // Search for cds rds file from previous run
-                search_ref_cds_rds = "${params.outdir}/annotation/*correct_cds.rds"
-                ref_cds_rds = collect_output_previous_run(search_ref_cds_rds, "path", true, "PSITE: ref cds rds file")
-            }
-            // Search for combined ORFcaller psite bed file from previous run
-            if (params.run_expression){
-                search_orfcaller_psites = "${params.outdir}/annotation/combined_psites.bed"
-                orfcaller_psites = collect_output_previous_run(search_orfcaller_psites, "path", true, "PSITE: combined orfcaller psites bed")
-            }
-        }
-
         // Annotate the ORFcaller output gtf files and harmonises them into a single table
         if (params.run_annotation && !params.run_quantify_existing){
             ANNOTATION(
                 params.reference_gtf,
                 package_install_loc,
                 orfcaller_gtf,
-                ref_cds_rds
+                params.reference_protein_fa,
             )
             harmonised_table = ANNOTATION.out.harmonised_orf_table
             removed_orf_ids = ANNOTATION.out.removed_orf_ids
@@ -287,10 +259,13 @@ workflow RIBOSEQ {
         // Calculate expression values for each ORF and add it to the harmonised ORF table
         if (params.run_expression){
             EXPRESSION(
+                orfcaller_gtf,
+                package_install_loc,
                 for_orfquant_files,
                 harmonised_table,
                 removed_orf_ids,
-                orfcaller_psites
+                params.run_quantify_existing,
+                params.existing_orf_table
             )
             multiqc_files = multiqc_files.mix(EXPRESSION.out.multiqc_expression_plot_txt)
         }

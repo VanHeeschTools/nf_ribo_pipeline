@@ -1,6 +1,4 @@
-include { riboseqc; sort_bedgraphs; merge_bedgraphs; convert_to_bigwig; create_riboseqc_report } from '../modules/riboseqc.nf'
-include { riboseqc_tables } from '../modules/qcplots.nf'
-
+include { riboseqc; sort_bedgraphs; merge_bedgraphs; convert_to_bigwig; create_riboseqc_report; riboseqc_tables } from '../modules/riboseqc.nf'
 workflow RIBOQC {
 
     take:

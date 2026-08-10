@@ -7,14 +7,14 @@ process filter_removed_orf_ids{
         path orfcaller_psites
 
     output:
-        path "combined_psites_filtered.bed", emit: orfcaller_psites_filtered
+        path "combined_psites_filtered.bed.gz", emit: orfcaller_psites_filtered
 
     when:
         task.ext.when == null || task.ext.when
 
     script:
         """
-        grep -v -w -F -f  ${removed_orf_ids} ${orfcaller_psites} > combined_psites_filtered.bed
+        grep -v -w -F -f  ${removed_orf_ids} ${orfcaller_psites} | gzip > combined_psites_filtered.bed.gz
         """
 }
 
@@ -30,7 +30,7 @@ process intersect_psites {
 
 
     output:
-        path "${sample_id}_intersect.bed", emit: sample_intersect
+        path "${sample_id}_intersect.bed.gz", emit: sample_intersect
 
     when:
         task.ext.when == null || task.ext.when
@@ -44,7 +44,7 @@ process intersect_psites {
         -wb \
         -header \
         -s \
-        -sorted > "${sample_id}_intersect.bed"
+        -sorted | gzip > "${sample_id}_intersect.bed.gz"
         """
 }
 
@@ -55,76 +55,32 @@ process ppm_matrix {
     label "Ribo_Seq_R"
 
     input:
-        path ref_psite_bed
-        path sample_intersect_bed
+    path ref_psite_bed
+    path sample_intersect_bed
+    path harmonised_orf_table
 
     output:
-        path "orf_table_psites_permillion.csv", emit: ppm_matrix
-        path "orf_table_psites_p0.csv", emit: psite_matrix
-        path "orf_table_psites_all_frames.csv", emit: psite_matrix_all
-        path "orf_table_translation_scores.csv", emit: orf_table_translation_scores
+    path "orf_table_psites_permillion.csv", emit: ppm_matrix
+    path "orf_table_psites_p0.csv", emit: psite_matrix
+    path "orf_table_psites_all_frames.csv", emit: psite_matrix_all
+    path "orf_table_translation_scores.csv", emit: orf_table_translation_scores
 
     when:
-        task.ext.when == null || task.ext.when
+    task.ext.when == null || task.ext.when
 
     script:
-        """
-        psite_matrix.R \
+    """
+    export TMPDIR=\$PWD/tmp
+    mkdir -p \$TMPDIR
+    psite_matrix.R \
         "${ref_psite_bed}" \
-        "${sample_intersect_bed}"
-        """
-}
-
-// Add the expression information to the harmonised orf table
-process expression_table{
-
-    label "Ribo_Seq_R"
-
-    input:
-        val harmonised_orf_table
-        val ppm_matrix
-
-    output:
-        path("final_orf_table.csv"), emit: final_orf_table
-
-    when:
-        task.ext.when == null || task.ext.when
-
-    script:
-        """
-        #!/usr/bin/env Rscript
-
-        library(dplyr)
-
-        # Load ORF table and PPM table
-        orf_table <- read.delim("${harmonised_orf_table}", sep = ",") 
-        combined_ppm_table <- read.csv("${ppm_matrix}", header = TRUE, row.names = NULL)
-
-        # Calculate amount of samples with a PPM of 1 or higher
-        sample_cols <- setdiff(names(combined_ppm_table), "orf_id")
-        # combined_ppm_table\$Total_number_samples <-  rowSums(combined_ppm_table[ , sample_cols] >= 1)
-
-        combined_ppm_table\$Total_number_samples <- rowSums(
-            combined_ppm_table[, sample_cols, drop = FALSE] >= 1
-        )
-
-        # Join ORF table with PPM results
-        orf_table_joined <- orf_table %>%
-        left_join(
-            combined_ppm_table %>%
-            select(orf_id, Total_number_samples),
-            by = "orf_id"
-        )
-
-        write.table(orf_table_joined, file = "final_orf_table.csv",
-                    sep = ",",
-                    quote = F,
-                    row.names = F)
-        """
+        "${sample_intersect_bed}" \
+        "${harmonised_orf_table}"
+    """
 }
 
 // Create plot of translated Canonical and Non-canonical ORFs for MultiQC
-process multiqc_expression_plot{
+process multiqc_expression_plot {
 
     label "Ribo_Seq_R"
 

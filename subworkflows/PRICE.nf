@@ -11,7 +11,6 @@ workflow PRICE {
   gtf               // Path, input GTF file
 
   main:
-
   // Validate price index file
   price_index_check = validate_price_index(price_index_path)
 
@@ -22,8 +21,7 @@ workflow PRICE {
   } else {
       // Create PRICE annotation
       log.warn "PRICE index file missing. Running PRICE indexing."
-      price_index(fasta,
-                  gtf)
+      price_index(fasta, gtf)
       price_index_ch = price_index.out.price_index
   }
   
@@ -36,9 +34,7 @@ workflow PRICE {
   )
   
   // Turn PRICE output into gtf format
-  price_to_gtf(
-    price.out.price_orfs
-  )
+  price_to_gtf(price.out.price_orfs)
 
   emit:
   // PRICE ORF output file

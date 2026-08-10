@@ -166,11 +166,6 @@
                     "default": true,
                     "description": "Toggle for RiboTIE module"
                 },                
-                "run_psite": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Toggle for Psite modules"
-                },
                 "run_annotation": {
                     "type": "boolean",
                     "default": true,

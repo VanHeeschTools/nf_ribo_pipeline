@@ -14,6 +14,7 @@ suppressPackageStartupMessages({
 args <- commandArgs(trailingOnly = TRUE)
 ref_bed <- args[1]
 bedfile_loc <- args[2]
+harmonised_orf_table <- args[3]
 analysis_name <- "orf_table"
 
 # Define frame
@@ -26,12 +27,27 @@ ref_bed <- data.table::fread(ref_bed,
 ref_ORFs_codons <- ref_bed %>%
   dplyr::group_by(ref_id) %>%
   dplyr::summarize(
-    n_codons  = n(),
-    length    = n() * 3,
+    n_codons  = n() / 3,
+    length    = n() ,
     length_kb = length / 1000,
     strand    = dplyr::first(strand),
     .groups = "drop"
   )
+
+# Load harmonised ORF table for ID conversion (ref_id -> orf_id)
+# Matched on ref_id == orfcaller_orf_id
+harmonised_tbl <- data.table::fread(harmonised_orf_table) %>%
+  dplyr::select(orfcaller_orf_id, orf_id) %>%
+  dplyr::distinct() %>%
+  dplyr::rename(new_id = orf_id, orf_id = orfcaller_orf_id)
+
+# Convert ORFcaller ORF_id to new ORF_id
+convert_ids <- function(df) {
+  df %>%
+    dplyr::left_join(harmonised_tbl, by = "orf_id") %>%
+    dplyr::mutate(orf_id = dplyr::coalesce(new_id, orf_id)) %>%
+    dplyr::select(-new_id)
+}
 
 # Split the string into a vector of filenames
 bed_file_list <- strsplit(bedfile_loc, " ")[[1]]
@@ -50,9 +66,10 @@ codon_accum_list <- vector("list", length(bed_file_list))
 # Loops over all files, extracts P-sites
 for (i in seq_along(bed_file_list)) {
   int_file <- bed_file_list[i]
-  sample_name <- gsub(pattern = "_intersect.bed",
+  sample_name <- gsub(pattern = "_intersect\\.bed\\.gz$",
                       replacement = "",
                       x = basename(int_file))
+  message(sample_name)
 
   intersect_bed <- data.table::fread(
     int_file,
@@ -88,7 +105,7 @@ for (i in seq_along(bed_file_list)) {
 
   if (nrow(psites_overlap) > 0) {
     scaling_factor <- sum(psites_overlap$psites_perkb) / 1000000
-    psites_overlap$ppm <- psites_overlap$psites_perkb / scaling_factor
+    psites_overlap$ppm <- round((psites_overlap$psites_perkb / scaling_factor), digits = 6)
 
     psites_overlap <- psites_overlap %>%
       dplyr::rename(orf_id = ref_id)
@@ -124,6 +141,7 @@ codon_accum <- data.table::rbindlist(codon_accum_list)[
 ]
 rm(codon_accum_list)
 
+# orf_len is in amino_acids + stop codon
 orf_len <- ref_ORFs_codons %>%
   dplyr::select(ref_id, orf_len = n_codons, strand)
 
@@ -165,6 +183,12 @@ scores <- orf_len %>%
     uniformity = round(dplyr::coalesce(uniformity, 0), 2)
   ) %>%
   dplyr::relocate(strand, orf_len_with_stop, .after = dplyr::last_col())
+
+# Apply ID conversion (raw ref_id -> new orf_id) to all output tables
+ppm                <- convert_ids(ppm)
+psites             <- convert_ids(psites)
+psites_all_frames  <- convert_ids(psites_all_frames)
+scores             <- convert_ids(scores)
 
 # Write outputs 
 write.csv(file = paste0(analysis_name, "_psites_permillion.csv"), x = ppm, quote = FALSE, row.names = FALSE)
