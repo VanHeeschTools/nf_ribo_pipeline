@@ -1,0 +1,170 @@
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Tool versions
+ENV FASTQC_VERSION=0.12.1
+ENV TRIMGALORE_VERSION=2.3.0
+ENV SAMTOOLS_VERSION=1.23.1
+ENV STAR_VERSION=2.7.11b
+ENV BOWTIE2_VERSION=2.5.5
+ENV PRESEQ_VERSION=3.2.0
+
+# GEDI
+ENV GEDI_HOME=/opt/gedi
+
+# Locale
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+
+# Install system + build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    g++ \
+    wget \
+    curl \
+    unzip \
+    git \
+    ca-certificates \
+    perl \
+    openjdk-17-jdk \
+    procps \
+    python3.11 \
+    python3.11-dev \
+    python3-pip \
+    zlib1g-dev \
+    libbz2-dev \
+    liblzma-dev \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libdeflate-dev \
+    libncurses5-dev \
+    libncursesw5-dev \
+    libgomp1 \
+    vim-common \
+    bedtools \
+    tabix \
+    maven \
+    locales \
+    && locale-gen en_US.UTF-8 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python tools
+RUN python3.11 -m pip install --no-cache-dir \
+    cutadapt \
+    multiqc
+
+# SAMtools
+WORKDIR /tmp
+RUN wget https://github.com/samtools/samtools/releases/download/${SAMTOOLS_VERSION}/samtools-${SAMTOOLS_VERSION}.tar.bz2 \
+    && tar -xjf samtools-${SAMTOOLS_VERSION}.tar.bz2 \
+    && cd samtools-${SAMTOOLS_VERSION} \
+    && ./configure --prefix=/opt/samtools \
+    && make -j$(nproc) \
+    && make install \
+    && ln -s /opt/samtools/bin/samtools /usr/local/bin/samtools \
+    && cd / && rm -rf /tmp/samtools-${SAMTOOLS_VERSION}*
+
+# preseq
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libgsl-dev \
+        libhts-dev \
+        libhts3 \
+    && apt-mark manual libhts-dev libhts3 \
+    && cd /tmp \
+    && wget https://github.com/smithlabcode/preseq/releases/download/v${PRESEQ_VERSION}/preseq-${PRESEQ_VERSION}.tar.gz \
+    && tar -xzf preseq-${PRESEQ_VERSION}.tar.gz \
+    && cd preseq-${PRESEQ_VERSION} \
+    && ./configure --prefix=/opt/preseq --enable-hts \
+    && make -j$(nproc) \
+    && make install \
+    && ln -s /opt/preseq/bin/preseq /usr/local/bin/preseq \
+    && cd / && rm -rf /tmp/preseq-${PRESEQ_VERSION}* \
+    && apt-get purge -y libgsl-dev \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# STAR
+RUN cd /tmp \
+    && wget https://github.com/alexdobin/STAR/archive/refs/tags/${STAR_VERSION}.tar.gz \
+    && tar -xzf ${STAR_VERSION}.tar.gz \
+    && cd STAR-${STAR_VERSION}/source \
+    && make STAR CXX=g++ -j$(nproc) \
+    && mkdir -p /opt/star \
+    && mv STAR /opt/star/ \
+    && ln -s /opt/star/STAR /usr/local/bin/STAR \
+    && cd / && rm -rf /tmp/STAR-${STAR_VERSION}*
+
+# Bowtie2
+RUN cd /tmp \
+    && wget https://github.com/BenLangmead/bowtie2/releases/download/v${BOWTIE2_VERSION}/bowtie2-${BOWTIE2_VERSION}-linux-x86_64.zip \
+    && unzip bowtie2-${BOWTIE2_VERSION}-linux-x86_64.zip \
+    && mv bowtie2-${BOWTIE2_VERSION}-linux-x86_64 /opt/bowtie2 \
+    && ln -s /opt/bowtie2/bowtie2 /usr/local/bin/bowtie2 \
+    && ln -s /opt/bowtie2/bowtie2-build /usr/local/bin/bowtie2-build \
+    && ln -s /opt/bowtie2/bowtie2-inspect /usr/local/bin/bowtie2-inspect \
+    && rm bowtie2-${BOWTIE2_VERSION}-linux-x86_64.zip
+
+# FastQC
+RUN cd /tmp \
+    && wget https://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v${FASTQC_VERSION}.zip \
+    && unzip fastqc_v${FASTQC_VERSION}.zip \
+    && chmod +x FastQC/fastqc \
+    && mv FastQC /opt/fastqc \
+    && ln -s /opt/fastqc/fastqc /usr/local/bin/fastqc \
+    && rm -rf FastQC fastqc_v${FASTQC_VERSION}.zip
+
+# Trim Galore
+RUN cd /tmp \
+    && wget https://github.com/FelixKrueger/TrimGalore/releases/download/v${TRIMGALORE_VERSION}/trim_galore-linux-x86_64.tar.gz \
+    && tar -xzf trim_galore-linux-x86_64.tar.gz \
+    && mkdir -p /opt/trim_galore \
+    && find /tmp -type f -name "trim_galore" -exec mv {} /opt/trim_galore/trim_galore \; \
+    && chmod +x /opt/trim_galore/trim_galore \
+    && ln -s /opt/trim_galore/trim_galore /usr/local/bin/trim_galore \
+    && rm -rf /tmp/trim_galore-linux-x86_64.tar.gz /tmp/trim_galore*
+
+# UCSC bedGraphToBigWig
+RUN wget http://hgdownload.soe.ucsc.edu/admin/exe/linux.x86_64/bedGraphToBigWig \
+    -O /usr/local/bin/bedGraphToBigWig \
+    && chmod +x /usr/local/bin/bedGraphToBigWig
+
+# GEDI
+ENV PATH="${GEDI_HOME}/gedi/Gedi:${PATH}"
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        maven \
+        git \
+    && mkdir -p ${GEDI_HOME} \
+    && cd ${GEDI_HOME} \
+    && git clone https://github.com/erhard-lab/gedi.git \
+    && cd gedi/Gedi \
+    \
+    # build GEDI
+    && mvn -q -DskipTests package \
+    \
+    # cleanup build deps
+    && apt-get purge -y maven git \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
+
+# Remove build dependencies
+RUN apt-get purge -y \
+    build-essential \
+    g++ \
+    python3.11-dev \
+    zlib1g-dev \
+    libbz2-dev \
+    liblzma-dev \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libdeflate-dev \
+    libncurses5-dev \
+    libncursesw5-dev \
+    vim-common \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/* /root/.cache/pip
+
+# Workspace
+WORKDIR /workspace
+
+CMD ["/bin/bash"]

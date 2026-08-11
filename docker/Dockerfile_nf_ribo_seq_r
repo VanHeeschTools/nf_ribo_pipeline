@@ -1,0 +1,38 @@
+FROM bioconductor/bioconductor_docker:RELEASE_3_22
+
+# Install system dependencies and Pandoc 2.17
+RUN apt-get update && apt-get install -y \
+    wget \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libxml2-dev \
+    libfontconfig1-dev \
+    libfreetype6-dev \
+    libpng-dev \
+    libtiff5-dev \
+    libjpeg-dev \
+    zlib1g-dev \
+    libharfbuzz-dev \
+    libfribidi-dev \
+    libglib2.0-dev \
+    libbz2-dev \
+    liblzma-dev \
+    && wget https://github.com/jgm/pandoc/releases/download/2.17.1.1/pandoc-2.17.1.1-linux-amd64.tar.gz \
+    && tar -xzf pandoc-2.17.1.1-linux-amd64.tar.gz \
+    && mv pandoc-2.17.1.1/bin/* /usr/local/bin/ \
+    && rm -rf pandoc-2.17.1.1* \
+    && apt-get clean
+
+# Install remotes, BiocManager, rmarkdown, knitr, Bioconductor core packages
+RUN R -e "install.packages('remotes', repos='https://cloud.r-project.org')" \
+    && R -e "install.packages('BiocManager', repos='https://cloud.r-project.org')" \
+    && R -e "remotes::install_version('rmarkdown', version='2.11', repos='https://cloud.r-project.org')" \
+    && R -e "remotes::install_version('knitr', version='1.37', repos='https://cloud.r-project.org')" \
+    && R -e "BiocManager::install(c('txdbmaker','Rhtslib','Rsamtools','GenomeInfoDb','GenomicAlignments','GenomicFeatures','GenomicFiles','rtracklayer','BSgenome','BSgenomeForge'), ask=FALSE)" \
+    && R -e "install.packages(c('tidyverse','tibble','dplyr','seqinr','stringdist','magrittr','stringr','ggplot2','data.table','DT','reshape2','gridExtra','ggpubr','viridis','R.utils'), repos='https://cloud.r-project.org')"
+
+# Install GitHub packages (RiboseQC, ORFquant) and check
+RUN R -e "remotes::install_github('damhof/RiboseQC')" \
+    && R -e "remotes::install_github('Edwinvanderwerf/ORFquant')"
+
+RUN R -e "remove.packages('pak')"

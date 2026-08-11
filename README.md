@@ -7,16 +7,16 @@ This pipeline is designed for the analysis and interpretation of Ribosome profil
 * Java 17 or later (up to 24)
 
 ### Containerised software
-* Trimgalore         (0.6.6)
-* Bowtie2            (2.5.4)
-* STAR               (2.7.8)
-* SAMtools           (1.12)
+* Trimgalore         (2.3.0)
+* Bowtie2            (2.5.5)
+* STAR               (2.7.11b)
+* SAMtools           (1.23.1)
 * ORFquant           (4.1.2)
 * java               (1.8.0)
 * bedgraphtobigwig   (ucsc 482)
 * Bedtools           (2.31.0)
 * TRISTAN            (1.1.1)
-* MultiQC            (1.33)
+* MultiQC            (1.35)
 * R, including the following packages:
     * tidyverse
     * tibble
@@ -35,6 +35,7 @@ This pipeline is designed for the analysis and interpretation of Ribosome profil
     * BSgenome
     * BSgenomeForge
     * txdbmaker
+    * rutils
     * github repo = 'damhof/RiboseQC'
     * github repo = 'Edwinvanderwerf/ORFquant
 
@@ -149,14 +150,13 @@ Note: the last three index paths can be automatically generated if the paths are
 | --run_orfquant   | Run ORFquant ORF calling                     | true    |
 | --run_price      | Run PRICE ORF calling                        | true    |
 | --run_ribotie    | Run RiboTIE (TRISTAN) ORF calling            | true    |
-| --run_psite      | Run psite annotation                         | true    |
 | --run_annotation | Run ORF annotation and harmonisation         | true    |
 | --run_expression | Run ORF expression                           | true    |
 | --run_multiqc    | Create MultiQC output report                 | true    |
 
 Note: RiboTIE requires GPU support.
 
-Note: You can start the pipeline in a later step by setting these parameters. It will search the given outdir for the required files, make sure to give these files in the correct format and directory.
+Note: The pipeline can be started from a later step by setting these parameters. In this case, it will search the specified outdir for the required input files, ensure these files are present in the correct format and directory structure.
 
 ### Pipeline extra Toggles
 
@@ -177,6 +177,25 @@ Note: You can start the pipeline in a later step by setting these parameters. It
 | --ribotie_min_samples      | Minimal amount of samples RiboTIE needs to call the same ORF in for it to be kept  | 2              |
 | --readlength_choice_method | RiboseQC filter to be used. Needs to be one of: 'max_coverage','max_inframe','all' | "max_coverage" |
 
+### Container Configuration
+
+Container images must be specified at the bottom of the params.config file. The pipeline currently relies on three containers:
+
+1. A general-purpose container for pipeline tools
+2. A container with the required R libraries
+3. A GPU-enabled container for running RiboTIE
+
+The corresponding Dockerfiles are available in the Docker folder.
+
+Prebuilt images can be converted to Apptainer (.sif) files using the following commands:
+
+```bash
+apptainer build --disable-cache nf_ribo_seq_r-1.0.8.sif docker://evanderwerf/rnf_ribo_seq_r:1.0.8
+apptainer build --disable-cache nf_ribo_pipeline_tools-1.0.1.sif docker://evanderwerf/riboseq_pipeline_tools:1.0.1
+apptainer build --disable-cache tristan_1.1.1.sif docker://evanderwerf/tristan:1.1.1
+```
+
+Place all three resulting .sif files in a shared container_folder, then set the container_folder parameter in params.config to point to this directory.
 
 ## Outputs
 
@@ -229,11 +248,14 @@ The final_orf_table directory in the output directory holds the harmonised ORF t
 |ends | All the ends of the ORF CDS seperated by "_"|
 |has_p0_cds_overlap | Boolean, set to true if the ORF has inframe overlap with a reference CDS. Note that the ORF doesn't have to fit the exon boundaries of the transcript this CDS comes from to be set to TRUE.|
 |cds_isoform_transcripts | All the transcripts of which the ORF could be an isoform off. This means that the ORF does fully fit within the exon boundaries of this transcript, but the exon length from the start of the ORF to the stop of the ORF is longer than the ORF length|
-|orfcaller | The used ORFcaller (currently ORFquant, PRICE, or RiboTIE)|
 |tx_id | All transcripts on which this ORF can be located, meaning it fits within the exon boundaries of the given transcripts, transcript ids are seperated by "__"|
 |transcript_biotype_all | The transcript_biotypes of all transcripts in the tx_id column, transcript biotypes seperated by "__"|
 |orf_biotypes_all | The ORF biotype (category) of the ORF classified on the transcripts in tx_id, shown in the same order as the transcripts in tx_id, seperated by "__"|
 |orf_biotype_single | The single ORF biotype (category) chosen from orf_biotypes_all. This single biotype is chosen using orf_biotypes_all and a factor in which it will pick the first occurence|
+|found_in_ORFquant | Boolean, shows if ORF was found by ORFquant|
+|found_in_PRICE	| Boolean, shows if ORF was found by PRICE|
+|found_in_RiboTIE | Boolean, shows if ORF was found by RiboTIE|
+|caller_count| Numerical value to show amount of callers ORF was found by|
 
 **Further orf_biotype_single explanation**
 The orf_biotype_single is decided by comparing the orf_biotypes_all to the factor shown below, in which it will pick the first occurence of the factor that is found in orf_biotypes all. This means e.g. that even if there is only one transcript which is classified as an ORF-annotated in orf_biotypes_all the orf_biotype_single will become ORF-annotated even if there are other transcripts on which the ORF would have a different ORF biotype. 
