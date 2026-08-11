@@ -231,8 +231,9 @@ The final_orf_table directory in the output directory holds the harmonised ORF t
 
 |Column_name | Description|
 | :--------------------- | -------------------------- |
-|orf_id | The id of the ORF as given by the ORFcaller|
-|summary_id | A combination of ORF location, ORF biotype, and its orf_id, to have a summary of relevant info in one column|
+|orf_id | The id of the ORF, exists of gene_id followed by a hash string to uniquely identify the ORF|
+|summary_id | A combination of ORF id, location, strand, and orf_biotype_single|
+|orfcaller_orf_id | The ORF id as given by the ORFcaller|
 |gene_id | The gene_id based on the transcript id on which the ORFcaller says the ORF is on|
 |gene_name | The gene_name based on the transcript id on which the ORFcaller says the ORF is on|
 |gene_biotype | The gene_biotype based on the transcript id on which the ORFcaller says the ORF is on|

@@ -221,7 +221,7 @@ workflow RIBOSEQ {
             ribotie_gtf = RIBOTIE.out
         } else {
             if (!params.run_quantify_existing){
-                ribotie_output_gtf = "${params.outdir}/merged_ribotie/RiboTIE.gtf"
+                ribotie_output_gtf = "${params.outdir}/ribotie/RiboTIE.gtf"
                 ribotie_gtf = collect_output_previous_run(ribotie_output_gtf, "path", true, "RIBOTIE")
             } else {
                 ribotie_gtf = channel.empty()

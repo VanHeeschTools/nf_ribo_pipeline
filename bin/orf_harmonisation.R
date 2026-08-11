@@ -365,8 +365,12 @@ write_orf_dna_fasta(sorted_df, "orf_dna_sequences.fa.gz")
 sorted_df <- sorted_df %>%
   dplyr::select(-dna_seq)
 
+# Reorder columns so orf_id, summary_id, and orfcaller_orf_id come first
+csv_df <- sorted_df %>%
+  dplyr::select(orf_id, summary_id, orfcaller_orf_id, dplyr::everything())
+
 # Write harmonised ORF table to csv file
-write_results(sorted_df, "harmonised_orf_table.csv")
+write_results(csv_df, "harmonised_orf_table.csv")
 
 # Convert harmonised ORF table to gtf file
 convert_to_gtf(sorted_df, "harmonised_orf_table.gtf")
