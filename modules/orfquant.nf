@@ -54,7 +54,7 @@ process fix_orfquant {
     label "Ribo_Seq_R"
 
     input:
-        path(orfquant_orfs)
+        path orfquant_orfs
         path rannot
         path reference_gtf
         path package_install_loc

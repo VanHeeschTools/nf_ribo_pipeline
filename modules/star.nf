@@ -39,7 +39,7 @@ process star {
         val local                         // Boolean, true if running local mode
     
     output:
-        path("${sample_id}/${sample_id}.*")
+        path "${sample_id}/${sample_id}.*"
         tuple val(sample_id), path("${sample_id}/*.Aligned.out.bam"), emit: bam_file
         tuple val(sample_id), path("${sample_id}/*.Aligned.toTranscriptome.out.bam"), optional: true, emit: bam_file_transcriptome
         path "${sample_id}/*.Log.final.out", emit: star_log

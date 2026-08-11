@@ -1,5 +1,8 @@
 #!/usr/bin/env Rscript
 
+# This script takes all given for_ORFquant files and creates a merged version that can be given to ORFquant
+# For the junction merging it assumes riboseqc has been run with the exact same annotation 
+
 suppressPackageStartupMessages({
   library(ORFquant)
   library(dplyr)
@@ -54,9 +57,9 @@ num_samples <- length(for_orfquant_files)
 
 if (num_samples == 1) {
   message("Only one sample detected. Loading for_ORFquant object and saving without merging.")
-  for_orfquant_file <- get(load(for_orfquant_files[1]))  # Load for_ORFquant object
+  for_ORFquant <- get(load(for_orfquant_files[1]))  # Load for_ORFquant object
   # Assuming the object is named for_ORFquant or similar in that file
-  save(for_orfquant_file, file = "Merged_for_ORFquant")
+  save(for_ORFquant, file = "Merged_for_ORFquant")
   
 } else if (num_samples > 1) {
 
@@ -74,7 +77,6 @@ if (num_samples == 1) {
     junctions_list[[i]] <- for_orfquant_file$junctions
     # Clean up
     rm(for_orfquant_file)
-    rm(for_ORFquant)
     gc()
   }
 

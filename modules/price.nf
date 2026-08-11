@@ -4,8 +4,8 @@ process price_index {
     label "Ribo_Seq_tools"
 
     input:
-        path fasta        // Genome fasta used for alingment
-        path gtf          // Transcriptome GTF used for alignment
+        path fasta // Genome fasta used for alingment
+        path gtf   // Transcriptome GTF used for alignment
 
     output:
         path "PRICE_index.oml", emit: price_index
