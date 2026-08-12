@@ -5,17 +5,16 @@ This pipeline processes ribosome profiling (Riboseq) data, including quality con
 alignment, ORF quantification, and expression analysis.
 
 Main steps:
-0.  Validate existence of input samplesheet and input files
-1.  SELECTION: Initial read processing and contaminant removal
-2.  ALIGNMENT: Align reads to the reference genome
-3.  RIBOQC: Quality control of Riboseq data
-4.  ORFQUANT: First ORF calling method using ORFquant
-5.  PRICE: Second ORF calling method using PRICE
-6.  RIBOTIE: Third ORF calling method using RiboTIE
-7.  PSITE: Obtain frame of transcripts/ORFs
-8.  ANNOTATION: Annotate identified ORFs
-9.  EXPRESSION: Analyze identified ORF expression
-10. MULTIQC: Create MultiQC report of outputs
+0. Validate existence of input samplesheet and input files
+1. SELECTION: Initial read processing and contaminant removal
+2. ALIGNMENT: Align reads to the reference genome
+3. RIBOQC: Quality control of Riboseq data
+4. ORFQUANT: First ORF calling method using ORFquant
+5. PRICE: Second ORF calling method using PRICE
+6. RIBOTIE: Third ORF calling method using RiboTIE
+7. ANNOTATION: Annotate identified ORFs
+8. EXPRESSION: Analyze identified ORF expression
+9. MULTIQC: Create MultiQC report of outputs
 */
 
 include { validateParameters; paramsSummaryLog; samplesheetToList } from 'plugin/nf-schema'

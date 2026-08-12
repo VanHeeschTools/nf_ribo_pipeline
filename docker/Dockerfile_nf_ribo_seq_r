@@ -31,8 +31,6 @@ RUN R -e "install.packages('remotes', repos='https://cloud.r-project.org')" \
     && R -e "BiocManager::install(c('txdbmaker','Rhtslib','Rsamtools','GenomeInfoDb','GenomicAlignments','GenomicFeatures','GenomicFiles','rtracklayer','BSgenome','BSgenomeForge'), ask=FALSE)" \
     && R -e "install.packages(c('tidyverse','tibble','dplyr','seqinr','stringdist','magrittr','stringr','ggplot2','data.table','DT','reshape2','gridExtra','ggpubr','viridis','R.utils'), repos='https://cloud.r-project.org')"
 
-# Install GitHub packages (RiboseQC, ORFquant) and check
+# Install GitHub packages (RiboseQC, ORFquant)
 RUN R -e "remotes::install_github('damhof/RiboseQC')" \
     && R -e "remotes::install_github('Edwinvanderwerf/ORFquant')"
-
-RUN R -e "remove.packages('pak')"
