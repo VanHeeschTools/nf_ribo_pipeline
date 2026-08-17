@@ -65,7 +65,7 @@ process contaminants_check {
     label "Ribo_Seq_tools"
 
     input:
-        tuple val(sample_id), path(filtered_reads), val(bam_file)
+        tuple val(sample_id), path(filtered_reads), path(bam_file)
         val keep_bam
 
     output:
@@ -73,6 +73,7 @@ process contaminants_check {
         path "passed_contaminant_counts_${sample_id}.txt"
         path "contaminant_counts_${sample_id}_mqc.txt", emit: contaminant_samples
         path "passed_contaminant_counts_${sample_id}_mqc.txt", emit: contaminant_samples_passed
+        path "${bam_file}", optional: true
 
     when:
         task.ext.when == null || task.ext.when
@@ -83,7 +84,6 @@ process contaminants_check {
 
         # Define output files
         outfile="contaminant_counts_\${sample_id}.txt"
-        outfile_passed="passed_contaminant_counts_\${sample_id}.txt"
         
         # Output file with _mqc so MultiQC can recognise them
         outfile_mqc="contaminant_counts_\${sample_id}_mqc.txt"
@@ -105,12 +105,11 @@ process contaminants_check {
         echo -e "Sample\\tPassed\\trRNA\\ttRNA\\tsnRNA\\tsnoRNA\\tmtDNA" >> "\$outfile"
         echo -e "\$sample_id\\t\$filtered_reads_n\\t\$read_counts" >> "\$outfile"
 
-        echo -e "Sample\\tPassed" >> "\$outfile_passed"
-        echo -e "\$sample_id\\t\$filtered_reads_n" >> "\$outfile_passed"
+        echo -e "Sample\\tPassed" >> "\$outfile_passed_mqc"
+        echo -e "\$sample_id\\t\$filtered_reads_n" >> "\$outfile_passed_mqc"
 
         # Copy output to MultiQC ready text file
         cp \${outfile} \${outfile_mqc}
-        cp \${outfile_passed} \${outfile_passed_mqc}
 
         if [ "$keep_bam" = false ]; then
             rm -f "${bam_file}"
