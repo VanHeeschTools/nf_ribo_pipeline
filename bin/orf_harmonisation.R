@@ -183,12 +183,23 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
 
     # Find all columns that show if ORF is found in caller
     found_cols <- grep("^found_in_", names(sorted_df), value = TRUE)
-    found_attrs <- Reduce(paste0, lapply(found_cols, function(col) {
-      paste0(col, ' "', sorted_df[[col]], '"; ')
-    }))
+    
+    orf_unique <- sorted_df %>%
+      dplyr::select(orf_id, dplyr::all_of(found_cols)) %>%
+      dplyr::distinct(orf_id, .keep_all = TRUE)
+
+    orf_found_attrs <- data.frame(
+      orf_id = orf_unique$orf_id,
+      found_attrs = do.call(
+        paste0,
+        base::lapply(found_cols, function(col) paste0(col, ' "', orf_unique[[col]], '"; '))
+      ),
+      stringsAsFactors = FALSE
+    )
 
     # Handle transcript rows
     transcripts <- sorted_df %>%
+    left_join(orf_found_attrs, by = "orf_id") %>%
     mutate(
         source = "Harmonised",
         start = as.integer(orf_start), 
@@ -215,6 +226,7 @@ convert_to_gtf <- function(sorted_df, gtf_output_file) {
         ends   = strsplit(as.character(ends), "_")
     ) %>%
     unnest(c(starts, ends)) %>%
+    left_join(orf_found_attrs, by = "orf_id") %>% 
     mutate(
         start = as.integer(starts),
         end   = as.integer(ends)
